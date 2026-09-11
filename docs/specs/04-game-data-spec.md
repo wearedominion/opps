@@ -39,16 +39,26 @@ contract for that data: formats, schemas, loading, validation, versioning, and d
 | `data/store.json` | `STORE_ITEMS` | `js/store.js` |
 | `data/properties.json` | `PROPERTIES` | `js/properties.js` |
 | `data/ranks.json` | `RANK_NAMES` | `hud.js`, `ui.js`, `stats.js` |
+| `data/tuning.json` | `TUNING` | economy systems (see [`08-economy-schema.md`](./08-economy-schema.md)) |
+| `data/progression.json` | `PROGRESSION` | `js/progression.js`, `js/main.js` |
+| `data/monetization.json` | `IAP_PRODUCTS` | `js/payments.js` |
+| `data/unlocks.json` | `UNLOCKS` | `js/unlocks.js` |
 
 **Rules:**
-- Data files are **arrays of objects** (except `ranks.json`, an array of strings). Keep that shape.
+- Data files are **arrays of objects**, with three exceptions: `ranks.json` (an array of
+  strings), `tuning.json` (a keyed config object — §3.8), `progression.json` (an object
+  wrapping a `levels` array — §3.7), and `unlocks.json` (a keyed capability object — §3.6). Keep that shape.
 - Every content object has a **stable, unique, lowercase `id`** (except ranks). `id` is a
   **permanent key**: it appears in save data (`G.inventory`, `G.properties`, `G.jobProgress`).
   **Never reuse or repurpose an `id`.** Renaming an `id` orphans existing saves.
 - A new data file MUST be added to the `Promise.all` in `loadGameData()` and assigned to a global,
-  and the loading-progress denominator updated (currently `/ 5`).
+  and the loading-progress denominator updated (currently `/ 9`).
 - Loading is resilient: a fetch failure is caught and logged. Systems must render sanely against an
   empty array. Don't assume data loaded successfully.
+
+> **Known gap:** `portraits.json` is in `data/` but is **not** in `loadGameData()` and is read by
+> nothing — renderers still use `ENEMY_PORTRAITS` in `js/combat.js`. Tracked on DOM-60.
+> (`progression.json` had the same problem and is now wired up.)
 
 ---
 
@@ -62,11 +72,10 @@ entries. All money ranges are `[min, max]` integer tuples.
 {
   "id": "lookout",        // string, unique, permanent
   "name": "Be a Lookout", // string, display name
-  "energy": 1,            // int > 0, energy cost per attempt
-  "money": [20, 40],      // [int,int] payout range, min ≤ max
-  "xp": 8,                // int ≥ 0, XP per attempt
-  "rep": 2,               // int ≥ 0, rep per attempt
-  "levelReq": 1,          // int ≥ 1, rank required to unlock
+  "moves": 1,             // int > 0, Moves cost per attempt
+  "cash": [20, 40],       // [int,int] payout range, min ≤ max
+  "clout": 10,            // int ≥ 0, Clout per attempt
+  "levelReq": 1,          // int ≥ 1, level required to unlock
   "times": 10             // int > 0, mastery cap (attempts to master)
 }
 ```
@@ -80,14 +89,18 @@ entries. All money ranges are `[min, max]` integer tuples.
   "hp": 40,                   // int > 0
   "atk": 6,                   // int ≥ 0
   "def": 3,                   // int ≥ 0
-  "lvlReq": 1,                // int ≥ 1, rank required to fight
+  "levelReq": 1,              // int ≥ 1, level required to fight
   "reward": {                 // object
-    "money": [30, 60],        // [int,int]
-    "rep": 10,                // int ≥ 0
-    "xp": 15                  // int ≥ 0
+    "cash": [30, 60],         // [int,int]
+    "clout": 25               // int ≥ 0
   }
 }
 ```
+> **Terminology migration, 2026-09-11.** `xp` + `rep` → `clout` (save `SCHEMA_VERSION` 1 → 2), then
+> `money` → `cash` and `energy` → `moves` (2 → 3). Canonical names per
+> [`../oppsDefinitions.md`](../oppsDefinitions.md); the old fields are gone from `jobs.json` and
+> `enemies.json`. See [`08-economy-schema.md`](./08-economy-schema.md) §3.
+>
 > **No `icon` field.** It was removed on 2026-09-11 — the UI Implementation Contract in
 > `CLAUDE.md` bans emoji, and it was only ever a fallback for enemies with no portrait. Every
 > enemy has one, so it never rendered. See `data/README.md`.
@@ -107,11 +120,19 @@ entries. All money ranges are `[min, max]` integer tuples.
   "price": 200,              // int > 0, cost in bread ($)
   "atk": 5,                  // int ≥ 0, attack bonus on purchase
   "def": 0,                  // int ≥ 0, defense bonus on purchase
-  "hpBonus": 10              // int ≥ 0, OPTIONAL: max-HP bonus (see "bando")
+  "hpBonus": 10,             // int ≥ 0, OPTIONAL: max-HP bonus (see "bando")
+  "upgradeable": true        // bool, required: may this item enter the upgrade track?
 }
 ```
 Gear is a **one-time permanent purchase** (owned via `G.inventory`). `hpBonus` is optional; omit
 when zero (matches current data).
+
+`upgradeable` gates the unbounded gear upgrade track (DOM-79 layer 2): an upgradeable item can be
+levelled with Cash indefinitely, with small hard-capped stat gains and prestige beyond the cap.
+It is per-item so limited/premium gear can opt out without a code change; the **cost curve is
+global** (`tuning.gear.upgradeCost`, scaled by the item's `price`). Upgrade *level* is
+per-instance save state and is **not built yet** — `G.inventory` is still a flat array of ids.
+See [`08-economy-schema.md`](./08-economy-schema.md) §5.
 
 ### 3.4 `properties.json` — Spots
 ```jsonc
@@ -130,8 +151,108 @@ Spots are **stackable** (`G.properties[id]` is a count). `collectIncome()` sums 
 ["Shorty", "Soldier", "Block Boy", "OG", "Set Leader",
  "Don", "Boss", "Kingpin", "Legend", "Untouchable"]
 ```
-An **ordered array of strings**, indexed by `level - 1` (clamped to the last entry). Add ranks at
-the **end** to extend progression; do not reorder (it renames existing players' ranks).
+An **ordered array of strings**. Ranks are **bands**: each name covers
+`tuning.progression.levelsPerRank` levels (currently 10), so index `0` is levels 1–10, index `1` is
+11–20, and so on. Resolve with `rankForLevel()` in `js/progression.js` — never index the array
+directly. Add ranks at the **end** to extend progression; do not reorder (it retitles existing
+players).
+
+> **Ten names at 10 levels each cover levels 1–90, and the cap is 120.** The last name absorbs
+> everything above its band, so "Untouchable" currently spans levels 91–120 — a 30-level plateau
+> rather than 10. That is a reasonable shape for a top rank, but if you want uniform bands, add
+> **two** names to the end of the list. Nothing in code needs to change: band width is
+> `tuning.progression.levelsPerRank` and the list length does the rest.
+
+### 3.6 `unlocks.json` — Level gates
+
+Two kinds of gate, deliberately kept apart:
+
+**Content gates** live on the content row itself — `levelReq` on a job, an enemy, an item. They
+stay there: one number next to the thing it gates is the right place for it. Read them through
+`isUnlocked(entity)` / `lockLabel(entity)` in `js/unlocks.js`, **never by comparing `G.level`
+directly**. Five call sites used to each write their own comparison with their own copy
+("REQUIRES RANK 3", "RANK 3", "You need a higher rank!"), which is how a gate drifts out of step
+with the rule it enforces.
+
+> `enemies.json` used `lvlReq` while `jobs.json` used `levelReq` — one concept, two names. Both are
+> `levelReq` as of 2026-09-11.
+
+**Capability gates** are level → value mappings belonging to no single row. Those live here:
+
+```jsonc
+{ "version": 1,
+  "capabilities": {
+    "spotOfflineCapSeconds": { "type": "linear", "base": 3600, "step": 600 }
+  } }
+```
+
+Each capability is a **curve object** evaluated at the player's level via `capabilityAt(name)`.
+Gear tiers and Moves tiers join this file when those systems exist; they are not stubbed in
+advance. The Spots offline-accrual cap moved here out of `tuning.json`, because a level → value
+mapping is exactly what this file is for.
+
+### 3.7 `progression.json` — Clout → level table
+
+```jsonc
+{ "levels": [ { "level": 5, "cloutToNext": 128 } ] }   // 120 contiguous rows
+```
+
+An **object wrapping a `levels` array** (the §2 exception), 120 contiguous rows.
+`cloutToNext` is the Clout needed to advance from that level to the next, and is `null` on level
+120 only. Generated from `tuning.progression.cloutToNext`
+(`{"type": "geometric", "base": 110, "ratio": 1.1}`), then hand-tunable row by row.
+
+**Level is derived from cumulative Clout against this table** (`js/progression.js`), never stored
+as the source of truth. Retuning the table reprices every level for every player on their next
+load with no migration — and can move a player's level *down*. See
+[`08-economy-schema.md`](./08-economy-schema.md) §3.
+
+### 3.8 `tuning.json` — Economy tunables
+
+Every economy constant in the game, in one keyed object. **Not an array** — the justified
+exception noted in §2: this is config, not a content catalog, and keying it by path is what
+lets logic read `TUNING.loot.defeatLossRate` directly.
+
+```jsonc
+{
+  "version": 2,                  // int, bump on any breaking restructure
+  "loot": {
+    "defeatLossRate": 0.10,      // float 0–1, share of YOUR Cash destroyed when you lose
+    "defeatLossCap": null        // int or null — absolute ceiling on that loss
+  },
+  "gear": {
+    "upgradeCost": { "type": "geometric", "base": 1.0, "ratio": 1.6, "scaleBy": "itemPrice" }
+  }
+}
+```
+
+Sections: `start` · `progression` · `pools` · `skills` · `combat` · `matchmaking` · `loot` ·
+`hospital` · `spots` · `gear` · `crew` · `hoodActions` · `monetization`.
+
+`start` holds a new player's opening balances (Cash, Attack, Defense, and each pool). The defaults
+in the `G` literal in `js/state.js` exist only so the object is well-formed before data loads —
+`applyStartingState()` overwrites them from here for every new player.
+
+Anything scaling with level or tier is a **curve object** —
+`{"type": "constant"|"linear"|"geometric"|"table", …}` — so tuning never needs a code change.
+Full field list, curve semantics and which values are real decisions vs. simulator-owned
+placeholders: [`08-economy-schema.md`](./08-economy-schema.md) §1–2.
+
+**Read it through `tune()` in `js/tuning.js`, never off `TUNING` directly.**
+
+```js
+const rate = tune('loot.defeatLossRate');    // throws if absent
+```
+
+**There is deliberately no fallback argument.** A fallback becomes the balance the first time a
+fetch fails or a path is renamed, and nobody finds out until the numbers are wrong in production.
+So `tune()` throws, and `assertTuningReady()` — called from `init()` before anything reads a
+balance — **aborts boot** with a visible list of the missing paths rather than starting the game on
+whatever the code happens to hold. This is the one data file whose absence is fatal; every other
+file degrades to an empty list.
+
+When game logic starts reading a new path, add it to `TUNING_REQUIRED` in `js/tuning.js` so a
+missing value fails at boot instead of surfacing later as `NaN` in a meter.
 
 ---
 
@@ -160,6 +281,19 @@ A genuinely new kind of content (e.g. "heists") means: a new `data/<type>.json`,
 - Referenced assets (portraits/icons) exist per [`05-asset-spec.md`](./05-asset-spec.md).
 - Files are **valid JSON** (no comments, no trailing commas — the `jsonc` blocks above are
   documentation only).
+- `store.json`: every item has a boolean `upgradeable`.
+- `jobs.json` / `enemies.json`: `clout` and `cash` present and ≥ 0; no `xp`, `rep`, `money` or
+  `energy` field remains.
+- `monetization.json`: unique `sku`s; every `effect.type` is one `js/payments.js` implements.
+- `unlocks.json`: every capability is a valid curve object.
+- No content file uses `lvlReq`; the field is `levelReq` everywhere.
+- `progression.json`: 120 contiguous `level`s from 1; `cloutToNext` > 0 on every row except the
+  last, which is `null`.
+- `ranks.json`: non-empty array of non-empty strings.
+- `tuning.json`: every pool has both `regenSeconds` > 0 and `regenAmount` > 0; parses as an object
+  with an integer `version`; every rate field is a float in
+  `[0, 1]`; every curve object has a known `type` and the fields that `type` requires; every
+  path in `TUNING_REQUIRED` (`js/tuning.js`) resolves.
 
 ---
 
@@ -195,19 +329,31 @@ cloud/CDN → all clients fetch the new data on their next load.
 Per the JSON-first rule, **monetization configuration and store packs are game data** and belong
 in JSON.
 
-**Known divergence to resolve:** today the gem catalog and spend options are **hardcoded in
-`js/payments.js`** (`GEM_PACKS`, `GEM_SPENDS`), and the server mirrors SKU→gem amounts in
-`server/index.js` (`SKU_GEMS`). This predates the JSON-first mandate.
+**Partly resolved, 2026-09-11.** The hard currency was removed (no gems in v1 — v1 sells
+Stamina/Moves refreshes and heals directly), and the catalogue moved out of `js/payments.js` into
+**`data/monetization.json`**, loaded into `IAP_PRODUCTS` like any other data file.
 
-**Direction (do this when touching monetization, via TDD):**
-- Move gem-pack and spend definitions into `data/monetization.json` (or `data/store_packs.json`),
-  loaded like other data.
-- Keep the **server's** SKU→gems map as the **authoritative grant source** (it must never trust
-  the client), but drive it from the same shared JSON so client and server can't drift. See
-  [`07-external-systems.md`](./07-external-systems.md).
-- Until migrated, **any change to gem packs MUST update all three places in lockstep**:
-  `js/payments.js`, `server/index.js`, and the Jest Developer Console product catalog. Call this
-  out in the PR.
+```jsonc
+{
+  "id": "refill_moves",   // string, unique, permanent
+  "sku": "refill_moves",  // platform SKU — must match the Jest Developer Console
+  "name": "Refill Moves", // string, display
+  "desc": "…",            // string
+  "mockPrice": "$0.99",   // string, shown only when the platform price is unavailable
+  "badge": "POPULAR",     // string, OPTIONAL
+  "effect": { "type": "refillPool", "pool": "moves" }
+}
+```
+
+`effect.type` must be one `js/payments.js` implements — today only `refillPool`.
+
+**Still outstanding:**
+- The **server must own SKU → grant** as the authoritative source and must never trust the client.
+  `server/index.js` verifies the receipt signature and nothing more, so the grant is currently a
+  client-side decision. Same gap as [`08-economy-schema.md`](./08-economy-schema.md) §8; close them
+  together.
+- That change needs a **TDD**.
+- SKUs must stay in lockstep with the Jest Developer Console product catalog. Call it out in the PR.
 
 Similarly, **NPC/plug content** currently lives in `js/plugs.js` (`PLUGS_DATA`). New narrative
 content of this kind SHOULD move to `data/plugs.json` following the same pattern.

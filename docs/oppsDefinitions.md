@@ -35,7 +35,7 @@ These terms are locked. Legacy prototype/code terms in the right column must be 
 **Naming flags to confirm:**
 - **Moves** names both the pacing *resource* and the PvE *feature* ("spend Moves to make a Move"). Fine if intentional; flag if the individual actions should use a different unit label.
 - **The Hood** currently labels the status/activities hub in code, but now means the 3D map; the old hub's actions (collect → Spots, rest/heal → the Hospital, launder → TBD) must be redistributed.
-- **Progression labeling (code issue — decision needed).** The prototype surfaces progression as a **Rank title** (`data/ranks.json`: Shorty → Untouchable) under the HUD label "RANK", plus a numeric level — while **Clout** (our canonical progression stat) isn't shown anywhere. Canonical naming defines **Clout → level** and never mentions Rank. Decide: keep Rank titles as flavor layered on the Clout-driven level (and surface Clout somewhere), or drop them. Touches `hud.js` / `stats.js` / `ui.js` / `index.html` ("RANK") and `data/ranks.json`.
+- **Progression labeling (code issue — partly resolved).** Rank titles are now **bands** of 10 levels (`tuning.progression.levelsPerRank`), layered on the Clout-driven level, so a title lasts. Ten names reach level 90 and the top rank runs to the 120 cap. Still open: whether Rank titles stay as flavour at all, and surfacing Clout itself (the HUD now shows it as the hero figure). The prototype surfaces progression as a **Rank title** (`data/ranks.json`: Shorty → Untouchable) under the HUD label "RANK", plus a numeric level — while **Clout** (our canonical progression stat) isn't shown anywhere. Canonical naming defines **Clout → level** and never mentions Rank. Decide: keep Rank titles as flavor layered on the Clout-driven level (and surface Clout somewhere), or drop them. Touches `hud.js` / `stats.js` / `ui.js` / `index.html` ("RANK") and `data/ranks.json`.
 
 ---
 
@@ -43,6 +43,7 @@ These terms are locked. Legacy prototype/code terms in the right column must be 
 
 ### Opps — combat targets
 - **Opps** are the targets you fight, covering both real players (PvP) and bots (PvE) — indistinguishable to the player. Reached via the **Search** button in The Hood.
+- **You always fight a snapshot, never a live player** (decision 2026-09-11). An Opp is a record: a generated bot, or a stored snapshot of a real player's public loadout. Winning **mints** Cash; losing **destroys** a proportion of your own. **Nothing is ever taken from the real player behind a snapshot** — they are not notified, not debited, and cannot lose while offline. This is what removes the need for a server-authoritative Cash balance; see `specs/08-economy-schema.md` §8.
 
 ### Moves — PvE economy actions
 - **Moves** are the non-combat gameplay: Moves-gated PvE actions and a steady source of Cash, Clout, and gear items.
@@ -109,16 +110,17 @@ These terms are locked. Legacy prototype/code terms in the right column must be 
 ## Terminology & Naming — Code Migration
 Where each canonical term lands in the current prototype. Paths relative to repo root. (Health is **retained** — see the "Combat Rework" notes in the Combat doc.)
 
-**Cash** (from `money` / "BREAD")
+**Cash** (from `money` / "BREAD") — **DONE 2026-09-11** (save `SCHEMA_VERSION` 2 → 3)
 - `js/state.js` `money: 500`; `js/hud.js` `h-money`; `index.html` HUD label **"BREAD"** (`h-money`); referenced in `combat.js`, `jobs.js`, `hood.js`, `store.js`, `properties.js`. Decide: keep flavor label "BREAD" or standardize UI to "CASH" (canonical term is Cash). Internal var `money` may stay or rename to `cash`.
 
-**Clout** (merge `xp` + `rep`)
+**Clout** (merge `xp` + `rep`) — **DONE 2026-09-11** (save `SCHEMA_VERSION` 1 → 2)
 - `js/state.js` `xp`, `xpNext`, `rep`; `js/main.js` `addXP()`/level logic; `js/hud.js` `h-rep`, `xp-bar`, `xp-label`; `index.html` "REP" stat + XP bar; `combat.js`/`jobs.js` `G.rep +=` and `addXP()`; `stats.js` 'REP'. **Consolidate XP and REP into a single Clout stat that drives leveling.**
+  **Done:** `G.clout` is a lifetime cumulative total; `addXP()` is now `addClout()`; level is derived from `data/progression.json` via `js/progression.js` rather than stored; `xp`/`xpNext`/`rep` are gone from state, from `jobs.json`/`enemies.json` and from the HUD. See `specs/08-economy-schema.md` §3.
 
-**Stamina** (new — fights)
+**Stamina** (new — fights) — **DONE 2026-09-11** (state + regen; entering a fight still does not debit it)
 - Add `stamina`/`maxStamina` to `state.js`; entering a fight costs **1 Stamina** (gate on Stamina ≥ 1); add a Stamina meter to `hud.js`/`index.html`; add Stamina regen in `main.js`.
 
-**Moves** (from `energy`)
+**Moves** (from `energy`) — **DONE 2026-09-11** (save `SCHEMA_VERSION` 2 → 3)
 - `js/state.js` `energy`/`maxEnergy` → `moves`/`maxMoves`; `js/main.js` `ENERGY_REGEN_SECONDS`, `applyOfflineEnergyRegen`, `tickEnergyRegen`, `lastEnergyTick`; `js/hud.js` `h-energy`/`energy-bar`/`energy-label`; `index.html` "ENERGY" labels; `js/jobs.js` `G.energy`, `job.energy`; `data/jobs.json` `"energy"` field; `js/hood.js` launder energy cost.
 
 **Opps** — no rename. (`enemies` / "OPPS LIST" stay; the static list → Search flow is a separate systems change.)
