@@ -122,11 +122,11 @@ async function init() {
   if (saved) {
     GameState.apply(saved);
     applyOfflineEnergyRegen();
-    log('⚡ Welcome back. Your empire awaits.', 'info');
+    log('Welcome back. Your empire awaits.', 'info');
   } else {
     G.lastSeen = Date.now();
     G.lastEnergyTick = Date.now();
-    log('⚡ Energy refills every 60 seconds. Stack your bread.', 'info');
+    log('Moves refill every 60 seconds. Stack your bread.', 'info');
   }
 
   // Init crew — checks entry payload for invite, fetches member count

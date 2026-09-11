@@ -26,7 +26,7 @@ const GameMap = (() => {
       road: '#17171c', block: '#0b0b0c', blockEdge: '#15151a',
       bldg: '#1f1f28', bldgEdge: '#2a2a34', bldgY: '#241f16', bldgYEdge: '#332c1f',
       water: '#0e2430', park: '#141a17', parkEdge: '#1b231d',
-      label: '#8e8e9a', laneY: '#a8873f', ave: '#26262e'
+      label: '#8e8e9a', district: '#55555f', laneY: '#a8873f', ave: '#26262e'
     };
     const px = [0], py = [0];
     let ax = 0;
@@ -207,7 +207,10 @@ const GameMap = (() => {
 
     // District labels
     d.labels.forEach(l => {
-      out += el('text', { x: l.x, y: l.y, fill: C.label, style: `font:400 ${l.size}px Anton,sans-serif;letter-spacing:2px;opacity:0.55;text-transform:uppercase` }, l.t);
+      // District names sit back from the pins, but by colour rather than by
+      // opacity — the contract bans dimming content, and --ghost lands on
+      // almost exactly the same rendered value as --muted at 0.55 did.
+      out += el('text', { x: l.x, y: l.y, fill: C.district, style: `font:400 ${l.size}px Anton,sans-serif;letter-spacing:2px;text-transform:uppercase` }, l.t);
     });
 
     out += '</svg>';

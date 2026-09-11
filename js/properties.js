@@ -28,7 +28,7 @@ function buyProp(propId) {
   if (G.money < prop.price) { toast("Can't afford that spot!", true); return; }
   G.money -= prop.price;
   G.properties[propId] = (G.properties[propId] || 0) + 1;
-  log(`🏢 Bought ${prop.name} — earns $${prop.income} per collect`, 'gold');
+  log(`Bought ${prop.name} — earns $${prop.income} per collect`, 'gold');
   toast(`${prop.name} acquired! +$${prop.income}/collect`);
   updateHUD();
   renderProps();

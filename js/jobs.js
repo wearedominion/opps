@@ -14,16 +14,16 @@ function renderJobs() {
     div.innerHTML = `
       <div class="job-name">${job.name}</div>
       <div class="job-meta">
-        <span>💰 <span class="val">$${job.money[0]}-$${job.money[1]}</span></span>
-        <span>⚡ <span class="val">${job.energy}</span></span>
-        <span>✨ <span class="val">${job.xp} XP</span></span>
+        <span>TAKE <span class="val">$${job.money[0]}-$${job.money[1]}</span></span>
+        <span>MOVES <span class="val">${job.energy}</span></span>
+        <span>XP <span class="val">${job.xp}</span></span>
       </div>
-      ${locked ? `<div style="color:var(--muted);font-size:12px;margin-top:6px;">🔒 Requires Rank ${job.levelReq}</div>` : `
+      ${locked ? `<div class="job-locked-note">REQUIRES RANK ${job.levelReq}</div>` : `
       <div class="job-progress-wrap">
         <div class="job-progress-label"><span>Progress</span><span>${prog}/${job.times}</span></div>
         <div class="job-bar"><div class="job-bar-fill" style="width:${maxed ? 100 : Math.floor(prog / job.times * 100)}%"></div></div>
       </div>
-      <button class="do-job-btn" onclick="doJob('${job.id}')" ${maxed ? 'disabled' : ''}>
+      <button class="do-job-btn secondary" onclick="doJob('${job.id}')" ${maxed ? 'disabled' : ''}>
         ${maxed ? 'MASTERED ✓' : 'DO IT'}
       </button>`}
     `;
@@ -46,7 +46,7 @@ function doJob(jobId) {
   G.jobProgress[job.id] = prog + 1;
   addXP(job.xp);
 
-  log(`💼 ${job.name} → earned $${earned} + ${job.xp} XP`, 'win');
+  log(`${job.name} — earned $${earned} + ${job.xp} XP`, 'win');
   toast(`+$${earned} | +${job.xp} XP`);
   updateHUD();
   renderJobs();

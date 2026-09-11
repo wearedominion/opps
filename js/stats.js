@@ -21,7 +21,7 @@ function renderStats() {
 
   const inv = $('inventory-list');
   if (G.inventory.length === 0) {
-    inv.innerHTML = '<span style="color:var(--muted);font-size:13px;">No gear yet. Visit the Plug.</span>';
+    inv.innerHTML = '<span class="card-note">No gear yet. Visit the Plug.</span>';
   } else {
     inv.innerHTML = G.inventory.map(id => {
       const item = STORE_ITEMS.find(i => i.id === id);

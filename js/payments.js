@@ -6,25 +6,23 @@
 const VERIFY_URL = 'http://localhost:3000/api/verify-purchase';
 
 const GEM_PACKS = [
-  { sku: 'gems_100',  gems: 100,  label: '100 💎',   mockPrice: '$0.99' },
-  { sku: 'gems_500',  gems: 550,  label: '550 💎',   mockPrice: '$3.99', badge: 'POPULAR' },
-  { sku: 'gems_1200', gems: 1400, label: '1,400 💎', mockPrice: '$7.99' },
-  { sku: 'gems_2500', gems: 3000, label: '3,000 💎', mockPrice: '$14.99', badge: 'BEST VALUE' },
+  { sku: 'gems_100',  gems: 100,  label: '100',   mockPrice: '$0.99' },
+  { sku: 'gems_500',  gems: 550,  label: '550',   mockPrice: '$3.99', badge: 'POPULAR' },
+  { sku: 'gems_1200', gems: 1400, label: '1,400', mockPrice: '$7.99' },
+  { sku: 'gems_2500', gems: 3000, label: '3,000', mockPrice: '$14.99', badge: 'BEST VALUE' },
 ];
 
 const GEM_SPENDS = [
   {
     id: 'energy',
     cost: 50,
-    label: 'Refill Energy',
-    icon: '⚡',
+    label: 'Refill Moves',
     action() { G.energy = G.maxEnergy; },
   },
   {
     id: 'health',
     cost: 75,
     label: 'Full Heal',
-    icon: '❤️',
     action() { G.health = G.maxHealth; },
   },
 ];
@@ -94,8 +92,8 @@ const Payments = {
     const pack = GEM_PACKS.find(p => p.sku === sku);
     if (pack) {
       G.gems = (G.gems || 0) + pack.gems;
-      log(`💎 Purchased ${pack.label} — balance: ${G.gems} 💎`, 'gold');
-      toast(`+${pack.gems} 💎 added!`);
+      log(`Purchased ${pack.label} gems — balance: ${G.gems}`, 'gold');
+      toast(`+${pack.gems} gems added!`);
       updateHUD();
       GameState.save();
       renderGemSection();
@@ -111,10 +109,10 @@ const Payments = {
   spendGems(spendId) {
     const spend = GEM_SPENDS.find(s => s.id === spendId);
     if (!spend) return;
-    if ((G.gems || 0) < spend.cost) { toast(`Need ${spend.cost} 💎 for that.`, true); return; }
+    if ((G.gems || 0) < spend.cost) { toast(`Need ${spend.cost} gems for that.`, true); return; }
     G.gems -= spend.cost;
     spend.action();
-    log(`💎 Spent ${spend.cost} 💎 — ${spend.label}`, 'info');
+    log(`Spent ${spend.cost} gems — ${spend.label}`, 'info');
     toast(`${spend.label} done!`);
     updateHUD();
     GameState.save();
@@ -137,12 +135,12 @@ function renderGemSection() {
 
   el.innerHTML = `
     <div class="card">
-      <div class="card-title">💎 GEM PACKS — LOAD UP</div>
+      <div class="card-title">GEM PACKS — LOAD UP</div>
       <div class="gem-grid">
         ${GEM_PACKS.map(pack => `
           <div class="gem-card${pack.badge ? ' gem-featured' : ''}">
             ${pack.badge ? `<div class="gem-badge">${pack.badge}</div>` : ''}
-            <div class="gem-amount">${pack.label}</div>
+            <div class="gem-amount">${pack.label} <span class="gem-unit">GEMS</span></div>
             <div class="gem-price">${Payments.getPrice(pack.sku)}</div>
             <button class="buy-btn" onclick="Payments.buy('${pack.sku}')">BUY</button>
           </div>
@@ -152,17 +150,16 @@ function renderGemSection() {
 
     <div class="card">
       <div class="card-title">
-        💎 SPEND GEMS
-        <span class="gem-balance-inline">${balance} 💎</span>
+        SPEND GEMS
+        <span class="gem-balance-inline">${balance} GEMS</span>
       </div>
       <div class="gem-spend-grid">
         ${GEM_SPENDS.map(s => {
           const canAfford = balance >= s.cost;
           return `
             <div class="gem-spend-card${canAfford ? '' : ' gem-spend-locked'}">
-              <div class="gem-spend-icon">${s.icon}</div>
               <div class="gem-spend-label">${s.label}</div>
-              <div class="gem-spend-cost">${s.cost} 💎</div>
+              <div class="gem-spend-cost">${s.cost} GEMS</div>
               <button class="buy-btn" onclick="Payments.spendGems('${s.id}')" ${canAfford ? '' : 'disabled'}>USE</button>
             </div>
           `;

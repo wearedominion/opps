@@ -633,7 +633,13 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   display: flex;
   justify-content: space-between;
   align-items: center;
+  /* space-between leaves nothing between the two children once the label runs
+     long — INCOME/COLLECT measured a 0px gap. The gap floors it; the value is
+     the half that must stay readable, so the label is the one that shrinks. */
+  gap: 10px;
 }
+.stat-row .label { min-width: 0; }
+.stat-row .val { flex: none; }
 .stat-row .label {
   color: var(--faint); font-size: 10px; letter-spacing: 2px;
   text-transform: uppercase;
@@ -1124,19 +1130,27 @@ img.plug-portrait {
   margin-top: var(--gap-section);
 }
 .plug-modal-count { font-family: var(--ui); font-size: 11px; color: var(--faint); }
+/* NEXT just advances the dialogue; GO on the last line is the one action
+   worth promoting, so the chrome primary is scoped to .is-final. */
 .plug-modal-cta {
   padding: 11px 24px;
   font-family: var(--display);
   font-size: 13px;
   letter-spacing: 1px;
-  background: var(--chrome-fill);
-  border: none;
-  color: var(--chrome-ink);
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
   border-radius: var(--r-pill);
   cursor: pointer;
   transition: filter .16s;
 }
-.plug-modal-cta:hover { filter: brightness(1.06); }
+.plug-modal-cta:hover { border-color: var(--border-gold); }
+.plug-modal-cta.is-final {
+  background: var(--chrome-fill);
+  border-color: transparent;
+  color: var(--chrome-ink);
+}
+.plug-modal-cta.is-final:hover { filter: brightness(1.06); }
 
 /* ── COMBAT PORTRAIT ── */
 .fighter-portrait-wrap { position: relative; }
@@ -1659,6 +1673,16 @@ img.plug-portrait {
   color: var(--text);
 }
 .do-job-btn.secondary:hover { border-color: var(--border-gold); filter: none; }
+
+/* Replaces inline style="" attributes swept out of the renderers
+   (crew.js, jobs.js, stats.js). Static styling belongs here. */
+.card-note { color: var(--muted); font-size: 13px; }
+.gem-unit { font-family: var(--ui); font-size: 10px; letter-spacing: 2px; color: var(--faint); }
+
+.job-locked-note {
+  color: var(--disabled); font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; margin-top: 6px;
+}
 
 /* money in the metrics panel: --chrome at body size, never the hero clip */
 .metric-val.money { color: var(--chrome); }
