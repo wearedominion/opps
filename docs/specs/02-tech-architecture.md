@@ -70,7 +70,7 @@ If you cannot answer all five in favor of adding it, don't.
   in [`03-game-architecture.md`](./03-game-architecture.md).
 - ✅ **New JSON data files** in `data/` per [`04-game-data-spec.md`](./04-game-data-spec.md).
 - ✅ **New CSS** appended to `css/styles.css` using the design tokens in
-  [`claude.md` — UI Implementation Contract](../../claude.md).
+  [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md).
 - ✅ **Standard Web Platform APIs** (Canvas, Web Audio, `fetch`, `localStorage`,
   `IntersectionObserver`, `requestAnimationFrame`, Pointer Events, etc.) — provided they are
   feature-detected and degrade gracefully.

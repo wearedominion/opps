@@ -4,7 +4,7 @@
 **Read before:** adding any art — buttons, screens, menus, portraits, icons, textures, models.
 
 This document governs **visual assets**: formats, sizes, naming, placement, and optimization.
-It works alongside — and never overrides — [`claude.md` — UI Implementation Contract](../../claude.md),
+It works alongside — and never overrides — [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md),
 which is authoritative for **how things look** (color, type, components). This doc is about the
 **files**.
 
@@ -161,7 +161,7 @@ LocationButton_16x16.png
 - [ ] Referenced with a relative path; has an emoji/placeholder fallback and `alt` text; lazy where
       off-screen.
 - [ ] No `.DS_Store` or editor cruft committed.
-- [ ] Matches [`claude.md` — UI Implementation Contract](../../claude.md) (framing, radii,
+- [ ] Matches [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md) (framing, radii,
       scrims, placeholder textures).
 
 ---

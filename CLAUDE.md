@@ -47,9 +47,11 @@ this section.
 
 Where a value is given, use it verbatim. Do not invent new colors, fonts, radii, or shadows.
 
-Visual reference (outside the repo): `Style Options/1d Chrome Money.png` and the standalone
-Chrome Money style-guide HTML in the design bundle. Target: port `css/styles.css` and the
-renderers in `js/` to this system **without changing game logic**.
+Visual reference, in the repo: **`docs/design-handoff/chrome-money/`** — `style-guide.html`
+(self-contained, open it in a browser) and `concept-board.png`. Read that directory's `README.md`
+first: it lists the handful of places those artefacts predate the port, where the token table
+below wins. Target: port `css/styles.css` and the renderers in `js/` to this system **without
+changing game logic**.
 
 ## Core idea
 

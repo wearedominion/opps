@@ -2,7 +2,7 @@
 
 Companion to `README.md` (shell, tokens, patterns, state, gap analysis). Read that first.
 Every measurement here is from the prototype. **Colors are intent, not tokens, and the prototype's
-palette is retired** — reconcile against the UI Implementation Contract in `claude.md` (Chrome Money).
+palette is retired** — reconcile against the UI Implementation Contract in `CLAUDE.md` (Chrome Money).
 
 ---
 

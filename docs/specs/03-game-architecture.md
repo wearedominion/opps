@@ -287,7 +287,7 @@ call `GameState.save()`.
   overlay, add its container to `index.html` and wire it into the nav + `showTab()`.
 - Use the `$(id)` helper from `js/ui.js`; never re-implement DOM lookups.
 - **Never hardcode colors/spacing/fonts** — use classes and tokens from
-  [`claude.md` — UI Implementation Contract](../../claude.md) (tenet T7). Prefer adding a
+  [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md) (tenet T7). Prefer adding a
   class to `css/styles.css` over long inline styles.
 - Guard DOM access: elements can be absent (`const el = $('x'); if (!el) return;`), as combat/map
   code does. This keeps systems resilient (tenet T5).
