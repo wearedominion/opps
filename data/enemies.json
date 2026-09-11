@@ -1,8 +1,104 @@
 [
-  { "id": "snitch", "name": "Local Snitch",   "role": "Informant",      "icon": "🐀", "hp": 40,  "atk": 6,  "def": 3,  "lvlReq": 1, "reward": { "money": [30,  60],  "rep": 10,  "xp": 15  } },
-  { "id": "stick",  "name": "Block Bully",    "role": "Street Muscle",  "icon": "😤", "hp": 70,  "atk": 12, "def": 6,  "lvlReq": 1, "reward": { "money": [80,  150], "rep": 20,  "xp": 30  } },
-  { "id": "oppcrew","name": "Opp Crew",       "role": "Gang of Hooligans","icon": "🤬","hp": 120, "atk": 20, "def": 10, "lvlReq": 3, "reward": { "money": [200, 350], "rep": 50,  "xp": 60  } },
-  { "id": "jackers","name": "Car Jackers",    "role": "Auto Theft Ring","icon": "🔫", "hp": 90,  "atk": 18, "def": 8,  "lvlReq": 2, "reward": { "money": [150, 280], "rep": 35,  "xp": 45  } },
-  { "id": "rival",  "name": "Rival Boss",     "role": "Gang Leader",    "icon": "😈", "hp": 200, "atk": 30, "def": 15, "lvlReq": 5, "reward": { "money": [500, 800], "rep": 100, "xp": 120 } },
-  { "id": "fed",    "name": "Undercover Fed", "role": "Federal Agent",  "icon": "🕵️","hp": 160, "atk": 25, "def": 20, "lvlReq": 4, "reward": { "money": [300, 600], "rep": 80,  "xp": 90  } }
+  {
+    "id": "snitch",
+    "name": "Local Snitch",
+    "role": "Informant",
+    "hp": 40,
+    "atk": 6,
+    "def": 3,
+    "lvlReq": 1,
+    "reward": {
+      "money": [
+        30,
+        60
+      ],
+      "rep": 10,
+      "xp": 15
+    }
+  },
+  {
+    "id": "stick",
+    "name": "Block Bully",
+    "role": "Street Muscle",
+    "hp": 70,
+    "atk": 12,
+    "def": 6,
+    "lvlReq": 1,
+    "reward": {
+      "money": [
+        80,
+        150
+      ],
+      "rep": 20,
+      "xp": 30
+    }
+  },
+  {
+    "id": "oppcrew",
+    "name": "Opp Crew",
+    "role": "Gang of Hooligans",
+    "hp": 120,
+    "atk": 20,
+    "def": 10,
+    "lvlReq": 3,
+    "reward": {
+      "money": [
+        200,
+        350
+      ],
+      "rep": 50,
+      "xp": 60
+    }
+  },
+  {
+    "id": "jackers",
+    "name": "Car Jackers",
+    "role": "Auto Theft Ring",
+    "hp": 90,
+    "atk": 18,
+    "def": 8,
+    "lvlReq": 2,
+    "reward": {
+      "money": [
+        150,
+        280
+      ],
+      "rep": 35,
+      "xp": 45
+    }
+  },
+  {
+    "id": "rival",
+    "name": "Rival Boss",
+    "role": "Gang Leader",
+    "hp": 200,
+    "atk": 30,
+    "def": 15,
+    "lvlReq": 5,
+    "reward": {
+      "money": [
+        500,
+        800
+      ],
+      "rep": 100,
+      "xp": 120
+    }
+  },
+  {
+    "id": "fed",
+    "name": "Undercover Fed",
+    "role": "Federal Agent",
+    "hp": 160,
+    "atk": 25,
+    "def": 20,
+    "lvlReq": 4,
+    "reward": {
+      "money": [
+        300,
+        600
+      ],
+      "rep": 80,
+      "xp": 90
+    }
+  }
 ]

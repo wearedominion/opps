@@ -1,7 +1,37 @@
 [
-  { "id": "corner", "name": "Corner Store", "icon": "🏪", "price": 800, "income": 50, "desc": "$50 per collect" },
-  { "id": "barber", "name": "Barber Shop", "icon": "💈", "price": 1500, "income": 120, "desc": "$120 per collect" },
-  { "id": "laundry", "name": "Laundromat", "icon": "🧺", "price": 3000, "income": 250, "desc": "$250 per collect" },
-  { "id": "carwash", "name": "Car Wash", "icon": "🚗", "price": 5000, "income": 500, "desc": "$500 per collect" },
-  { "id": "club", "name": "Nightclub", "icon": "🎵", "price": 10000, "income": 1200, "desc": "$1200 per collect" }
+  {
+    "id": "corner",
+    "name": "Corner Store",
+    "price": 800,
+    "income": 50,
+    "desc": "$50 per collect"
+  },
+  {
+    "id": "barber",
+    "name": "Barber Shop",
+    "price": 1500,
+    "income": 120,
+    "desc": "$120 per collect"
+  },
+  {
+    "id": "laundry",
+    "name": "Laundromat",
+    "price": 3000,
+    "income": 250,
+    "desc": "$250 per collect"
+  },
+  {
+    "id": "carwash",
+    "name": "Car Wash",
+    "price": 5000,
+    "income": 500,
+    "desc": "$500 per collect"
+  },
+  {
+    "id": "club",
+    "name": "Nightclub",
+    "price": 10000,
+    "income": 1200,
+    "desc": "$1200 per collect"
+  }
 ]

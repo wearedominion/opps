@@ -25,7 +25,7 @@ function renderStats() {
   } else {
     inv.innerHTML = G.inventory.map(id => {
       const item = STORE_ITEMS.find(i => i.id === id);
-      return item ? `<div style="background:#161616;border:1px solid var(--border);border-radius:4px;padding:8px 12px;display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">${item.icon}</span><span style="font-size:13px;">${item.name}</span></div>` : '';
+      return item ? `<div class="gear-chip">${item.name}</div>` : '';
     }).join('');
   }
 }

@@ -22,6 +22,42 @@ Individual levels can be hand-tuned after generation — the formula is a
 starting point, not a constraint. If you regenerate the whole table, note the
 new curve parameters here.
 
+## portraits.json
+
+Portrait art keyed by entity id, in two groups: `enemies` and `plugs`.
+
+```json
+{ "version": 1,
+  "enemies": { "snitch": "assets/portraits/enemy-snitch.png" },
+  "plugs":   { "plug-tommy": "assets/portraits/plug-tommy.webp" } }
+```
+
+Every id in `enemies.json` must have an entry under `enemies`. A missing entry
+degrades to a styled placeholder circle — never a broken image.
+
+This file exists so art is data, not code. Portrait paths were previously
+hardcoded in `js/combat.js` and `js/plugs.js`, which meant adding an enemy
+required redeploying JavaScript instead of shipping JSON. The renderers are
+being migrated to read from here.
+
+## No emoji in game data
+
+**Do not add an `icon` field, or any other emoji, to these files.** It was
+removed from `enemies.json`, `store.json` and `properties.json` on 2026-09-11.
+
+The UI Implementation Contract in `CLAUDE.md` bans emoji outright — meaning
+comes from colour, type and real portrait art. Specifically:
+
+- **Enemies** get art via `portraits.json`. The old `icon` was only ever a
+  fallback for enemies with no portrait, and every enemy has one, so it never
+  rendered.
+- **Store items and properties** have no art and are not getting any. The
+  contract specifies `.store-item` and `.prop-card` as *"two-column grid, no
+  icon, full-width action pill"* — these rows are typographic by design.
+
+If an entity needs visual identity, add real art and reference it from
+`portraits.json`. Do not reach for a glyph.
+
 ## Other files
 
 `jobs.json`, `enemies.json`, `store.json`, `properties.json`, `ranks.json` —

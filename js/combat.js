@@ -156,7 +156,7 @@ function renderEnemies() {
     div.innerHTML =
       '<div class="enemy-portrait-wrap">' +
         (portrait ? '<img class="enemy-portrait" src="' + portrait + '" alt="' + e.name + '" loading="lazy">'
-                  : '<div class="enemy-avatar">' + (e.icon || '') + '</div>') +
+                  : '<div class="enemy-avatar"></div>') +
       '</div>' +
       '<div class="enemy-info">' +
         '<div class="enemy-name">' + e.name + '</div>' +
@@ -185,7 +185,7 @@ function startCombat(enemyId) {
     portraitEl.style.display = src ? 'block' : 'none';
   }
   var iconEl = $('c-enemy-icon');
-  if (iconEl) iconEl.textContent = ENEMY_PORTRAITS[e.id] ? '' : (e.icon || '😤');
+  if (iconEl) iconEl.textContent = '';
 
   $('c-enemy-name').textContent = e.name;
   $('c-player-hp').style.width = '100%';

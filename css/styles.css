@@ -755,6 +755,20 @@ nav.open { transform: translateX(0); }
 }
 .stat-row .val { font-family: var(--ui); font-weight: 500; font-size: 14px; color: var(--text); }
 
+/* gear chips in the stats inventory — was an inline blob carrying #161616
+   and radius 4px; the icon it held is retired with the data field */
+.gear-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  border-radius: var(--r-pill);
+  padding: 8px 14px;
+  font-family: var(--ui);
+  font-size: 13px;
+  color: var(--text);
+}
+
 /* ── LEVEL UP BANNER ── */
 .levelup-banner {
   display: none;

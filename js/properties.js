@@ -11,7 +11,6 @@ function renderProps() {
     const div = document.createElement('div');
     div.className = 'prop-card';
     div.innerHTML = `
-      <div class="prop-icon">${p.icon}</div>
       <div class="prop-name">${p.name}</div>
       <div class="prop-income">${p.desc}</div>
       <div class="prop-owned">${owned > 0 ? `Owned: ${owned}` : 'Not owned'}</div>
