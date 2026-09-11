@@ -147,6 +147,10 @@ async function init() {
   renderProps();
   updateHUD();
 
+  // Seed the whole nav from one call so the bottom tab, chip row and section
+  // label can't drift out of step with the markup's starting screen.
+  showTab('hood');
+
   if (typeof JestSDK !== 'undefined') JestSDK.setLoadingProgress(100); // dismisses loading overlay
 
   // Energy regen tick — checks every 10s, grants 1 energy per full 60s interval
