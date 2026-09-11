@@ -248,6 +248,21 @@ function q4() {
   };
 }
 
+// DOM-79 — break-even placement vs the ratified anchor.
+// Target: BE(level) = breakEven.hoursOfJobIncome × best-job Cash/hour at that
+// level, at the nominal win probability. Implied win reward follows from
+// BE = p·R/((1−p)·L)  →  R = BE·(1−p)·L/p.
+function breakEvenPlan() {
+  const hours = TARGETS.breakEven.hoursOfJobIncome;
+  return [1, 3, 5, 7].map(lv => {
+    const jobPerHour = cashPerMove(bestJob(lv, cashPerMove)) * MOVES_PER_HOUR;
+    const targetBE = hours * jobPerHour;
+    const impliedR = targetBE * (1 - p0) * DEFEAT_LOSS_RATE / p0;
+    const currentR = mean(bestEnemy(lv).reward.cash);
+    return { level: lv, jobPerHour, targetBE, impliedR, currentR, scale: impliedR / currentR };
+  });
+}
+
 // Bonus finding — the launder faucet, quantified.
 function launder() {
   const rate = T('hoodActions.launderRate');
@@ -360,6 +375,15 @@ function run() {
   say('    Every wallet below break-even mints on net; nothing self-limits it');
   say('    (the opponent is a snapshot and loses nothing).');
 
+  say('\n■ BE. Break-even placement vs the ratified anchor (DOM-79: '
+    + TARGETS.breakEven.hoursOfJobIncome + 'h of job income, p = ' + p0 + ')');
+  const plan = breakEvenPlan();
+  say(table(['lvl', 'job $/h', 'target BE $', 'implied R $', 'current R $', 'R scale ×'],
+    plan.map(r => [r.level, r.jobPerHour, r.targetBE, r.impliedR, r.currentR, Math.round(r.scale * 100) / 100]),
+    [4, 8, 12, 12, 12, 10]));
+  say('    Win rewards need rescaling by the last column — execution lands with the');
+  say('    DOM-71/DOM-81 catalog pass; loot.defeatLossRate stays ' + DEFEAT_LOSS_RATE + '.');
+
   say('\n■ Q4. Does a wiped new player recover?  YES — within one session.');
   const a4 = q4();
   say('    Lose all ' + a4.lossesModelled + ' starting fights: $' + fmt(a4.startCash) + ' → $' + fmt(a4.cashAfterLosses)
@@ -414,6 +438,7 @@ function run() {
       byName.casual.daysToLevel[i + 1], byName.committed.daysToLevel[i + 1], byName.grinder.daysToLevel[i + 1]]),
     fightRate: sustainableFightsPerHour(p0, T('start.health')),
     q1: q1(), q2: q2(), q3: q3(), q4: q4(),
+    breakEvenPlan: breakEvenPlan(),
     launder: launder(), spotsExploit: spotsExploit(),
     targets: TARGETS,
   };
@@ -522,6 +547,12 @@ function buildHtml(json, outDir) {
     BE_NOMINAL: money(beNominal),
     BE_HOURS: String(Math.round(beNominal / committedJobPerHour * 10) / 10),
     BE_ROWS: beRows,
+    BE_ANCHOR: String(t.breakEven.hoursOfJobIncome),
+    BE_PLAN_ROWS: json.breakEvenPlan.map(r =>
+      `          <tr><td>L${r.level}${r.level === Math.max(...json.breakEvenPlan.map(x => x.level)) ? '+' : ''}</td>`
+      + `<td>${money(r.jobPerHour)}</td><td class="money">${money(r.targetBE)}</td>`
+      + `<td class="money">${money(r.impliedR)}</td><td>${money(r.currentR)}</td>`
+      + `<td>×${Math.round(r.scale * 10) / 10}</td></tr>`).join('\n'),
 
     F1_MULT: Math.round(json.launder.dailyMultiplier / 1000).toLocaleString('en-US') + ',000',
     F1_RATE: Math.round(json.launder.rate * 100) + '%',
