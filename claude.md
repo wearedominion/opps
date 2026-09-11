@@ -123,7 +123,7 @@ Condensed, Oswald and JetBrains Mono — Space Grotesk at 500 covers the numeric
 | Role | Spec |
 |---|---|
 | Wordmark | Anton 27 / +4px, chrome-clipped |
-| Money figure | Anton 36 / +0.5px, chrome-clipped |
+| Hero figure | Anton 36 / +0.5px, chrome-clipped — the HUD clout figure |
 | Screen title | Anton 19 / +2px, `--text` |
 | Card title | Anton 14–16 / +1px, `--text` |
 | Action label | Anton 12–13 / +1px |
@@ -140,7 +140,7 @@ background: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
 -webkit-background-clip: text; background-clip: text; color: transparent;
 ```
 
-Only these use it: the OPPS wordmark, the HUD bread figure, crew stat counters, gem pack amounts.
+Only these use it: the OPPS wordmark, the HUD clout figure, crew stat counters, gem pack amounts.
 
 ## Geometry
 
@@ -168,6 +168,12 @@ One primary per card and per screen region.
 
 **Cards** — `--panel-fill`, 1px `--border`, radius 14–16, padding 11–14. Title Anton, meta 10–11px
 `--faint`, action pinned right and vertically centred.
+
+One primary per card **and per screen region**. A grid of peer items — store rows, gem spends,
+property rows — is one region, so those actions are all **secondary** (`--control`, 1px
+`--border-ctrl`, `--text`). Six chrome pills on one screen is not six primaries, it is none.
+Where a card holds several actions of unequal weight, the money action takes the chrome pill and
+the rest go secondary — e.g. hood activities: COLLECT primary, REST and LAUNDER secondary.
 
 **Meters** — 7px tall (4px for mastery), radius 999, track `--track`, `width` transition 0.4s.
 Fixed fills: XP `--xp`, energy `--energy-fill`, health `--green`, enemy HP `--red`,
@@ -197,8 +203,10 @@ Combat centres; the plug dialog rises from the bottom edge. Border `--border-gol
 3. **Locked states.** Never dim a card to 40% opacity. Render at full contrast and swap the action for
    a disabled chip naming the gate (`RANK 5`). Applies to `.job-card.locked`, `.enemy-locked`,
    `.gem-spend-locked`.
-4. **Money is sacred.** Chrome text is money only. List prices stay `--chrome` at 11–13px; only the
-   HUD bread renders at display size.
+4. **Money is sacred.** Chrome text is money only. List prices stay `--chrome` at 11–13px.
+   **Clout, not money, holds the hero slot** — the HUD clout figure is the one thing rendered at
+   display size (Anton 36, chrome-clipped). Bread renders as a panel row in `--chrome` at body
+   size. Decided 2026-09-11; supersedes the earlier reading that the bread figure took the hero.
 5. **Map palette.** `.map-outer` base `#494741` → `#17171c`; blocks `#0b0b0c`, buildings `#1f1f28`,
    lane markings `#a8873f`, water `#0e2430`, parks `#141a17`. Pins: chrome = your turf,
    `--red` = opps, `--green` = drops. Controls become 36px radius-12 buttons on `rgba(17,17,22,.9)`.

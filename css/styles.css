@@ -549,9 +549,9 @@ nav.open { transform: translateX(0); }
 .buy-btn {
   width: 100%;
   margin-top: auto;
-  background: var(--chrome-fill);
-  border: none;
-  color: var(--chrome-ink);
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
   font-family: var(--display);
   font-size: 12px;
   letter-spacing: 1px;
@@ -560,7 +560,7 @@ nav.open { transform: translateX(0); }
   cursor: pointer;
   transition: filter .16s;
 }
-.buy-btn:hover { filter: brightness(1.06); }
+.buy-btn:hover { border-color: var(--border-gold); }
 .buy-btn:disabled {
   background: var(--chip-locked-bg);
   border: 1px solid var(--chip-locked-border);
@@ -589,9 +589,9 @@ nav.open { transform: translateX(0); }
 .prop-btn {
   width: 100%;
   margin-top: auto;
-  background: var(--chrome-fill);
-  border: none;
-  color: var(--chrome-ink);
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
   font-family: var(--display);
   font-size: 12px;
   letter-spacing: 1px;
@@ -600,7 +600,7 @@ nav.open { transform: translateX(0); }
   cursor: pointer;
   transition: filter .16s;
 }
-.prop-btn:hover { filter: brightness(1.06); }
+.prop-btn:hover { border-color: var(--border-gold); }
 .prop-btn:disabled {
   background: var(--chip-locked-bg);
   border: 1px solid var(--chip-locked-border);
