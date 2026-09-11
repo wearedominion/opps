@@ -17,10 +17,9 @@ function updateHUD() {
   const rank = (typeof RANK_NAMES !== 'undefined' && RANK_NAMES.length)
     ? RANK_NAMES[Math.min(G.level - 1, RANK_NAMES.length - 1)] : '';
 
-  // header cluster
-  set('h-clout', G.xp.toLocaleString());
+  // header pills — rank and gems only; everything else is in the panel
   set('h-level', rank);
-  bar('h-lvbar', (G.xp / G.xpNext) * 100);
+  set('h-gems', G.gems || 0);
 
   // metrics panel hero
   set('m-clout', G.xp.toLocaleString());
@@ -30,7 +29,7 @@ function updateHUD() {
   // metrics panel rows
   set('h-money', '$' + G.money.toLocaleString());
   set('h-rep', G.rep);
-  set('h-gems', G.gems || 0);
+  set('m-gems', G.gems || 0);
   set('h-energy', G.energy + '/' + G.maxEnergy);
   set('h-health', G.health + '/' + G.maxHealth);
   set('h-stamina', (G.stamina || 0) + ' / ' + (G.maxStamina || 0));

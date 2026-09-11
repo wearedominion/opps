@@ -12,13 +12,34 @@ const SECTION_TITLES = {
   props: 'SPOTS', store: 'THE PLUG', stats: 'STATS',
 };
 
+// Five bottom tabs. Plugs / Gear / Spots / Stats / Crew live inside Empire
+// behind the chip row — five fit a 390pt screen, so do not add a sixth.
+// Profile has no tab of its own; it opens from the header identity button.
+const EMPIRE_SCREENS = ['plugs', 'store', 'props', 'stats', 'crew'];
+const TOP_TABS = ['hood', 'map', 'jobs', 'fight'];
+
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const tab = $('tab-' + name);
   if (tab) tab.classList.add('active');
-  const navItem = $('nav-' + name);
-  if (navItem) navItem.classList.add('active');
+
+  // bottom tab: an Empire screen lights the Empire tab, not one of its own
+  const inEmpire = EMPIRE_SCREENS.indexOf(name) !== -1;
+  const topTab = inEmpire ? 'empire' : (TOP_TABS.indexOf(name) !== -1 ? name : null);
+  document.querySelectorAll('.tabbar-btn').forEach(b => b.classList.remove('active'));
+  if (topTab) {
+    const btn = $('tab-btn-' + topTab);
+    if (btn) btn.classList.add('active');
+  }
+
+  // chip row is visible only inside Empire
+  const chips = $('empire-chips');
+  if (chips) chips.hidden = !inEmpire;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  if (inEmpire) {
+    const chip = $('chip-' + name);
+    if (chip) chip.classList.add('active');
+  }
 
   // The map fills the body: no padding, no scroll, no section label.
   const app = $('app');
@@ -31,13 +52,14 @@ function showTab(name) {
   if (name === 'map')    GameMap.init();
   if (name === 'plugs')  renderPlugs();
   if (name === 'profile' && typeof renderProfile === 'function') renderProfile();
-  closeNav();
 }
 
 function log(msg, cls = '') {
   const feed = $('feed');
   const line = document.createElement('div');
   line.className = 'feed-line ' + cls;
+  // the newest line is the only coloured one; older lines drop to --ghost.
+  // CSS keys that off :first-child, so nothing to set here.
   const now = new Date();
   line.textContent = '[' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + '] ' + msg;
   feed.insertBefore(line, feed.firstChild);
@@ -61,19 +83,6 @@ function showLevelUp() {
   banner.classList.add('show');
   log('RANKED UP to "' + rank + '" (Rank ' + G.level + ')!', 'gold');
   setTimeout(() => { banner.classList.remove('show'); }, 3000);
-}
-
-// ── NAV DRAWER ─────────────────────────────────
-function openNav() {
-  document.querySelector('nav').classList.add('open');
-  document.getElementById('nav-overlay').classList.add('open');
-}
-function closeNav() {
-  document.querySelector('nav').classList.remove('open');
-  document.getElementById('nav-overlay').classList.remove('open');
-}
-function toggleNav() {
-  document.querySelector('nav').classList.contains('open') ? closeNav() : openNav();
 }
 
 // ── METRICS / CURRENCIES PANEL ──────────────────

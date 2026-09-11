@@ -20,26 +20,23 @@
     <div class="hdr-row">
       <div class="logo">OPPS</div>
 
-      <!-- clout + level cluster — opens the metrics panel -->
-      <button class="hud" onclick="openMetrics()" aria-label="Power and currencies">
-        <div class="hud-block">
-          <div class="hud-label">CLOUT</div>
-          <div class="hud-clout" id="h-clout">0</div>
-        </div>
-        <div class="hud-lv">
-          <div class="hud-label" id="h-level">SHORTY</div>
-          <div class="hud-lv-track"><div class="hud-lv-fill" id="h-lvbar" style="width:0%"></div></div>
-        </div>
-        <span class="hud-caret" aria-hidden="true">&#9662;</span>
-      </button>
+      <!-- rank + gems are header pills; everything else lives in the panel -->
+      <div class="hdr-pills">
+        <button class="hdr-pill" onclick="openMetrics()" aria-label="Rank and power">
+          <span id="h-level">SHORTY</span>
+        </button>
+        <button class="hdr-pill" onclick="openMetrics()" aria-label="Gems">
+          <span id="h-gems">0</span><span class="hdr-pill-k">GEMS</span>
+        </button>
+      </div>
 
       <!-- Messages is a later system (build order item 8); shown disabled, not dead -->
       <button class="hdr-btn" id="btn-msgs" disabled aria-label="Messages — not available yet">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cfc9bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.76L3 21l1.86-5.54A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.76L3 21l1.86-5.54A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
       </button>
 
-      <button class="hdr-btn hamburger" onclick="toggleNav()" aria-label="Menu">
-        <span></span><span></span><span></span>
+      <button class="hdr-btn" onclick="showTab('profile')" aria-label="Player profile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
       </button>
     </div>
     <div class="hdr-rule"></div>
@@ -52,6 +49,15 @@
     <!-- Screen label — a caption, not a title -->
     <div class="section-label"><h3 id="section-title">ACTIVITIES</h3><div class="rule"></div></div>
 
+    <!-- Empire sub-nav. Five fit a 390pt screen; do not add a sixth. -->
+    <div class="chip-row" id="empire-chips" hidden>
+      <button class="chip" onclick="showTab('plugs')" id="chip-plugs">PLUGS</button>
+      <button class="chip" onclick="showTab('store')" id="chip-store">GEAR</button>
+      <button class="chip" onclick="showTab('props')" id="chip-props">SPOTS</button>
+      <button class="chip" onclick="showTab('stats')" id="chip-stats">STATS</button>
+      <button class="chip" onclick="showTab('crew')"  id="chip-crew">CREW</button>
+    </div>
+
     <!-- FEED -->
     <div id="feed">
       <div class="feed-line info">» Welcome to OPPS. Build your empire.</div>
@@ -60,31 +66,31 @@
     <!-- HOOD TAB -->
     <div class="tab active" id="tab-hood">
       <div class="card">
-        <div class="card-title">🏚️ HOOD ACTIVITIES</div>
+        <div class="card-title">HOOD ACTIVITIES</div>
         <div class="job-grid">
           <div class="job-card" onclick="doActivity('collect')">
             <div class="job-name">Collect From Spots</div>
             <div class="job-meta">
-              <span>💰 <span class="val" id="collect-income">$0</span></span>
-              <span>⚡ <span class="val">0</span></span>
+              <span>TAKE <span class="val" id="collect-income">$0</span></span>
+              <span>MOVES <span class="val">0</span></span>
             </div>
-            <div class="do-job-btn" style="text-align:center;background:#1c1c1c;border:1px solid var(--chrome);color:var(--chrome);padding:6px;border-radius:2px;cursor:pointer;font-family:'Saira Condensed',sans-serif;letter-spacing:2px;font-size:1rem;">COLLECT</div>
+            <div class="do-job-btn">COLLECT</div>
           </div>
           <div class="job-card" onclick="doActivity('rest')">
             <div class="job-name">Rest Up (Heal)</div>
             <div class="job-meta">
-              <span>❤️ <span class="val">+25 HP</span></span>
-              <span>⚡ <span class="val">1</span></span>
+              <span>HEAL <span class="val">+25 HP</span></span>
+              <span>MOVES <span class="val">1</span></span>
             </div>
-            <div class="do-job-btn" style="text-align:center;background:#1c1c1c;border:1px solid var(--green);color:var(--green);padding:6px;border-radius:2px;cursor:pointer;font-family:'Saira Condensed',sans-serif;letter-spacing:2px;font-size:1rem;">REST</div>
+            <div class="do-job-btn secondary">REST</div>
           </div>
           <div class="job-card" onclick="doActivity('launder')">
             <div class="job-name">Launder Money</div>
             <div class="job-meta">
-              <span>📈 <span class="val">+10% Cash</span></span>
-              <span>⚡ <span class="val">2</span></span>
+              <span>CASH <span class="val">+10% Cash</span></span>
+              <span>MOVES <span class="val">2</span></span>
             </div>
-            <div class="do-job-btn" style="text-align:center;background:#1c1c1c;border:1px solid var(--chrome);color:var(--chrome);padding:6px;border-radius:2px;cursor:pointer;font-family:'Saira Condensed',sans-serif;letter-spacing:2px;font-size:1rem;">LAUNDER</div>
+            <div class="do-job-btn secondary">LAUNDER</div>
           </div>
         </div>
       </div>
@@ -93,7 +99,7 @@
     <!-- MAP TAB -->
     <div class="tab" id="tab-map">
       <div class="map-outer">
-        <div id="map-container" style="position:absolute;inset:0;overflow:hidden;cursor:grab;background:#494741;">
+        <div id="map-container">
           <!-- SVG injected by map.js -->
         </div>
         <!-- Controls -->
@@ -112,7 +118,7 @@
     <!-- JOBS TAB -->
     <div class="tab" id="tab-jobs">
       <div class="card">
-        <div class="card-title">💼 MOVES — EARN YOUR BREAD</div>
+        <div class="card-title">MOVES — EARN YOUR BREAD</div>
         <div class="job-grid" id="job-list"></div>
       </div>
     </div>
@@ -120,7 +126,7 @@
     <!-- FIGHT TAB -->
     <div class="tab" id="tab-fight">
       <div class="card">
-        <div class="card-title">⚔️ OPPS LIST</div>
+        <div class="card-title">OPPS LIST</div>
         <div class="enemy-list" id="enemy-list"></div>
       </div>
     </div>
@@ -128,7 +134,7 @@
     <!-- PLUGS TAB -->
     <div class="tab" id="tab-plugs">
       <div class="card">
-        <div class="card-title">🤝 PLUGS — YOUR CONNECTS</div>
+        <div class="card-title">PLUGS — YOUR CONNECTS</div>
         <div class="plugs-grid" id="plugs-grid"></div>
       </div>
     </div>
@@ -136,7 +142,7 @@
     <!-- STORE TAB -->
     <div class="tab" id="tab-store">
       <div class="card">
-        <div class="card-title">🔫 THE PLUG — GEAR UP</div>
+        <div class="card-title">THE PLUG — GEAR UP</div>
         <div class="store-grid" id="store-list"></div>
       </div>
       <div id="gem-section"></div>
@@ -145,7 +151,7 @@
     <!-- PROPS TAB -->
     <div class="tab" id="tab-props">
       <div class="card">
-        <div class="card-title">🏢 SPOTS — PASSIVE INCOME</div>
+        <div class="card-title">SPOTS — PASSIVE INCOME</div>
         <div class="prop-grid" id="prop-list"></div>
       </div>
     </div>
@@ -161,44 +167,24 @@
     <!-- STATS TAB -->
     <div class="tab" id="tab-stats">
       <div class="card">
-        <div class="card-title">📊 YOUR STATS</div>
+        <div class="card-title">YOUR STATS</div>
         <div class="stat-grid" id="stat-grid"></div>
       </div>
       <div class="card">
-        <div class="card-title">🎒 INVENTORY</div>
-        <div id="inventory-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        <div class="card-title">INVENTORY</div>
+        <div id="inventory-list"></div>
       </div>
     </div>
 
   </main>
 
-  <!-- NAV DRAWER -->
-  <div id="nav-overlay" onclick="closeNav()"></div>
-  <nav>
-    <div class="nav-head">
-      <div class="logo">OPPS</div>
-      <button class="nav-close" onclick="closeNav()" aria-label="Close menu">&#10005;</button>
-    </div>
-    <div class="nav-list">
-      <div class="nav-item" onclick="showTab('map')" id="nav-map"><span class="nav-caret">&#9656;</span>THE HOOD</div>
-      <div class="nav-item" onclick="showTab('jobs')" id="nav-jobs"><span class="nav-caret">&#9656;</span>MAKE MOVES</div>
-      <div class="nav-item" onclick="showTab('fight')" id="nav-fight"><span class="nav-caret">&#9656;</span>OPPS LIST</div>
-      <div class="nav-item" onclick="showTab('plugs')" id="nav-plugs"><span class="nav-caret">&#9656;</span>PLUGS</div>
-      <div class="nav-item" onclick="showTab('crew')" id="nav-crew"><span class="nav-caret">&#9656;</span>CREW</div>
-      <div class="nav-item locked"><span class="nav-caret">&#9656;</span>INVENTORY<span class="nav-soon">SOON</span></div>
-      <div class="nav-item" onclick="showTab('profile')" id="nav-profile"><span class="nav-caret">&#9656;</span>PROFILE</div>
-      <div class="nav-item locked"><span class="nav-caret">&#9656;</span>SETTINGS<span class="nav-soon">SOON</span></div>
-
-      <!-- Screens the prototype has no home for yet. Kept reachable so no
-           existing feature is orphaned by the shell rebuild. -->
-      <div class="nav-section">MORE</div>
-      <div class="nav-item" onclick="showTab('hood')" id="nav-hood"><span class="nav-caret">&#9656;</span>ACTIVITIES</div>
-      <div class="nav-item" onclick="showTab('props')" id="nav-props"><span class="nav-caret">&#9656;</span>SPOTS</div>
-      <div class="nav-item" onclick="showTab('stats')" id="nav-stats"><span class="nav-caret">&#9656;</span>STATS</div>
-    </div>
-    <div class="nav-foot">
-      <button class="nav-store-btn" onclick="showTab('store')" id="nav-store">STORE</button>
-    </div>
+  <!-- BOTTOM TABS -->
+  <nav class="tabbar">
+    <button class="tabbar-btn" onclick="showTab('hood')"  id="tab-btn-hood">HOOD</button>
+    <button class="tabbar-btn" onclick="showTab('map')"   id="tab-btn-map">MAP</button>
+    <button class="tabbar-btn" onclick="showTab('jobs')"  id="tab-btn-jobs">MOVES</button>
+    <button class="tabbar-btn" onclick="showTab('fight')" id="tab-btn-fight">OPPS</button>
+    <button class="tabbar-btn" onclick="showTab('plugs')" id="tab-btn-empire">EMPIRE</button>
   </nav>
 
   <!-- METRICS / CURRENCIES PANEL -->
@@ -233,13 +219,13 @@
         <div class="metric-track"><div class="metric-fill gold" id="health-bar" style="width:100%"></div></div>
       </div>
       <div class="metric-row">
-        <div class="metric-top"><span class="metric-label">BAG</span><span class="metric-val" id="h-money" style="color:#bfce1c">$500</span></div>
+        <div class="metric-top"><span class="metric-label">BAG</span><span class="metric-val money" id="h-money">$500</span></div>
       </div>
       <div class="metric-row">
         <div class="metric-top"><span class="metric-label">REP</span><span class="metric-val" id="h-rep">0</span></div>
       </div>
       <div class="metric-row">
-        <div class="metric-top"><span class="metric-label">GEMS</span><span class="metric-val" id="h-gems">0</span></div>
+        <div class="metric-top"><span class="metric-label">GEMS</span><span class="metric-val" id="m-gems">0</span></div>
       </div>
       <div class="metric-row">
         <div class="metric-top"><span class="metric-label">STAMINA</span><span class="metric-val" id="h-stamina">10 / 10</span></div>
@@ -261,32 +247,30 @@
 
       <div class="vs-row">
         <div class="fighter">
-          <div class="fighter-icon">🤜</div>
+          <div class="fighter-portrait-wrap ally"></div>
           <div class="fighter-name" id="c-player">YOU</div>
           <div class="hp-bar"><div class="hp-fill" id="c-player-hp" style="width:100%"></div></div>
         </div>
         <div class="vs-text">VS</div>
         <div class="fighter">
-          <div class="fighter-portrait-wrap">
-            <img id="c-enemy-portrait" src="" alt="" style="display:none;width:56px;height:56px;object-fit:cover;border-radius:4px;border:2px solid var(--border);">
-            <div class="fighter-icon" id="c-enemy-icon">😤</div>
+          <div class="fighter-portrait-wrap opp">
+            <img id="c-enemy-portrait" src="" alt="" hidden>
+            <div class="fighter-icon" id="c-enemy-icon"></div>
           </div>
           <div class="fighter-name" id="c-enemy-name">OPP</div>
           <div class="hp-bar"><div class="hp-fill enemy-hp" id="c-enemy-hp" style="width:100%"></div></div>
         </div>
       </div>
-      <div id="combat-info-wrap" style="transition:opacity 0.3s;">
-        <div style="text-align:center;margin:6px 0 2px;">
-          <span style="font-size:11px;color:var(--muted);letter-spacing:2px;font-family:'JetBrains Mono',monospace;">WIN ODDS </span>
-          <span id="c-odds" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;"></span>
+      <div id="combat-info-wrap">
+        <div class="combat-odds">
+          <span class="combat-odds-k">WIN ODDS</span>
+          <span id="c-odds"></span>
         </div>
-        <div style="text-align:center;margin-top:8px;">
-          <button class="attack-btn" onclick="hitEm()" style="width:100%;font-size:1.1rem;letter-spacing:3px;">HIT 'EM</button>
-        </div>
+        <button class="attack-btn wide" onclick="hitEm()">HIT 'EM</button>
       </div>
-      <div id="sim-canvas-wrap" style="display:none;position:relative;height:80px;margin:8px 0;">
-        <canvas id="sim-canvas" style="width:100%;height:100%;display:block;border-radius:4px;background:#0d0d0d;"></canvas>
-        <div id="sim-result" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Saira Condensed',sans-serif;font-size:3rem;letter-spacing:6px;opacity:0;transition:opacity 0.4s;text-shadow:0 0 20px currentColor;"></div>
+      <div id="sim-canvas-wrap" hidden>
+        <canvas id="sim-canvas"></canvas>
+        <div id="sim-result"></div>
       </div>
       <div class="combat-log" id="combat-log"></div>
       <div class="combat-result" id="combat-result"></div>
@@ -297,7 +281,7 @@
     <div class="plug-modal">
       <button class="plug-modal-close" onclick="closePlug()">&#x2715;</button>
       <div class="plug-modal-portrait-wrap">
-        <img id="plug-modal-portrait" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
+        <img id="plug-modal-portrait" src="" alt="">
       </div>
       <div class="plug-modal-body">
         <div class="plug-modal-name" id="plug-modal-name">NAME</div>
@@ -311,8 +295,8 @@
     </div>
   </div>
   <div class="levelup-banner" id="levelup-banner">
-    <div class="levelup-text">&#x1F525; RANKED UP! &#x1F525;</div>
-    <div style="font-size:13px;color:var(--muted);margin-top:4px;" id="levelup-sub">You are now Rank 2</div>
+    <div class="levelup-text">RANKED UP</div>
+    <div class="levelup-sub" id="levelup-sub">You are now Rank 2</div>
   </div>
   <div class="toast" id="toast"></div>
   <!-- Player Profile overlays: equip picker, confirm allocation, stat info -->
