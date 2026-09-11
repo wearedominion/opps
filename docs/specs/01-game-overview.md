@@ -72,7 +72,7 @@ place that knows whether we're on Jest or localStorage. Do not scatter `localSto
 `JestSDK.data` calls through the codebase. See [`03-game-architecture.md`](./03-game-architecture.md).
 
 ### T7 — Visual system is fixed
-All UI follows [`claude.md` — UI Implementation Contract](../../claude.md). No new
+All UI follows [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md). No new
 colors, fonts, radii, or shadows. The dark, gritty aesthetic is part of the product.
 
 ### T8 — Fiction stays fiction
@@ -193,6 +193,6 @@ A player-facing feature is not done until:
 1. It respects every tenet in §2.
 2. It works in the **plain-browser** fallback (no SDK) and on the **Jest** surface.
 3. Its content (if any) is in JSON per [`04-game-data-spec.md`](./04-game-data-spec.md).
-4. Its UI matches [`claude.md` — UI Implementation Contract](../../claude.md).
+4. Its UI matches [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md).
 5. It persists correctly through `GameState` (or explicitly documents why it is session-only).
 6. It has a reviewed TDD (see [`06-technical-requirements.md`](./06-technical-requirements.md)).

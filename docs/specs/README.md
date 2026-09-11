@@ -38,9 +38,8 @@ diverge.
 
 Related existing docs:
 
-- [`../../claude.md`](../../claude.md) — the **UI Implementation Contract** (Chrome Money design system). **Authoritative for all UI.** These specs never override it. It replaced the deleted `OPPS_UI_Agent_Style_Guide.md` on 2026-09-10.
+- [`../../CLAUDE.md`](../../CLAUDE.md) — the context file for AI coding agents, and the home of the **UI Implementation Contract** (Chrome Money design system). **Authoritative for all UI.** These specs never override it. It replaced the deleted `OPPS_UI_Agent_Style_Guide.md` on 2026-09-10. Its visual reference lives in [`../design-handoff/chrome-money/`](../design-handoff/chrome-money/).
 - [`../../README.md`](../../README.md) — quick-start, contribution workflow, roadmap.
-- [`../../CLAUDE.md`](../../CLAUDE.md) — context file for AI coding agents.
 
 ---
 

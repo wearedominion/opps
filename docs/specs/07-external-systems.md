@@ -181,7 +181,7 @@ merges to `main`, and validating data so malformed JSON can never reach a client
   (vendoring vs CDN) in a TDD if 3D becomes core.
 
 ### 6.2 Google Fonts
-- **Loaded:** via `<link>` in `index.html` (families fixed by the UI Implementation Contract in `claude.md`, tenet T7).
+- **Loaded:** via `<link>` in `index.html` (families fixed by the UI Implementation Contract in `CLAUDE.md`, tenet T7).
 - **Failure handling:** always specify real fallback stacks so text renders if fonts fail. Do not
   add new font *families*.
 
