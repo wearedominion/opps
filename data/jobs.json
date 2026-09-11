@@ -1,10 +1,98 @@
 [
-  { "id": "lookout", "name": "Be a Lookout", "energy": 1, "money": [20, 40], "xp": 8, "rep": 2, "levelReq": 1, "times": 10 },
-  { "id": "runner", "name": "Run Packages", "energy": 2, "money": [50, 90], "xp": 15, "rep": 5, "levelReq": 1, "times": 8 },
-  { "id": "boost", "name": "Boost a Whip", "energy": 3, "money": [100, 180], "xp": 25, "rep": 10, "levelReq": 2, "times": 6 },
-  { "id": "stash", "name": "Guard the Stash", "energy": 2, "money": [80, 130], "xp": 20, "rep": 8, "levelReq": 2, "times": 8 },
-  { "id": "shake", "name": "Shake a Block", "energy": 3, "money": [150, 250], "xp": 35, "rep": 15, "levelReq": 3, "times": 5 },
-  { "id": "hit", "name": "Pull a Lick", "energy": 4, "money": [200, 400], "xp": 50, "rep": 25, "levelReq": 3, "times": 4 },
-  { "id": "move", "name": "Move Weight", "energy": 5, "money": [400, 700], "xp": 80, "rep": 40, "levelReq": 5, "times": 3 },
-  { "id": "takeover", "name": "Block Takeover", "energy": 6, "money": [600, 1000], "xp": 120, "rep": 60, "levelReq": 7, "times": 2 }
+  {
+    "id": "lookout",
+    "name": "Be a Lookout",
+    "moves": 1,
+    "cash": [
+      20,
+      40
+    ],
+    "clout": 10,
+    "levelReq": 1,
+    "times": 10
+  },
+  {
+    "id": "runner",
+    "name": "Run Packages",
+    "moves": 2,
+    "cash": [
+      50,
+      90
+    ],
+    "clout": 20,
+    "levelReq": 1,
+    "times": 8
+  },
+  {
+    "id": "boost",
+    "name": "Boost a Whip",
+    "moves": 3,
+    "cash": [
+      100,
+      180
+    ],
+    "clout": 35,
+    "levelReq": 2,
+    "times": 6
+  },
+  {
+    "id": "stash",
+    "name": "Guard the Stash",
+    "moves": 2,
+    "cash": [
+      80,
+      130
+    ],
+    "clout": 28,
+    "levelReq": 2,
+    "times": 8
+  },
+  {
+    "id": "shake",
+    "name": "Shake a Block",
+    "moves": 3,
+    "cash": [
+      150,
+      250
+    ],
+    "clout": 50,
+    "levelReq": 3,
+    "times": 5
+  },
+  {
+    "id": "hit",
+    "name": "Pull a Lick",
+    "moves": 4,
+    "cash": [
+      200,
+      400
+    ],
+    "clout": 75,
+    "levelReq": 3,
+    "times": 4
+  },
+  {
+    "id": "move",
+    "name": "Move Weight",
+    "moves": 5,
+    "cash": [
+      400,
+      700
+    ],
+    "clout": 120,
+    "levelReq": 5,
+    "times": 3
+  },
+  {
+    "id": "takeover",
+    "name": "Block Takeover",
+    "moves": 6,
+    "cash": [
+      600,
+      1000
+    ],
+    "clout": 180,
+    "levelReq": 7,
+    "times": 2
+  }
 ]

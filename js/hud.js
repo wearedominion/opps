@@ -14,34 +14,31 @@ function updateHUD() {
   const set = (id, val) => { const el = $(id); if (el) el.textContent = val; };
   const bar = (id, pct) => { const el = $(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
 
-  const rank = (typeof RANK_NAMES !== 'undefined' && RANK_NAMES.length)
-    ? RANK_NAMES[Math.min(G.level - 1, RANK_NAMES.length - 1)] : '';
+  const rank = rankForLevel(G.level);
 
-  // header pills — rank and gems only; everything else is in the panel
+  // header pill — rank only; everything else is in the panel
   set('h-level', rank);
-  set('h-gems', G.gems || 0);
 
   // metrics panel hero
-  set('m-clout', G.xp.toLocaleString());
+  set('m-clout', G.clout.toLocaleString());
   set('m-level', G.level);
   set('m-rank', rank);
 
   // metrics panel rows
-  set('h-money', '$' + G.money.toLocaleString());
-  set('h-rep', G.rep);
-  set('m-gems', G.gems || 0);
-  set('h-energy', G.energy + '/' + G.maxEnergy);
-  set('h-health', G.health + '/' + G.maxHealth);
-  set('h-stamina', (G.stamina || 0) + ' / ' + (G.maxStamina || 0));
+  set('h-cash', '$' + G.cash.toLocaleString());
+  set('h-moves', G.moves.current + '/' + G.moves.max);
+  set('h-health', G.health.current + '/' + G.health.max);
+  set('h-stamina', G.stamina.current + ' / ' + G.stamina.max);
 
-  set('xp-label', G.xp + ' / ' + G.xpNext);
-  bar('xp-bar', (G.xp / G.xpNext) * 100);
+  const cp = cloutProgress(G.clout);
+  set('xp-label', cp.atCap ? 'MAX' : cp.into.toLocaleString() + ' / ' + cp.need.toLocaleString());
+  bar('xp-bar', cp.pct);
 
-  set('energy-label', G.energy + ' / ' + G.maxEnergy);
-  bar('energy-bar', (G.energy / G.maxEnergy) * 100);
+  set('moves-label', G.moves.current + ' / ' + G.moves.max);
+  bar('moves-bar', (G.moves.current / G.moves.max) * 100);
 
-  set('health-label', G.health + ' / ' + G.maxHealth);
-  bar('health-bar', (G.health / G.maxHealth) * 100);
+  set('health-label', G.health.current + ' / ' + G.health.max);
+  bar('health-bar', (G.health.current / G.health.max) * 100);
 
   set('collect-income', '$' + collectIncome());
 }

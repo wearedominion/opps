@@ -1,31 +1,23 @@
 // ─────────────────────────────────────────────
 //  PAYMENTS
+//
+//  v1 sells Stamina/Moves refreshes and heals DIRECTLY — there is no hard
+//  currency (docs/oppsDefinitions.md, Monetization). The gem pack / gem spend
+//  catalogue that used to live here was removed with the `gems` balance.
+//
+//  The GameState/payments seam is deliberately intact so a hard currency can be
+//  reintroduced later without reopening this module: purchases still verify
+//  server-side before anything is granted, and grants still route through one
+//  function.
+//
+//  The catalogue is data (data/monetization.json), per 04-game-data-spec §6.
+//  STILL OUTSTANDING from that section: the server must mirror SKU -> grant as
+//  the authoritative source and must never trust the client, and the move needs
+//  a TDD. Today server/index.js only verifies the receipt signature.
 // ─────────────────────────────────────────────
 
 // Update VERIFY_URL to your deployed server URL before going live
 const VERIFY_URL = 'http://localhost:3000/api/verify-purchase';
-
-const GEM_PACKS = [
-  { sku: 'gems_100',  gems: 100,  label: '100',   mockPrice: '$0.99' },
-  { sku: 'gems_500',  gems: 550,  label: '550',   mockPrice: '$3.99', badge: 'POPULAR' },
-  { sku: 'gems_1200', gems: 1400, label: '1,400', mockPrice: '$7.99' },
-  { sku: 'gems_2500', gems: 3000, label: '3,000', mockPrice: '$14.99', badge: 'BEST VALUE' },
-];
-
-const GEM_SPENDS = [
-  {
-    id: 'energy',
-    cost: 50,
-    label: 'Refill Moves',
-    action() { G.energy = G.maxEnergy; },
-  },
-  {
-    id: 'health',
-    cost: 75,
-    label: 'Full Heal',
-    action() { G.health = G.maxHealth; },
-  },
-];
 
 const Payments = {
   _products: [], // official product list from Jest
@@ -89,14 +81,18 @@ const Payments = {
       return;
     }
 
-    const pack = GEM_PACKS.find(p => p.sku === sku);
-    if (pack) {
-      G.gems = (G.gems || 0) + pack.gems;
-      log(`Purchased ${pack.label} gems — balance: ${G.gems}`, 'gold');
-      toast(`+${pack.gems} gems added!`);
+    const product = IAP_PRODUCTS.find(p => p.sku === sku);
+    if (product) {
+      this._applyEffect(product);
+      log(`Purchased ${product.name}`, 'gold');
+      toast(product.name + ' applied!');
       updateHUD();
       GameState.save();
-      renderGemSection();
+      renderStore();
+    } else {
+      // Verified a SKU this build has no catalogue entry for. Complete the
+      // purchase anyway so the platform does not retry it forever, but say so.
+      console.warn('Verified purchase for unknown SKU:', sku);
     }
 
     try {
@@ -106,64 +102,42 @@ const Payments = {
     }
   },
 
-  spendGems(spendId) {
-    const spend = GEM_SPENDS.find(s => s.id === spendId);
-    if (!spend) return;
-    if ((G.gems || 0) < spend.cost) { toast(`Need ${spend.cost} gems for that.`, true); return; }
-    G.gems -= spend.cost;
-    spend.action();
-    log(`Spent ${spend.cost} gems — ${spend.label}`, 'info');
-    toast(`${spend.label} done!`);
-    updateHUD();
-    GameState.save();
-    renderGemSection();
+  _applyEffect(product) {
+    const fx = product.effect || {};
+    if (fx.type === 'refillPool' && G[fx.pool]) {
+      credit(fx.pool, G[fx.pool].max - G[fx.pool].current, REASON.IAP_GRANT,
+             { ref: { sku: product.sku } });
+      return;
+    }
+    console.warn('Unknown purchase effect:', fx);
   },
 
   // Returns display price: official from Jest if available, mock otherwise
   getPrice(sku) {
     const official = this._products.find(p => p.sku === sku);
     if (official) return `${official.price} ${official.currency}`;
-    return GEM_PACKS.find(p => p.sku === sku)?.mockPrice ?? '—';
+    return IAP_PRODUCTS.find(p => p.sku === sku)?.mockPrice ?? '—';
   },
 };
 
-function renderGemSection() {
-  const el = $('gem-section');
+function renderIapSection() {
+  const el = $('iap-section');
   if (!el) return;
-
-  const balance = G.gems || 0;
+  if (!IAP_PRODUCTS.length) { el.innerHTML = ''; return; }
 
   el.innerHTML = `
     <div class="card">
-      <div class="card-title">GEM PACKS — LOAD UP</div>
-      <div class="gem-grid">
-        ${GEM_PACKS.map(pack => `
-          <div class="gem-card${pack.badge ? ' gem-featured' : ''}">
-            ${pack.badge ? `<div class="gem-badge">${pack.badge}</div>` : ''}
-            <div class="gem-amount">${pack.label} <span class="gem-unit">GEMS</span></div>
-            <div class="gem-price">${Payments.getPrice(pack.sku)}</div>
-            <button class="buy-btn" onclick="Payments.buy('${pack.sku}')">BUY</button>
+      <div class="card-title">SKIP THE WAIT</div>
+      <div class="iap-grid">
+        ${IAP_PRODUCTS.map(p => `
+          <div class="iap-card${p.badge ? ' iap-featured' : ''}">
+            ${p.badge ? `<div class="iap-badge">${p.badge}</div>` : ''}
+            <div class="iap-name">${p.name}</div>
+            <div class="iap-desc">${p.desc}</div>
+            <div class="iap-price">${Payments.getPrice(p.sku)}</div>
+            <button class="buy-btn" onclick="Payments.buy('${p.sku}')">BUY</button>
           </div>
         `).join('')}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">
-        SPEND GEMS
-        <span class="gem-balance-inline">${balance} GEMS</span>
-      </div>
-      <div class="gem-spend-grid">
-        ${GEM_SPENDS.map(s => {
-          const canAfford = balance >= s.cost;
-          return `
-            <div class="gem-spend-card${canAfford ? '' : ' gem-spend-locked'}">
-              <div class="gem-spend-label">${s.label}</div>
-              <div class="gem-spend-cost">${s.cost} GEMS</div>
-              <button class="buy-btn" onclick="Payments.spendGems('${s.id}')" ${canAfford ? '' : 'disabled'}>USE</button>
-            </div>
-          `;
-        }).join('')}
       </div>
     </div>
   `;

@@ -20,13 +20,10 @@
     <div class="hdr-row">
       <div class="logo">OPPS</div>
 
-      <!-- rank + gems are header pills; everything else lives in the panel -->
+      <!-- rank is the only header pill; everything else lives in the panel -->
       <div class="hdr-pills">
         <button class="hdr-pill" onclick="openMetrics()" aria-label="Rank and power">
           <span id="h-level">SHORTY</span>
-        </button>
-        <button class="hdr-pill" onclick="openMetrics()" aria-label="Gems">
-          <span id="h-gems">0</span><span class="hdr-pill-k">GEMS</span>
         </button>
       </div>
 
@@ -152,7 +149,7 @@
         <div class="card-title">THE PLUG — GEAR UP</div>
         <div class="store-grid" id="store-list"></div>
       </div>
-      <div id="gem-section"></div>
+      <div id="iap-section"></div>
     </div>
 
     <!-- PROPS TAB -->
@@ -218,27 +215,21 @@
         <div class="metric-track"><div class="metric-fill amber" id="xp-bar" style="width:0%"></div></div>
       </div>
       <div class="metric-row">
-        <div class="metric-top"><span class="metric-label">MOVES</span><span class="metric-val" id="energy-label">10 / 10</span></div>
-        <div class="metric-track"><div class="metric-fill lime" id="energy-bar" style="width:100%"></div></div>
+        <div class="metric-top"><span class="metric-label">MOVES</span><span class="metric-val" id="moves-label">10 / 10</span></div>
+        <div class="metric-track"><div class="metric-fill lime" id="moves-bar" style="width:100%"></div></div>
       </div>
       <div class="metric-row">
         <div class="metric-top"><span class="metric-label">HEALTH</span><span class="metric-val" id="health-label">100 / 100</span></div>
         <div class="metric-track"><div class="metric-fill gold" id="health-bar" style="width:100%"></div></div>
       </div>
       <div class="metric-row">
-        <div class="metric-top"><span class="metric-label">BAG</span><span class="metric-val money" id="h-money">$500</span></div>
+        <div class="metric-top"><span class="metric-label">BAG</span><span class="metric-val cash" id="h-cash">$500</span></div>
       </div>
       <div class="metric-row">
-        <div class="metric-top"><span class="metric-label">REP</span><span class="metric-val" id="h-rep">0</span></div>
-      </div>
-      <div class="metric-row">
-        <div class="metric-top"><span class="metric-label">GEMS</span><span class="metric-val" id="m-gems">0</span></div>
-      </div>
-      <div class="metric-row">
-        <div class="metric-top"><span class="metric-label">STAMINA</span><span class="metric-val" id="h-stamina">10 / 10</span></div>
+        <div class="metric-top"><span class="metric-label">STAMINA</span><span class="metric-val" id="h-stamina">3 / 3</span></div>
       </div>
       <div class="metric-row" style="display:none">
-        <span class="metric-val" id="h-energy">10/10</span><span class="metric-val" id="h-health">100/100</span>
+        <span class="metric-val" id="h-moves">10/10</span><span class="metric-val" id="h-health">100/100</span>
       </div>
     </div>
   </div>
@@ -322,6 +313,11 @@
 
 <script src="https://cdn.jest.com/sdk/latest/jestsdk.js"></script>
 <script src="js/state.js"></script>
+<script src="js/tuning.js"></script>
+<script src="js/ledger.js"></script>
+<script src="js/progression.js"></script>
+<script src="js/regen.js"></script>
+<script src="js/unlocks.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/map.js"></script>

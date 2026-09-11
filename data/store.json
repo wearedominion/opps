@@ -5,7 +5,8 @@
     "desc": "+5 ATK",
     "price": 200,
     "atk": 5,
-    "def": 0
+    "def": 0,
+    "upgradeable": true
   },
   {
     "id": "vest",
@@ -13,7 +14,8 @@
     "desc": "+10 DEF",
     "price": 500,
     "atk": 0,
-    "def": 10
+    "def": 10,
+    "upgradeable": true
   },
   {
     "id": "glock",
@@ -21,7 +23,8 @@
     "desc": "+15 ATK",
     "price": 1000,
     "atk": 15,
-    "def": 0
+    "def": 0,
+    "upgradeable": true
   },
   {
     "id": "burner",
@@ -29,7 +32,8 @@
     "desc": "+5 ATK +5 DEF",
     "price": 600,
     "atk": 5,
-    "def": 5
+    "def": 5,
+    "upgradeable": true
   },
   {
     "id": "bando",
@@ -38,7 +42,8 @@
     "price": 2000,
     "atk": 0,
     "def": 20,
-    "hpBonus": 10
+    "hpBonus": 10,
+    "upgradeable": true
   },
   {
     "id": "ak",
@@ -46,6 +51,7 @@
     "desc": "+30 ATK",
     "price": 3500,
     "atk": 30,
-    "def": 0
+    "def": 0,
+    "upgradeable": true
   }
 ]

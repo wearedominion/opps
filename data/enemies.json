@@ -6,14 +6,13 @@
     "hp": 40,
     "atk": 6,
     "def": 3,
-    "lvlReq": 1,
+    "levelReq": 1,
     "reward": {
-      "money": [
+      "cash": [
         30,
         60
       ],
-      "rep": 10,
-      "xp": 15
+      "clout": 25
     }
   },
   {
@@ -23,14 +22,13 @@
     "hp": 70,
     "atk": 12,
     "def": 6,
-    "lvlReq": 1,
+    "levelReq": 1,
     "reward": {
-      "money": [
+      "cash": [
         80,
         150
       ],
-      "rep": 20,
-      "xp": 30
+      "clout": 50
     }
   },
   {
@@ -40,14 +38,13 @@
     "hp": 120,
     "atk": 20,
     "def": 10,
-    "lvlReq": 3,
+    "levelReq": 3,
     "reward": {
-      "money": [
+      "cash": [
         200,
         350
       ],
-      "rep": 50,
-      "xp": 60
+      "clout": 110
     }
   },
   {
@@ -57,14 +54,13 @@
     "hp": 90,
     "atk": 18,
     "def": 8,
-    "lvlReq": 2,
+    "levelReq": 2,
     "reward": {
-      "money": [
+      "cash": [
         150,
         280
       ],
-      "rep": 35,
-      "xp": 45
+      "clout": 80
     }
   },
   {
@@ -74,14 +70,13 @@
     "hp": 200,
     "atk": 30,
     "def": 15,
-    "lvlReq": 5,
+    "levelReq": 5,
     "reward": {
-      "money": [
+      "cash": [
         500,
         800
       ],
-      "rep": 100,
-      "xp": 120
+      "clout": 220
     }
   },
   {
@@ -91,14 +86,13 @@
     "hp": 160,
     "atk": 25,
     "def": 20,
-    "lvlReq": 4,
+    "levelReq": 4,
     "reward": {
-      "money": [
+      "cash": [
         300,
         600
       ],
-      "rep": 80,
-      "xp": 90
+      "clout": 170
     }
   }
 ]

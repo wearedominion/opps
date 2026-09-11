@@ -7,33 +7,87 @@ let ENEMIES = [];
 let STORE_ITEMS = [];
 let PROPERTIES = [];
 let RANK_NAMES = [];
+// Economy tunables (data/tuning.json). Object, not an array — see 04-game-data-spec §3.6.
+// Null until loadGameData() resolves; economy callers must guard (`TUNING?.loot`).
+let TUNING = null;
+// Clout -> level table (data/progression.json). Array of {level, cloutToNext};
+// cloutToNext is null on the last row only. Empty until loadGameData() resolves.
+let PROGRESSION = [];
+// Purchasable SKUs (data/monetization.json). v1 sells refreshes and heals directly.
+let IAP_PRODUCTS = [];
+// Level -> capability gates (data/unlocks.json). Content gates stay on their own rows.
+let UNLOCKS = null;
 
 // ─────────────────────────────────────────────
 //  MAIN — INIT
 // ─────────────────────────────────────────────
 
-const SKILL_POINTS_PER_LEVEL = 5;
+// One level's worth of rewards. Called once per level crossed, never directly —
+// go through syncLevel() so the high-water mark stays honest.
+// A brand-new player's opening balances. The defaults in the G literal exist only
+// so the object is well-formed before data loads — these are the real values.
+function applyStartingState() {
+  const now = Date.now();
+  G.attack  = tune('start.attack');
+  G.defense = tune('start.defense');
+  // Opening balances are credited, not assigned, so a new player's first rows are
+  // in the ledger and the money supply reconciles from row one.
+  G.cash = 0;
+  credit('cash', tune('start.cash'), REASON.STARTING_GRANT);
+  ['moves', 'stamina', 'health'].forEach(pool => {
+    const max = tune('start.' + pool);
+    G[pool] = { current: 0, max: max, lastTick: now };
+    credit(pool, max, REASON.STARTING_GRANT);
+  });
+}
 
-function addXP(amt) {
-  G.xp += amt;
-  while (G.xp >= G.xpNext) {
-    G.xp -= G.xpNext;
-    G.level++;
-    G.xpNext = Math.floor(G.xpNext * 1.6);
-    G.maxEnergy += 2;
-    G.energy = G.maxEnergy;
-    G.maxHealth += 15;
-    G.health = G.maxHealth;
-    G.attack += 3;
-    G.defense += 2;
-    // Level-up grants 5 skill points and fully refills Stamina, Moves and Health
-    // (docs/profileScreen.md §4). Moves == G.energy, refilled above.
-    G.skillPts = (G.skillPts || 0) + SKILL_POINTS_PER_LEVEL;
-    G.maxStamina = G.maxStamina || 10;
-    G.stamina = G.maxStamina;
-    // BALANCE FLAG (Bobby): the automatic +3 attack / +2 defense / +15 maxHealth above
-    // competes with the 1-point ATTACK / DEFENSE / MAX HEALTH skill sinks, which grant +1.
-    // Left as-is deliberately — changing it is an economy decision, not an implementation one.
+function applyLevelGrants() {
+  // BALANCE FLAG (Bobby): these automatic gains compete with the 1-point ATTACK /
+  // DEFENSE / MAX HEALTH skill sinks, which grant +1 each. Still true, but it is now
+  // a data argument, not a code one — set tuning.progression.autoStatGainPerLevel to
+  // zeroes and all stat growth becomes player-allocated. Owned by DOM-66.
+  const gain = tune('progression.autoStatGainPerLevel');
+  G.moves.max  += gain.moves;
+  G.health.max += gain.health;
+  G.attack     += gain.attack;
+  G.defense    += gain.defense;
+  credit('skillPts', tune('progression.skillPointsPerLevel'), REASON.LEVEL_UP_GRANT,
+         { ref: { level: G.level } });
+  // Level-up fully refills Stamina, Moves and Health (docs/profileScreen.md §4).
+  // Once the Hospital exists this is also the free release —
+  // see DOM-66's note on banking a level before a session.
+  if (tune('progression.levelUpRefillsPools')) {
+    ['moves', 'stamina', 'health'].forEach(pool => {
+      credit(pool, G[pool].max - G[pool].current, REASON.LEVEL_UP_GRANT,
+             { ref: { level: G.level } });
+    });
+  }
+}
+
+// The ONE place G.level changes. Derives level from cumulative Clout and pays
+// out any levels not yet granted. Returns how many levels were newly granted.
+//
+// Rewards are a RATCHET, tracked by G.levelGranted. A retuned table can lower a
+// player's derived level; when it does we lower the display but never claw back
+// skill points or stats, and we don't re-grant them if they climb back.
+function syncLevel() {
+  if (!PROGRESSION.length) return 0;              // no table: leave the saved level alone
+  const target = levelFromClout(G.clout);
+  G.level = target;
+  const granted = G.levelGranted || 1;
+  let gained = 0;
+  for (let l = granted + 1; l <= target; l++) { applyLevelGrants(); gained++; }
+  if (target > granted) G.levelGranted = target;
+  return gained;
+}
+
+// Clout is monotonic — there is no subtractClout, by design. `reason` is required
+// so every point is attributable to what produced it; the four sources are Moves,
+// fight wins, fight losses and recruiting.
+function addClout(amt, reason, ref) {
+  if (!(amt > 0)) return;
+  credit('clout', amt, reason, { ref: ref || null });
+  if (syncLevel() > 0) {
     showLevelUp();
     renderJobs();
     renderEnemies();
@@ -42,35 +96,9 @@ function addXP(amt) {
   updateHUD();
 }
 
-// ─────────────────────────────────────────────
-//  ENERGY REGEN — timestamp based
-//  Safe when tab is backgrounded or killed
-// ─────────────────────────────────────────────
-
-const ENERGY_REGEN_SECONDS = 60; // 1 energy per 60 seconds
-
-function applyOfflineEnergyRegen() {
-  const lastSeen = G.lastSeen || Date.now();
-  const secondsElapsed = Math.floor((Date.now() - lastSeen) / 1000);
-  const energyToAdd = Math.floor(secondsElapsed / ENERGY_REGEN_SECONDS);
-  if (energyToAdd > 0) {
-    G.energy = Math.min(G.maxEnergy, G.energy + energyToAdd);
-  }
-}
-
-function tickEnergyRegen() {
-  G.lastSeen = Date.now();
-  if (G.energy < G.maxEnergy) {
-    const lastTick = G.lastEnergyTick || Date.now();
-    const secondsElapsed = Math.floor((Date.now() - lastTick) / 1000);
-    if (secondsElapsed >= ENERGY_REGEN_SECONDS) {
-      G.energy = Math.min(G.maxEnergy, G.energy + 1);
-      G.lastEnergyTick = Date.now();
-      updateHUD();
-      GameState.save();
-    }
-  }
-}
+// Regen lives in js/regen.js — one lazy, timestamp-driven implementation for
+// Moves, Stamina and Health. Offline catch-up is not a separate code path: a
+// pool is worth whatever its lastTick and the clock say, whenever you ask.
 
 // ─────────────────────────────────────────────
 //  LOAD JSON DATA FROM CDN
@@ -81,17 +109,21 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 5) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 9) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, store, properties, ranks] = await Promise.all([
+    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/store.json').then(r => r.json())),
       track(fetch('data/properties.json').then(r => r.json())),
       track(fetch('data/ranks.json').then(r => r.json())),
+      track(fetch('data/tuning.json').then(r => r.json())),
+      track(fetch('data/progression.json').then(r => r.json())),
+      track(fetch('data/monetization.json').then(r => r.json())),
+      track(fetch('data/unlocks.json').then(r => r.json())),
     ]);
 
     JOBS        = jobs;
@@ -99,6 +131,10 @@ async function loadGameData() {
     STORE_ITEMS = store;
     PROPERTIES  = properties;
     RANK_NAMES  = ranks;
+    TUNING      = tuning;
+    PROGRESSION = (progression && progression.levels) || [];
+    IAP_PRODUCTS = monetization;
+    UNLOCKS      = unlocks;
 
   } catch (err) {
     console.error('Failed to load game data:', err);
@@ -118,15 +154,22 @@ async function init() {
 
   await loadGameData(); // progress: 0 → 80%
 
+  // Nothing below here is safe without tuning data — every balance number comes
+  // from it. Stop rather than run the economy on whatever the code happens to hold.
+  if (!assertTuningReady()) return;
+
   const saved = await GameState.load();
   if (saved) {
     GameState.apply(saved);
-    applyOfflineEnergyRegen();
+    // Level is derived, so reconcile it against the current table on every load.
+    // This is what makes the curve retunable without a migration.
+    syncLevel();
+    regenAll();          // offline catch-up — the same call the timer makes
     log('Welcome back. Your empire awaits.', 'info');
   } else {
+    applyStartingState();
     G.lastSeen = Date.now();
-    G.lastEnergyTick = Date.now();
-    log('Moves refill every 60 seconds. Stack your bread.', 'info');
+    log('Moves refill every ' + tune('pools.moves.regenSeconds') + ' seconds. Stack your bread.', 'info');
   }
 
   // Init crew — checks entry payload for invite, fetches member count
@@ -144,6 +187,7 @@ async function init() {
   renderJobs();
   renderEnemies();
   renderStore();
+  renderIapSection();
   renderProps();
   updateHUD();
 
@@ -153,10 +197,15 @@ async function init() {
 
   if (typeof JestSDK !== 'undefined') JestSDK.setLoadingProgress(100); // dismisses loading overlay
 
-  // Energy regen tick — checks every 10s, grants 1 energy per full 60s interval
-  setInterval(tickEnergyRegen, 10000);
-  // Keep lastSeen current in memory so offline regen is accurate on next load
-  setInterval(() => { G.lastSeen = Date.now(); }, 5000);
+  // Display refresh only. Regen is computed from timestamps on read, so this
+  // interval changes nothing about how much a player earns — it just means the
+  // meters move while they watch. One timer, not two: the old pair kept a
+  // separate `lastSeen` clock for offline catch-up, which could disagree with
+  // the per-pool ticks.
+  setInterval(() => {
+    G.lastSeen = Date.now();
+    if (regenAll() > 0) { updateHUD(); GameState.save(); }
+  }, 10000);
 }
 
 init();
