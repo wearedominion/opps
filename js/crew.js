@@ -26,11 +26,26 @@ const Crew = {
       const result = await JestSDK.referrals.listReferrals({ reference: 'crew_invite_v1' });
       this._memberCount = result.referrals?.length ?? 0;
       G.crewMemberCount = this._memberCount;
+      this._awardNewLieutenants();
       GameState.save();
     } catch (e) {
       console.warn('Crew.refresh failed:', e);
       this._memberCount = G.crewMemberCount || 0;
     }
+  },
+
+  // Clout for Lieutenants recruited since the last award. `lieutenantsRewarded`
+  // is a high-water mark, not a count: the referral list is re-read on every boot,
+  // so without it a player would be paid again for the same crew every session.
+  // It never decreases, so a Lieutenant who leaves does not claw back their Clout.
+  _awardNewLieutenants() {
+    const rewarded = G.lieutenantsRewarded || 0;
+    const fresh = this._memberCount - rewarded;
+    if (fresh <= 0) return;
+    G.lieutenantsRewarded = this._memberCount;
+    const clout = fresh * tune('crew.cloutPerRecruit');
+    addClout(clout, REASON.RECRUIT_BONUS, { lieutenants: fresh });
+    log('+' + clout + ' Clout - ' + fresh + ' new Lieutenant' + (fresh > 1 ? 's' : ''), 'gold');
   },
 
   async invite() {
@@ -48,8 +63,8 @@ const Crew = {
 
   getBonus() {
     return {
-      attack: this._memberCount * 2,
-      defense: this._memberCount * 1,
+      attack: this._memberCount * tune('crew.attackPerLieutenant'),
+      defense: this._memberCount * tune('crew.defensePerLieutenant'),
     };
   },
 
@@ -107,8 +122,8 @@ function renderCrew() {
     <div class="card">
       <div class="card-title">HOW IT WORKS</div>
       <div class="crew-rules">
-        <div>+2 ATK per crew member</div>
-        <div>+1 DEF per crew member</div>
+        <div>+${tune('crew.attackPerLieutenant')} ATK per crew member</div>
+        <div>+${tune('crew.defensePerLieutenant')} DEF per crew member</div>
         <div>Bonuses apply to every fight</div>
       </div>
     </div>

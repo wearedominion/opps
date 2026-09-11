@@ -69,22 +69,32 @@ const GEAR_ITEMS = {
   ],
 };
 
-// `field` is the G field the skill raises. MAX MOVES raises the EXISTING
-// G.maxEnergy — energy IS the Moves pool; the fiction rename happens in the
-// render layer only (docs/specs/03-game-architecture.md §3.1).
+// A skill raises either a POOL ceiling (`pool` -> G[pool].max, topping up
+// G[pool].current to match) or a flat STAT (`stat` -> G[stat]). Exactly one of
+// the two per entry — pfSkillTarget() reads the current value for either.
 // `segMax` is a display-only scale for the segmented bar — PLACEHOLDER, needs tuning.
+// Point COSTS and per-rank GRANTS are not here: they are balance, so they live in
+// data/tuning.json (skills.cost / skills.grant) and are read via pfSkillCost/pfSkillGrant.
 const SKILL_DEFS = [
-  { id: 'moves',   label: 'MAX MOVES',   cost: 1, field: 'maxEnergy',  build: 'GRINDER', segMax: 24,
+  { id: 'moves',   label: 'MAX MOVES',   pool: 'moves',   build: 'GRINDER', segMax: 24,
     desc: 'More PvE jobs per session — faster mastery, cash and levels.' },
-  { id: 'stamina', label: 'MAX STAMINA', cost: 2, field: 'maxStamina', build: 'FIGHTER', segMax: 24,
+  { id: 'stamina', label: 'MAX STAMINA', pool: 'stamina', build: 'FIGHTER', segMax: 24,
     desc: 'Attack other players more often. Costs double on purpose — fighting cadence is a real investment.' },
-  { id: 'health',  label: 'MAX HEALTH',  cost: 1, field: 'maxHealth',  build: 'TANK',    segMax: 240,
+  { id: 'health',  label: 'MAX HEALTH',  pool: 'health',  build: 'TANK',    segMax: 240,
     desc: 'Survive more rounds in turn-based fights. Resists hospitalization and makes you a poor target to farm.' },
-  { id: 'attack',  label: 'ATTACK',      cost: 1, field: 'attack',     build: 'COMBAT',  segMax: 120,
+  { id: 'attack',  label: 'ATTACK',      stat: 'attack',  build: 'COMBAT',  segMax: 120,
     desc: 'Damage dealt when you engage. Note: equipped gear is expected to dominate this total, so raw points here are a weak sink until tuned.' },
-  { id: 'defense', label: 'DEFENSE',     cost: 1, field: 'defense',    build: 'COMBAT',  segMax: 120,
+  { id: 'defense', label: 'DEFENSE',     stat: 'defense', build: 'COMBAT',  segMax: 120,
     desc: 'Damage reduced when you are engaged. Note: equipped gear is expected to dominate this total, so raw points here are a weak sink until tuned.' },
 ];
+
+// Current value a skill governs: a pool's ceiling, or a flat stat.
+function pfSkillTarget(def) {
+  return def.pool ? ((G[def.pool] && G[def.pool].max) || 0) : (G[def.stat] || 0);
+}
+
+function pfSkillCost(id)  { return tune('skills.cost.' + id); }
+function pfSkillGrant(id) { return tune('skills.grant.' + id); }
 
 // ═════════════════════════════════════════════
 //  SESSION-ONLY UI STATE — intentionally NOT persisted, so a returning
@@ -149,7 +159,7 @@ function pfSkillDef(id) { return SKILL_DEFS.find(s => s.id === id) || null; }
 function pfPendingCost(pending) {
   return Object.keys(pending || {}).reduce((sum, id) => {
     const def = pfSkillDef(id);
-    return sum + (def ? def.cost * (pending[id] || 0) : 0);
+    return sum + (def ? pfSkillCost(def.id) * (pending[id] || 0) : 0);
   }, 0);
 }
 
@@ -159,7 +169,7 @@ function pfPointsLeft() {
 
 function pfCanAfford(skillId) {
   const def = pfSkillDef(skillId);
-  return !!def && pfPointsLeft() >= def.cost;
+  return !!def && pfPointsLeft() >= pfSkillCost(def.id);
 }
 
 // The ONE public projection. docs/profileScreen.md "Self vs Public" and
@@ -172,17 +182,16 @@ function pfPublicProjection(state) {
   return {
     handle: s.handle || 'PLAYER',
     level: s.level,
-    clout: s.xp,
-    rank: (typeof RANK_NAMES !== 'undefined' && RANK_NAMES.length)
-      ? RANK_NAMES[Math.min((s.level || 1) - 1, RANK_NAMES.length - 1)] : '',
+    clout: s.clout,
+    rank: rankForLevel(s.level),
     gear: GEAR_SLOTS.map(sl => {
       const it = pfFindItem(eq[sl.id]);
       return it && it.slot === sl.id
         ? { slot: sl.id, slotLabel: sl.label, name: it.name, tier: it.tier }
         : null;
     }).filter(Boolean),
-    // Deliberately absent: attack, defense, health, maxHealth, energy,
-    // stamina, money, gems, skillPts, inventory.
+    // Deliberately absent: attack, defense, the health / moves / stamina pools,
+    // cash, skillPts and unequipped inventory.
   };
 }
 
@@ -203,10 +212,10 @@ function renderProfile() {
 }
 
 function pfRenderIdentity() {
-  const rank = (typeof RANK_NAMES !== 'undefined' && RANK_NAMES.length)
-    ? RANK_NAMES[Math.min(G.level - 1, RANK_NAMES.length - 1)] : '';
-  const pct = Math.min((G.xp / G.xpNext) * 100, 100);
-  const toNext = Math.max(G.xpNext - G.xp, 0);
+  const rank = rankForLevel(G.level);
+  const cp = cloutProgress(G.clout);
+  const pct = cp.pct;
+  const toNext = cp.toNext;
   return `
     <div class="pf-id">
       <div class="pf-avatar">
@@ -220,13 +229,13 @@ function pfRenderIdentity() {
           <button class="pf-i-btn" onclick="pfOpenInfo('rank')" aria-label="About ranks">i</button>
         </div>
         <div class="pf-clout-row">
-          <span class="pf-clout">${G.xp.toLocaleString()}</span>
+          <span class="pf-clout">${G.clout.toLocaleString()}</span>
           <span class="pf-clout-tag">CLOUT</span>
         </div>
         <div class="pf-xp-wrap">
           <div class="pf-xp-labels">
-            <span class="l">${toNext.toLocaleString()} TO NEXT</span>
-            <span class="r">${G.xp.toLocaleString()} / ${G.xpNext.toLocaleString()}</span>
+            <span class="l">${cp.atCap ? 'MAX LEVEL' : toNext.toLocaleString() + ' TO NEXT'}</span>
+            <span class="r">${cp.atCap ? '' : cp.into.toLocaleString() + ' / ' + cp.need.toLocaleString()}</span>
           </div>
           <div class="pf-xp-track"><div class="pf-xp-fill" style="width:${pct}%"></div></div>
         </div>
@@ -257,10 +266,11 @@ function pfRenderSkills() {
   const left = total - spent;
 
   const rows = SKILL_DEFS.map(def => {
-    const base = G[def.field] || 0;
+    const base = pfSkillTarget(def);
     const staged = pfPending[def.id] || 0;
     const shown = base + staged;
-    const afford = left >= def.cost;
+    const cost = pfSkillCost(def.id);
+    const afford = left >= cost;
     const segs = 12;
     const onBase = Math.max(0, Math.min(segs, Math.round((base / def.segMax) * segs)));
     const onStaged = Math.max(0, Math.min(segs - onBase, Math.round((staged / def.segMax) * segs)));
@@ -277,7 +287,7 @@ function pfRenderSkills() {
               <span class="pf-skill-name">${def.label}</span>
               <button class="pf-i-btn" onclick="pfOpenInfo('${def.id}')" aria-label="About ${def.label}">i</button>
             </div>
-            <div class="pf-skill-cost${afford ? ' afford' : ''}">${def.cost} ${def.cost === 1 ? 'PT' : 'PTS'} PER RANK</div>
+            <div class="pf-skill-cost${afford ? ' afford' : ''}">${cost} ${cost === 1 ? 'PT' : 'PTS'} PER RANK</div>
           </div>
           <div class="pf-skill-val-wrap">
             <div class="pf-skill-val${staged ? ' staged' : ''}">${shown}</div>
@@ -314,7 +324,7 @@ function pfRenderSkills() {
       ${total === 0 && spent === 0 ? `
         <div class="pf-empty">
           <div class="pf-empty-label">NO POINTS</div>
-          <div class="pf-empty-hint">Level up to earn ${SKILL_POINTS_PER_LEVEL} skill points.</div>
+          <div class="pf-empty-hint">Level up to earn ${tune('progression.skillPointsPerLevel')} skill points.</div>
         </div>` : ''}
       ${rows}
       <div class="pf-warn">
@@ -482,7 +492,7 @@ function pfRenderConfirm() {
   const lines = SKILL_DEFS.filter(d => pfPending[d.id]).map(d => `
     <div class="pf-conf-line">
       <span class="k">${d.label}</span>
-      <span class="v">${G[d.field] || 0} → ${(G[d.field] || 0) + pfPending[d.id]}</span>
+      <span class="v">${pfSkillTarget(d)} → ${pfSkillTarget(d) + pfPending[d.id] * pfSkillGrant(d.id)}</span>
     </div>`).join('');
   return `
     <div class="pf-scrim confirm open" onclick="pfCloseConfirm()">
@@ -521,7 +531,8 @@ function pfRenderInfo() {
     if (!def) return '';
     title = def.label;
     tag = def.build;
-    body = def.desc + ' Costs ' + def.cost + (def.cost === 1 ? ' point' : ' points') + ' per rank.';
+    const c = pfSkillCost(def.id);
+    body = def.desc + ' Costs ' + c + (c === 1 ? ' point' : ' points') + ' per rank.';
   }
   return `
     <div class="pf-scrim info open" onclick="pfCloseInfo()">
@@ -588,14 +599,17 @@ function pfCommitSkills() {
   SKILL_DEFS.forEach(def => {
     const ranks = pfPending[def.id] || 0;
     if (!ranks) return;
-    G[def.field] = (G[def.field] || 0) + ranks;
-    // Raising a max also tops up the matching current pool — you feel it now.
-    if (def.field === 'maxEnergy')  G.energy    = Math.min(G.maxEnergy,  (G.energy || 0) + ranks);
-    if (def.field === 'maxStamina') G.stamina   = Math.min(G.maxStamina, (G.stamina || 0) + ranks);
-    if (def.field === 'maxHealth')  G.health    = Math.min(G.maxHealth,  (G.health || 0) + ranks);
-    summary.push(def.label + ' +' + ranks);
+    const gained = ranks * pfSkillGrant(def.id);
+    if (def.pool) {
+      // Raising a ceiling also tops up the pool itself — you feel it now.
+      G[def.pool].max += gained;
+      credit(def.pool, gained, REASON.SKILL_ALLOC, { ref: { skill: def.id, ranks: ranks } });
+    } else {
+      G[def.stat] = (G[def.stat] || 0) + gained;   // a stat, not a balance
+    }
+    summary.push(def.label + ' +' + gained);
   });
-  G.skillPts = (G.skillPts || 0) - spent;
+  debit('skillPts', spent, REASON.SKILL_ALLOC, { ref: { skills: Object.keys(pfPending) } });
 
   pfPending = {};
   pfConfirmOpen = false;

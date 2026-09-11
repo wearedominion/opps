@@ -1,0 +1,55 @@
+{
+  "_comment": "DOM-67 pacing targets. These are DESIGN TARGETS, not game constants — the game never reads this file. RATIFIED 2026-09-11 by Jake, with one amendment: level 120 in one year of committed play. The simulator scores the live tuning against them; docs/specs/09-economy-pacing-targets.md is the prose version.",
+
+  "session": {
+    "minutesPerSession": 8,
+    "sessionsPerDay": 3
+  },
+
+  "levelByDay": {
+    "day1": 8,
+    "day7": 20,
+    "day30": 40
+  },
+
+  "daysToMaxLevel": {
+    "profile": "committed",
+    "days": 365
+  },
+
+  "breakEven": {
+    "_comment": "DOM-79, ratified 2026-09-11 (Jake): fighting's break-even wallet sits at this many hours of best-job income at the player's level, evaluated at the nominal win probability. Win rewards (enemies.json, and the snapshot-reward formula when matchmaking lands) are sized to hit it; loot.defeatLossRate stays the fixed proportional drain. defeatLossCap stays null (uncapped) for v1 — revisit with DOM-78 telemetry.",
+    "hoursOfJobIncome": 8
+  },
+
+  "faucetShareOfCashIncome": {
+    "moves": 0.45,
+    "fights": 0.30,
+    "spots": 0.25
+  },
+
+  "cloutIncomeMix": {
+    "_comment": "DOM-81, ratified 2026-09-11 (Jake): target share of a committed player's earned Clout per day, held at every checkpoint level. Grind-led — the late game stays reachable without fighting, just slower. Recruiting is recorded as FLAVOUR (crew.cloutPerRecruit stays a flat 250, not an income source); its 0.05 is headroom, so moves and fights are sized to carry the whole target at 60:35. tools/econ-sim/gen-catalog.js realizes this mix in data/jobs.json and data/enemies.json.",
+    "moves": 0.60,
+    "fights": 0.35,
+    "recruiting": 0.05
+  },
+
+  "hospitalizedShareOfPlayers": 0.08,
+
+  "newPlayerOfflineCapHours": 1.0,
+
+  "playerProfiles": {
+    "_comment": "Share of daily pool regen actually spent. Committed ~= plays every session to empty pools; casual logs in twice and leaves regen on the table; grinder is the ceiling case for exploit math.",
+    "casual":    { "movesUse": 0.40, "staminaUse": 0.20 },
+    "committed": { "movesUse": 0.90, "staminaUse": 0.60 },
+    "grinder":   { "movesUse": 1.00, "staminaUse": 1.00 }
+  },
+
+  "assumptions": {
+    "_comment": "Modelling assumptions where the game data is silent. Each one is a gap the sim surfaces; none is a decision.",
+    "winProbabilityNominal": 0.50,
+    "spotCollectsPerDay": 3,
+    "spotAccrualNote": "Spots have no accrual rate in tuning.json — the prototype pays full income per tap, min 60s apart. The sim models the INTENDED design (collect on login, sessionsPerDay collects) and separately prints the prototype exploit ceiling (60 collects/hour)."
+  }
+}

@@ -327,10 +327,13 @@ Carried from the draft, with current status:
    "skill points into Attack are a trap" dynamic the profile spec warns about, but worse, because
    it is free. **Left unchanged deliberately: this is an economy decision, not an implementation
    one.** Flagged in `js/main.js`. **Needs Bobby.**
-10. **Level curve.** `data/progression.json` (120 levels, `round(100 · 1.05^L)`) exists in the repo
-    but is **wired to nothing**; `addXP()` still uses `xpNext * 1.6`, a far steeper curve. The
-    profile's Clout bar and "TO NEXT" label render whichever is live. Additionally `ranks.json`
-    holds 10 rank names indexed by level, so every level past 10 displays "Untouchable".
-    **Needs a decision** — it directly shapes this screen.
+10. **Level curve — RESOLVED 2026-09-11.** `data/progression.json` is now the source of truth and
+    is wired up: level is derived from cumulative Clout via `js/progression.js`, and `addXP()`/
+    `xpNext * 1.6` are gone. The table was retuned from `round(100 · 1.05^L)` to
+    `round(100 · 1.10^L)` — the 1.05 curve was too flat — so lifetime clout to the level-120 cap
+    is ~92.7M rather than ~696k. The profile's Clout bar and "TO NEXT" label read this table.
+    `ranks.json` was also fixed: rank names are now **bands** of `tuning.progression.levelsPerRank`
+    (10) levels via `rankForLevel()`, so level 11 is "Soldier", not "Untouchable".
+    **No open question here.** The open item is grant-side scaling, tracked on DOM-67.
 11. **Skill segment scale.** `segMax` per skill is a display-only placeholder (24/24/240/120/120)
     and needs tuning against real caps.

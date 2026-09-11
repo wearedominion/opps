@@ -78,10 +78,10 @@ function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + m
 
 function showLevelUp() {
   const banner = $('levelup-banner');
-  const rank = RANK_NAMES[Math.min(G.level - 1, RANK_NAMES.length - 1)];
-  $('levelup-sub').textContent = 'You are now "' + rank + '" (Rank ' + G.level + ')';
+  const rank = rankForLevel(G.level);
+  $('levelup-sub').textContent = 'You are now "' + rank + '" (Level ' + G.level + ')';
   banner.classList.add('show');
-  log('RANKED UP to "' + rank + '" (Rank ' + G.level + ')!', 'gold');
+  log('LEVEL ' + G.level + ' - "' + rank + '"', 'gold');
   setTimeout(() => { banner.classList.remove('show'); }, 3000);
 }
 

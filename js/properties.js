@@ -7,7 +7,7 @@ function renderProps() {
   container.innerHTML = '';
   PROPERTIES.forEach(p => {
     const owned = G.properties[p.id] || 0;
-    const canAfford = G.money >= p.price;
+    const canAfford = G.cash >= p.price;
     const div = document.createElement('div');
     div.className = 'prop-card';
     div.innerHTML = `
@@ -25,8 +25,8 @@ function renderProps() {
 function buyProp(propId) {
   const prop = PROPERTIES.find(p => p.id === propId);
   if (!prop) return;
-  if (G.money < prop.price) { toast("Can't afford that spot!", true); return; }
-  G.money -= prop.price;
+  if (G.cash < prop.price) { toast("Can't afford that spot!", true); return; }
+  debit('cash', prop.price, REASON.SPOT_BUY, { ref: { spotId: prop.id } });
   G.properties[propId] = (G.properties[propId] || 0) + 1;
   log(`Bought ${prop.name} — earns $${prop.income} per collect`, 'gold');
   toast(`${prop.name} acquired! +$${prop.income}/collect`);

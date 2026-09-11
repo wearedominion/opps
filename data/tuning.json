@@ -1,0 +1,101 @@
+{
+  "version": 2,
+
+  "start": {
+    "cash": 500,
+    "attack": 10,
+    "defense": 5,
+    "moves": 10,
+    "stamina": 3,
+    "health": 100
+  },
+
+  "progression": {
+    "maxLevel": 120,
+    "skillPointsPerLevel": 5,
+    "levelsPerRank": 10,
+    "levelUpRefillsPools": true,
+    "autoStatGainPerLevel": { "attack": 3, "defense": 2, "health": 15, "moves": 2 }
+  },
+
+  "pools": {
+    "stamina": { "regenSeconds": 180, "regenAmount": 1, "maxCap": 60 },
+    "moves":   { "regenSeconds": 300, "regenAmount": 1, "maxCap": 200 },
+    "health":  { "regenSeconds": 60,  "regenAmount": 5, "maxCap": 2000 }
+  },
+
+  "skills": {
+    "cost":  { "moves": 1, "stamina": 2, "health": 1, "attack": 1, "defense": 1 },
+    "grant": { "moves": 1, "stamina": 1, "health": 1, "attack": 1, "defense": 1 },
+    "respecEnabled": false,
+    "respecCost": { "type": "geometric", "base": 500, "ratio": 1.05 }
+  },
+
+  "combat": {
+    "staminaPerFight": 1,
+    "winProbability": { "beta": 2.0, "bias": 0.0 },
+    "damageScale": 1.0,
+    "maxRounds": 20,
+    "shortlistPower": { "attackWeight": 1.0, "healthWeight": 1.0, "defenseWeight": 1.0 },
+    "defeatCloutShare": 0.25,
+    "winHealthLoss": [5, 20],
+    "defeatHealthRemaining": 5
+  },
+
+  "matchmaking": {
+    "winRateBandMin": 0.35,
+    "winRateBandMax": 0.70,
+    "shortlistSize": 5,
+    "rerollFee": { "type": "geometric", "base": 50, "ratio": 1.05 },
+    "firstRerollFree": true
+  },
+
+  "loot": {
+    "defeatLossRate": 0.10,
+    "defeatLossCap": null,
+    "rewardScalesWithOpponent": true
+  },
+
+  "hospital": {
+    "fullHealSeconds": 1800,
+    "shieldedWhileHospitalized": true,
+    "healCost": { "type": "geometric", "base": 100, "ratio": 1.05 }
+  },
+
+  "spots": {
+    "collectMinimumSeconds": 60,
+    "upgradeEnabled": false
+  },
+
+  "gear": {
+    "upgradeEnabled": true,
+    "maxUpgradeLevel": null,
+    "statCapLevel": 10,
+    "statGainPerLevel": { "attack": 1, "defense": 1, "hpBonus": 0 },
+    "upgradeCost": { "type": "geometric", "base": 1.0, "ratio": 1.6, "scaleBy": "itemPrice" },
+    "duplicatesPerLevel": { "type": "linear", "base": 1, "step": 1 },
+    "duplicatesRequired": false
+  },
+
+  "crew": {
+    "lieutenantsPerSlot": 5,
+    "slotRotation": ["weapon", "armor", "vehicle"],
+    "cloutPerRecruit": 250,
+    "attackPerLieutenant": 2,
+    "defensePerLieutenant": 1
+  },
+
+  "hoodActions": {
+    "restMovesCost": 1,
+    "restHealAmount": 25,
+    "launderMovesCost": 2,
+    "launderRate": 0.10
+  },
+
+  "monetization": {
+    "hardCurrencyEnabled": false,
+    "sellsStaminaRefresh": true,
+    "sellsMovesRefresh": true,
+    "sellsHospitalHeal": true
+  }
+}

@@ -110,8 +110,15 @@ Each feature maps to a tab in the UI (`index.html`) and one or more systems in `
 [`03-game-architecture.md`](./03-game-architecture.md) for the code behind each.
 
 ### 4.1 Core progression
-- **Ranks & XP** — 10 named ranks (`data/ranks.json`), XP curve scales ×1.6 per level. Leveling
-  grants +energy, +health, +attack, +defense.
+- **Clout & levels** — a single progression stat, **Clout** (the old `xp` + `rep`, merged
+  2026-09-11). Level is **derived** from lifetime Clout against `data/progression.json`
+  (120 levels, `round(100 · 1.10^L)`, ~92.7M lifetime to cap) — never stored, so the curve is
+  retunable with no migration. The `×1.6` curve this section used to describe is gone.
+  **The curve is decided; do not carry it as open.** See `data/README.md` and
+  [`08-economy-schema.md`](./08-economy-schema.md) §3.
+- **Ranks** — 10 names in `data/ranks.json` are **bands** of `tuning.progression.levelsPerRank`
+  (10) levels, layered on the Clout-driven level. Leveling grants +moves, +health, +attack,
+  +defense.
 - **Energy** — regenerates 1 per 60s, timestamp-based so it accrues while the game is closed.
   Gates most active play.
 - **Health** — depleted by combat, restored by resting (energy) or Gems.

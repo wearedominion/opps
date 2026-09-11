@@ -10,12 +10,31 @@ An asynchronous, Mafia Wars–style combat game. Players scan a map for targets 
 ## Economy
 
 ### Cash — the spendable, at-risk currency
-- Earned by winning fights: **the winner takes 10% of the loser's Cash on hand** per fight.
-- Lost by losing fights, whether attacking or defending.
+
+> **DECISION 2026-09-11 — combat is settled against snapshots, not live players.** An opponent is a
+> record: a blend of generated bots and stored snapshots of real players, indistinguishable in play.
+> **Nothing is ever debited from the real player behind a snapshot.** Winning **mints** Cash;
+> losing **destroys** a proportion of your own. Fight loot is no longer a transfer between wallets,
+> which removes the need for any server-authoritative balance — see
+> [`specs/08-economy-schema.md`](specs/08-economy-schema.md) §8. Statements below are corrected to
+> match; the superseded wording is noted where it mattered.
+
+- Earned by winning fights: a reward **scaled to the opponent's power**, minted rather than taken.
+  *(Superseded: "the winner takes 10% of the loser's Cash on hand".)*
+- Lost by losing fights, whether attacking or defending — a proportion of **your own** Cash,
+  destroyed rather than paid to anyone.
 - **All Cash is at risk at all times.** No bank in v1. The defense against loss is spending it on gear.
 - Cash sinks: **gear** (from Plugs), **Spots** (buying/upgrading passive-income properties), **target-search rerolls**, and **healing** out of the hospital. Premium/limited gear is a planned future sink — see Monetization (in the Definitions doc).
 - **Passive income exists via Spots** (this reverses the earlier "no passive income" call): Spots generate Cash over time; you must log in to collect, and your **max offline accrual is gated by level/skills**.
-- The 10% cap is self-limiting against farming: each successive hit yields 10% of a shrinking pile.
+- **Fighting has a break-even balance.** An absolute win reward against a proportional loss means
+  a fixed reward cannot keep pace with a percentage of a growing wallet: below break-even fighting
+  mints Cash, above it fighting destroys Cash, forever and without tuning. This is now the economy's
+  main long-run drain and it replaces the planned loot burn entirely.
+  *(Superseded: "the 10% cap is self-limiting against farming" — that reasoning depended on the
+  loser's pile shrinking, which no longer happens.)*
+- **The reward MUST scale with the opponent's power.** A win mints Cash from nothing, so steering
+  toward weak opponents is an uncapped faucet, and it costs the target nothing — nothing
+  self-limits it. Scaling the reward is what makes band-gaming unprofitable.
 
 ### Clout — permanent progression
 - The overall progression stat. **Clout only ever goes up.**
@@ -48,9 +67,9 @@ Values below mirror Mafia Wars' economy (from memory — treat as tunable defaul
 ### Resource Flow Summary
 ```
 Stamina ──1 per fight──▶ Fight (turn-based rounds vs an Opp)
-  Fight ──reduce foe's Health to 0──▶ WIN: +10% of loser's Cash + Clout
-  Fight ──your Health hits 0────────▶ LOSE: −10% of own Cash, small Clout, hospitalized
-  Fight ──run away (small fail chance)▶ ends, no loot exchange
+  Fight ──reduce foe's Health to 0──▶ WIN: + reward scaled to the Opp (minted) + Clout
+  Fight ──your Health hits 0────────▶ LOSE: −10% of own Cash (destroyed), small Clout, hospitalized
+  Fight ──run away (small fail chance)▶ ends, no Cash won or lost
 Health ──0──▶ Hospitalized ──heal (time / Cash / premium)──▶ back in action
 Moves ──spent──▶ Moves (PvE) ──▶ Cash + Clout + gear items
 Cash ──spent──▶ Gear (from Plugs) ──equipped──▶ Attack / Defense / Health
@@ -92,9 +111,18 @@ Clout ──▶ Level-up ──▶ +5 skill points, full Stamina/Moves/Health re
   4. **Next round** — the attacker again chooses **Attack** or **Run**. (Additional moves — items, specials — are a possible later addition; v1 is Attack / Run.)
 - **Damage per hit** scales with the attacker's **Attack** mitigated by the opponent's **Defense**, plus a small random spread; Health decides how many hits you can take. See **Combat Math (proposed)** below for the formula.
 - **End conditions:** a combatant's Health hits **0** → they are **defeated**. Or the attacker **successfully runs**.
-- **Loot:** the **winner** takes **10% of the loser's Cash** + Clout; the **loser** loses **10% of their Cash** and is **hospitalized**. Note the attacker can **lose** (their own Health hits 0 first) — attacking is now genuinely risky, and **Run** is the tool to cut losses mid-fight.
+- **Settlement:** the **winner** gains a Cash reward scaled to the opponent plus Clout; the **loser**
+  loses **10% of their own Cash** and is **hospitalized**. Only the present player's wallet is
+  touched — see the decision note under Economy. Note the attacker can **lose** (their own Health
+  hits 0 first) — attacking is genuinely risky, and **Run** is the tool to cut losses mid-fight.
 - **The Hospital.** Being defeated sends you to the **Hospital**: your Health is depleted, you **cannot fight**, and you are **shielded from incoming attacks** while hospitalized. That shield doubles as the **offline-farming cap** — a swarm can only beat you down to hospitalized, after which you're protected. You leave by healing: **passive regen over time**, or pay **Cash / premium to heal faster** and get back in the fight (a monetization hook). Exact heal cost/time is tuning.
-- **Cash settlement at resolution (S2):** the loser's Cash is debited **when the fight resolves** — 10% of their *current* balance, never pre-reserved. Keeps multi-attacker farming self-limiting; atomic, server-authoritative, serialized across concurrent attackers.
+- **Cash settlement at resolution (S2):** the **losing player's** Cash is debited when the fight
+  resolves — 10% of their *current* balance, never pre-reserved. Because only the present player's
+  wallet is written, this is a local, single-writer operation: **no atomicity, server authority or
+  serialization across concurrent attackers is required.** A player cannot be attacked while
+  offline, so there are no concurrent writers to their balance at all.
+  *(Superseded: "atomic, server-authoritative, serialized across concurrent attackers" — that was
+  required only by the transfer model.)*
 
 ### Combat Math (proposed — confirm with eng) *(owner: Jake)*
 *Proposed model; the **shapes** are the proposal, the **constants** are tuning data.*
@@ -130,7 +158,12 @@ P(win) = σ( β · ln ρ + b )        # σ = logistic; β ≈ 2 (band-width knob
 - No heat, no cooldowns, no recency weighting, no revenge mechanics, no new-player shields.
 
 #### PvE/PvP blend — the Clash Royale feel
-The **Clash Royale** influence is the *feeling of being good early*: you hit bots you believe are real players, at a high win rate, and it feels great. (The **search/target flow itself** is the **Clash of Clans** model — tap to get matched to a raidable target — see Target Search.) The map is presented as pure PvP, but the target pool is secretly a **mix of real players and bots**, both drawn from the same win-rate band and **indistinguishable** (same intel, rewards, and UI; bots carry real stats and a real Cash balance — see Data Designs).
+The **Clash Royale** influence is the *feeling of being good early*: you hit bots you believe are real players, at a high win rate, and it feels great. (The **search/target flow itself** is the **Clash of Clans** model — tap to get matched to a raidable target — see Target Search.) The map is presented as pure PvP, but the target pool is secretly a **mix of real players and bots**, both drawn from the same win-rate band and **indistinguishable** (same intel, rewards, and UI; bots carry real, varied stats — see Data Designs).
+
+> **Bots hold no Cash** (decision 2026-09-11). Every opponent is a snapshot, so nothing is ever
+> debited from one — a win **mints** its reward from the opponent's power, and there is no wallet
+> on the other side to draw it from. A bot and a real-player snapshot are therefore the *same kind
+> of object*: stats, a loadout, a name, and a `CP`. The only difference is where the row came from.
 - **Bots are NOT pinned to a fixed win rate.** Forcing every bot to, say, 65% would make PvE targets obvious. Instead, bots carry varied, realistic stats and populate the band like players; each bot's win rate lands wherever its stats sit relative to the attacker's.
 - **Early game feels good because matchmaking serves easier targets** — and the easy end of a new player's band is disproportionately bots. As the player levels, both the weighting and the pool composition shift toward harder, increasingly real-PvP fights.
 - **Empty-band fallback:** if no eligible real players exist in the band, the scan serves a bot.
@@ -156,13 +189,13 @@ The **Clash Royale** influence is the *feeling of being good early*: you hit bot
 6. **Health is in the game** and is a skill-point stat — enabling the **tank / durability** build (the third axis alongside grinder and fighter).
 7. **The Hospital** (confirmed feature): defeat depletes Health and sends you to the Hospital — you **can't fight** and are **shielded from incoming attacks** (this is the offline-farming cap). Heal via passive regen, or pay Cash/premium to speed it up.
 8. Matchmaking is a **win-rate band** (35–70%); win probability is the **estimated turn-based outcome** over both parties' Attack/Defense/Health. Selection within the band is **progression-weighted** (easier early).
-9. Target pool is a **hidden PvE/PvP blend**. **Search flow = Clash of Clans**; **feel-good early game = Clash Royale**. Bots are **indistinguishable** from real targets — real, varied stats and a real Cash balance, **NOT pinned to a fixed win rate**. Bots also cover the empty-band fallback.
-10. Bots are a **preloaded list of persistent entities** (stats + Cash) in the same matchmaking pool as players — not instanced per scan.
+9. Target pool is a **hidden PvE/PvP blend**. **Search flow = Clash of Clans**; **feel-good early game = Clash Royale**. Bots are **indistinguishable** from real targets — real, varied stats, **NOT pinned to a fixed win rate**. Bots also cover the empty-band fallback. **Bots hold no Cash**: rewards are minted from opponent power, so there is no balance to hold.
+10. Bots are a **preloaded list of persistent entities** (stats only) in the same matchmaking pool as players — not instanced per scan. Persistence is for *matchmaking stability*, not for holding a balance: a player who scans twice should meet a consistent world.
 11. Loser's Cash is debited **at combat resolution** — 10% of their *current* balance, never pre-reserved.
 12. No heat, no revenge mechanics, no new-player shields.
 13. Fights do not drop items in v1.
 14. Pool growth is **player-allocated skill points** (not automatic).
-15. **120 levels**, Clout-per-level on an **exponential curve** (chosen ratio r ≈ 1.05; exact base is data).
+15. **120 levels**, Clout-per-level on an **exponential curve** — `round(100 · 1.10^L)`, retuned from r ≈ 1.05 on 2026-09-11. Shipped in `data/progression.json`; params in `tuning.progression.cloutToNext`.
 16. **Target search:** Search snaps to a **single** eligible target showing **win rate + amount of gear** (raw Attack/Defense/Health hidden). Searching costs **no Stamina**; the first search is free and each **reroll costs a nominal Cash fee**.
 
 ## Open Questions
@@ -171,8 +204,12 @@ The **Clash Royale** influence is the *feeling of being good early*: you hit bot
 3. **Combat tuning** *(data)*: constants for the proposed combat math (`s` spread ≈0.15, `β` band-width ≈2, `b` first-strike ≈0.1), the damage scale, Health values, **run-away success rate**, and hospital **heal cost / heal time**.
 4. **Confirm the combat math + matchmaking approach** (proposed in Combat Math / Matchmaking): validate the ratio damage model and closed-form `P(win)`, and that `CP = A×(H+D)` is a good enough shortlist proxy (+ pick the shortlist width). *(owner: Jake)*
 5. Crew/Lieutenant slot rotation order (weapon/armor/vehicle/…), long-tail curve, and hard cap vs. diminishing returns.
-6. Clout curve *(data)*: base value (ratio r ≈ 1.05 chosen) and per-source Clout yields (win/loss/Move/recruit).
-7. Do bot Cash balances replenish/reset after being farmed down, and can bots appear as *attackers* (defense-side feed), or defenders only? *(data + design)*
+6. ~~Clout curve~~ **— curve CLOSED 2026-09-11**: `{"base": 110, "ratio": 1.1}`, all 120 rows shipped in `data/progression.json` (source of truth). Still open: **per-source Clout yields** (win/loss/Move/recruit), which have not been rescaled for the steeper curve — DOM-67.
+7. ~~Do bot Cash balances replenish/reset after being farmed down~~ **— CLOSED 2026-09-11 by the
+   snapshot model**: bots hold no Cash, so there is nothing to farm down and nothing to replenish.
+   Still open: can bots appear as *attackers* (defense-side feed), or defenders only? Note that
+   under the snapshot model an incoming attack cannot debit the defender, so a defence-side feed is
+   a **notification/narrative** feature rather than an economic one. *(design)*
 8. Target-search details: (a) win rate as an exact % or a banded label (EASY/EVEN/RISKY)? (b) reroll fee flat or escalating? (c) also show an estimated Cash reward?
 9. Spots: catalog, income rates, upgrade curve, and the level → offline-accrual-cap mapping. *(data + design)*
 10. Player Profile public view: which fields are visible to other players (gear/loadout shown, raw Attack/Defense/Health hidden)?
@@ -188,10 +225,20 @@ The schemas/models that must be designed to build this system. (Draft list — r
 4. **Player gear inventory** — which items a player owns and which are equipped.
 5. **Gear-slot capacity + combat loadout** — per-player combat slot limits derived from Crew size / Lieutenant count (rotating-type-per-5-Lieutenants rule), plus the player's **chosen loadout**: one primary item per gear type + the Crew-unlocked secondary slots, and which owned item fills each slot. The loadout is what the snapshot freezes.
 6. **Matchmaking index / estimator** — index players + bots by a precomputed **Combat Power** proxy (`CP = A×(H+D)`, stored on snapshot write) for a coarse shortlist, then **exact-filter** by the closed-form `P(win)` (see Combat Math) down to the 35–70% band. Directional (attacker vs defender); `CP` only needs to correlate with strength — the exact filter does the gatekeeping.
-7. **Bot roster** — a **preloaded list of persistent bot entities**, each with real stats (Attack/Defense/Health) and a real Cash balance, in the same matchmaking pool as players. Stat distribution should mirror the real player population so they're indistinguishable in-band. (Not generated per scan.)
+7. **Bot roster** — a **preloaded list of persistent bot entities**, each with real stats
+   (Attack/Defense/Health), a loadout, a name/portrait and a precomputed `CP`, in the same
+   matchmaking pool as players. **No Cash balance** — rewards are minted from opponent power
+   (see the PvE/PvP blend note), so a bot row and a real-player snapshot row are the same shape and
+   the matchmaking index does not need to know which is which. Stat distribution should mirror the
+   real player population so they're indistinguishable in-band. (Not generated per scan.)
+
+   *Consequence worth the ink:* because reward is a function of opponent power alone, a bot needs
+   no economy simulation of its own — no income, no spending, no decay. It is a static row.
 7a. **Target intel payload** — the client-facing contract returned by a search: win rate (estimated server-side), gear amount (loadout size), name, portrait, and an opaque target/snapshot handle. **Never includes raw Attack/Defense/Health** or the PvE/PvP flag.
 8. **Matchmaking selection-weighting config** — the per-level/progression weighting that biases in-band target selection toward the easy (70%) end early and flattens it with level. PvE-vs-PvP share is emergent, not a hard-coded ratio.
-9. **Fight log / history** — per-fight record: attacker, defender (or bot), outcome (win/loss/fled), rounds, Cash transferred, Clout gained, timestamp, PvE/PvP flag (internal only).
+9. **Fight log / history** — per-fight record: attacker, opponent (snapshot or bot), outcome
+   (win/loss/fled), rounds, **Cash minted on a win / Cash destroyed on a loss** (never "transferred"
+   — no Cash moves between wallets), Clout gained, timestamp, PvE/PvP flag (internal only).
 10. **Level / Clout curve table** — Clout threshold per level (120, exponential) and what each level unlocks (gear tiers, Moves tiers, Spots offline cap).
 11. **Skill-point allocation** — per-player record of allocated points plus the global cost config (Moves 1pt, Stamina 2pt, **Health 1pt**, Attack/Defense 1pt).
 12. **Crew / Lieutenants** — invite records and which invitees actually played (Lieutenants), Lieutenant count → gear-equip capacity, and Clout granted per recruit.

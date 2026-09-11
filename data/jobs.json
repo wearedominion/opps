@@ -1,10 +1,298 @@
 [
-  { "id": "lookout", "name": "Be a Lookout", "energy": 1, "money": [20, 40], "xp": 8, "rep": 2, "levelReq": 1, "times": 10 },
-  { "id": "runner", "name": "Run Packages", "energy": 2, "money": [50, 90], "xp": 15, "rep": 5, "levelReq": 1, "times": 8 },
-  { "id": "boost", "name": "Boost a Whip", "energy": 3, "money": [100, 180], "xp": 25, "rep": 10, "levelReq": 2, "times": 6 },
-  { "id": "stash", "name": "Guard the Stash", "energy": 2, "money": [80, 130], "xp": 20, "rep": 8, "levelReq": 2, "times": 8 },
-  { "id": "shake", "name": "Shake a Block", "energy": 3, "money": [150, 250], "xp": 35, "rep": 15, "levelReq": 3, "times": 5 },
-  { "id": "hit", "name": "Pull a Lick", "energy": 4, "money": [200, 400], "xp": 50, "rep": 25, "levelReq": 3, "times": 4 },
-  { "id": "move", "name": "Move Weight", "energy": 5, "money": [400, 700], "xp": 80, "rep": 40, "levelReq": 5, "times": 3 },
-  { "id": "takeover", "name": "Block Takeover", "energy": 6, "money": [600, 1000], "xp": 120, "rep": 60, "levelReq": 7, "times": 2 }
+  {
+    "id": "lookout",
+    "name": "Be a Lookout",
+    "tier": 1,
+    "moves": 1,
+    "cash": [
+      20,
+      40
+    ],
+    "clout": 7,
+    "levelReq": 1,
+    "times": 10,
+    "drops": []
+  },
+  {
+    "id": "runner",
+    "name": "Run Packages",
+    "tier": 1,
+    "moves": 2,
+    "cash": [
+      50,
+      90
+    ],
+    "clout": 14,
+    "levelReq": 1,
+    "times": 8,
+    "drops": []
+  },
+  {
+    "id": "boost",
+    "name": "Boost a Whip",
+    "tier": 2,
+    "moves": 3,
+    "cash": [
+      100,
+      180
+    ],
+    "clout": 22,
+    "levelReq": 2,
+    "times": 6,
+    "drops": [
+      {
+        "item": "knife",
+        "rate": 0.05
+      }
+    ]
+  },
+  {
+    "id": "stash",
+    "name": "Guard the Stash",
+    "tier": 2,
+    "moves": 2,
+    "cash": [
+      80,
+      130
+    ],
+    "clout": 15,
+    "levelReq": 2,
+    "times": 8,
+    "drops": []
+  },
+  {
+    "id": "shake",
+    "name": "Shake a Block",
+    "tier": 3,
+    "moves": 3,
+    "cash": [
+      150,
+      250
+    ],
+    "clout": 24,
+    "levelReq": 3,
+    "times": 5,
+    "drops": []
+  },
+  {
+    "id": "hit",
+    "name": "Pull a Lick",
+    "tier": 3,
+    "moves": 4,
+    "cash": [
+      200,
+      400
+    ],
+    "clout": 33,
+    "levelReq": 3,
+    "times": 4,
+    "drops": [
+      {
+        "item": "burner",
+        "rate": 0.04
+      }
+    ]
+  },
+  {
+    "id": "move",
+    "name": "Move Weight",
+    "tier": 4,
+    "moves": 5,
+    "cash": [
+      400,
+      700
+    ],
+    "clout": 45,
+    "levelReq": 5,
+    "times": 3,
+    "drops": [
+      {
+        "item": "vest",
+        "rate": 0.04
+      }
+    ]
+  },
+  {
+    "id": "takeover",
+    "name": "Block Takeover",
+    "tier": 5,
+    "moves": 6,
+    "cash": [
+      600,
+      1000
+    ],
+    "clout": 58,
+    "levelReq": 7,
+    "times": 2,
+    "drops": [
+      {
+        "item": "glock",
+        "rate": 0.03
+      }
+    ]
+  },
+  {
+    "id": "traphouse",
+    "name": "Run a Trap House",
+    "tier": 6,
+    "moves": 6,
+    "cash": [
+      850,
+      1280
+    ],
+    "clout": 59,
+    "levelReq": 10,
+    "times": 3,
+    "drops": [
+      {
+        "item": "bando",
+        "rate": 0.03
+      }
+    ]
+  },
+  {
+    "id": "fixfight",
+    "name": "Fix a Fight",
+    "tier": 7,
+    "moves": 6,
+    "cash": [
+      2210,
+      3310
+    ],
+    "clout": 60,
+    "levelReq": 20,
+    "times": 3,
+    "drops": [
+      {
+        "item": "ak",
+        "rate": 0.025
+      }
+    ]
+  },
+  {
+    "id": "hijack",
+    "name": "Hijack a Shipment",
+    "tier": 8,
+    "moves": 7,
+    "cash": [
+      6690,
+      10000
+    ],
+    "clout": 71,
+    "levelReq": 30,
+    "times": 3,
+    "drops": []
+  },
+  {
+    "id": "precinct",
+    "name": "Flip a Precinct",
+    "tier": 9,
+    "moves": 7,
+    "cash": [
+      17300,
+      26000
+    ],
+    "clout": 73,
+    "levelReq": 40,
+    "times": 2,
+    "drops": []
+  },
+  {
+    "id": "docks",
+    "name": "Run the Docks",
+    "tier": 10,
+    "moves": 7,
+    "cash": [
+      45000,
+      67500
+    ],
+    "clout": 74,
+    "levelReq": 50,
+    "times": 2,
+    "drops": []
+  },
+  {
+    "id": "club",
+    "name": "Own the Night Club",
+    "tier": 11,
+    "moves": 8,
+    "cash": [
+      133000,
+      200000
+    ],
+    "clout": 196,
+    "levelReq": 60,
+    "times": 2,
+    "drops": []
+  },
+  {
+    "id": "contract",
+    "name": "Rig the City Contract",
+    "tier": 12,
+    "moves": 8,
+    "cash": [
+      346000,
+      519000
+    ],
+    "clout": 507,
+    "levelReq": 70,
+    "times": 2,
+    "drops": []
+  },
+  {
+    "id": "interstate",
+    "name": "Run Guns Interstate",
+    "tier": 13,
+    "moves": 8,
+    "cash": [
+      897000,
+      1350000
+    ],
+    "clout": 1315,
+    "levelReq": 80,
+    "times": 2,
+    "drops": []
+  },
+  {
+    "id": "judge",
+    "name": "Buy a Judge",
+    "tier": 14,
+    "moves": 8,
+    "cash": [
+      2330000,
+      3490000
+    ],
+    "clout": 3411,
+    "levelReq": 90,
+    "times": 2,
+    "drops": []
+  },
+  {
+    "id": "commission",
+    "name": "Take the Commission Seat",
+    "tier": 15,
+    "moves": 8,
+    "cash": [
+      6030000,
+      9050000
+    ],
+    "clout": 8848,
+    "levelReq": 100,
+    "times": 2,
+    "drops": []
+  },
+  {
+    "id": "runcity",
+    "name": "Run the City",
+    "tier": 16,
+    "moves": 8,
+    "cash": [
+      15700000,
+      23500000
+    ],
+    "clout": 22950,
+    "levelReq": 110,
+    "times": 2,
+    "drops": []
+  }
 ]

@@ -29,6 +29,9 @@ var Sim = (function() {
 
   function start(threat) {
     if (_phase === 'run') return;
+    // A tap during the result window settles the finished fight now, rather than
+    // leaving its pending timer to fire mid-way through the new run.
+    if (_phase === 'done') end_(true);
     var lo = Math.max(5, Math.round((90 - threat * 7.5) / 5) * 5);
     var hi = Math.min(95, lo + 25);
     var win = Math.random() < (lo + hi) / 200;
@@ -149,22 +152,32 @@ var Sim = (function() {
     var enemy = combatEnemy;
     if (!enemy) { closeCombat(); return; }
     if (_result === 'W') {
-      var moneyWon = rand(enemy.reward.money[0], enemy.reward.money[1]);
-      G.money += moneyWon; G.rep += enemy.reward.rep;
-      addXP(enemy.reward.xp);
-      G.health = Math.max(5, G.health - rand(5, 20));
+      var cashWon = rand(enemy.reward.cash[0], enemy.reward.cash[1]);
+      credit('cash', cashWon, REASON.FIGHT_REWARD, { ref: { enemyId: enemy.id } });
+      addClout(enemy.reward.clout, REASON.FIGHT_REWARD, { enemyId: enemy.id });
+      const hit = tune('combat.winHealthLoss');
+      const floor = tune('combat.defeatHealthRemaining');
+      const dmg = Math.min(rand(hit[0], hit[1]), Math.max(0, G.health.current - floor));
+      debit('health', dmg, REASON.COMBAT_DAMAGE, { ref: { enemyId: enemy.id } });
       updateHUD();
       $('combat-result').textContent = 'YOU SMOKED HIM!';
       $('combat-result').style.color = 'var(--green)';
-      log('Smoked ' + enemy.name + ' -- won $' + moneyWon + ' + ' + enemy.reward.xp + ' XP', 'win');
+      log('Smoked ' + enemy.name + ' -- won $' + cashWon + ' + ' + enemy.reward.clout + ' Clout', 'win');
       Sound.win();
     } else {
-      var moneyLost = Math.floor(G.money * 0.1);
-      G.money = Math.max(0, G.money - moneyLost); G.health = 5;
+      var cashLost = Math.floor(G.cash * tune('loot.defeatLossRate'));
+      cashLost = debit('cash', cashLost, REASON.FIGHT_DEFEAT_LOSS, { ref: { enemyId: enemy.id } });
+      // Never negative: a player already below the floor takes no further damage.
+      debit('health', Math.max(0, G.health.current - tune('combat.defeatHealthRemaining')),
+            REASON.COMBAT_DAMAGE, { ref: { enemyId: enemy.id } });
+      // Losing still teaches you something. Expressed as a share of the win so it
+      // tracks content difficulty automatically instead of needing its own table.
+      var cloutLost = Math.floor(enemy.reward.clout * tune('combat.defeatCloutShare'));
+      addClout(cloutLost, REASON.FIGHT_REWARD, { enemyId: enemy.id, outcome: 'loss' });
       updateHUD();
-      $('combat-result').textContent = 'YOU CAUGHT AN L! Lost $' + moneyLost;
+      $('combat-result').textContent = 'YOU CAUGHT AN L! Lost $' + cashLost;
       $('combat-result').style.color = 'var(--red)';
-      log('Got beat by ' + enemy.name + ' -- lost $' + moneyLost, 'loss');
+      log('Got beat by ' + enemy.name + ' -- lost $' + cashLost + ', kept ' + cloutLost + ' Clout', 'loss');
       Sound.loss();
     }
     $('close-combat').style.display = 'inline-block';
@@ -181,7 +194,7 @@ function renderEnemies() {
   if (!container) return;
   container.innerHTML = '';
   ENEMIES.forEach(function(e) {
-    var locked = G.level < e.lvlReq;
+    var locked = !isUnlocked(e);
     var portrait = ENEMY_PORTRAITS[e.id];
     var threat = ENEMY_THREAT[e.id] || 5;
     // Contract: --red on --ghost. Split the run so the empty blocks are not
@@ -199,10 +212,10 @@ function renderEnemies() {
         '<div class="enemy-name">' + e.name + '</div>' +
         '<div class="enemy-role">' + (e.role || '') + '</div>' +
         '<div class="enemy-stats"><span class="threat-bar">' + bars + '<span class="threat-label">THREAT</span></span></div>' +
-        '<div class="enemy-reward">Reward: $' + e.reward.money[0] + '–$' + e.reward.money[1] + '</div>' +
+        '<div class="enemy-reward">Reward: $' + e.reward.cash[0] + '–$' + e.reward.cash[1] + '</div>' +
       '</div>' +
       (locked
-        ? '<div class="enemy-locked">RANK ' + e.lvlReq + '</div>'
+        ? '<div class="enemy-locked">' + lockLabel(e) + '</div>'
         : '<button class="attack-btn" onclick="startCombat(\'' + e.id + '\')">SLIDE ON \'EM</button>');
     container.appendChild(div);
   });
@@ -210,7 +223,7 @@ function renderEnemies() {
 
 // ── Start combat ──────────────────────────────
 function startCombat(enemyId) {
-  if (G.health < 20) { toast('Too hurt to fight! Rest up first.', true); return; }
+  if (G.health.current < 20) { toast('Too hurt to fight! Rest up first.', true); return; }
   var e = ENEMIES.find(function(x) { return x.id === enemyId; });
   if (!e) return;
   combatEnemy = Object.assign({}, e);

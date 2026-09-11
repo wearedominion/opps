@@ -24,15 +24,16 @@ const Notify = {
     if (this._canNotify()) {
       this.reEngage();
       this.incomeReady();
-      this.energyFull();
+      this.movesFull();
     } else if (typeof Auth !== 'undefined' && Auth.canPrompt()) {
       this._clearStale();
     }
   },
 
   // Unscheduling an absent identifier is a no-op, so this is safe every boot.
+  // 'energy_full' is the pre-Moves-rename identifier — clear it too.
   async _clearStale() {
-    for (const identifier of ['energy_full', 'income_ready', 're_engage']) {
+    for (const identifier of ['moves_full', 'energy_full', 'income_ready', 're_engage']) {
       try {
         await JestSDK.notifications.unscheduleNotification({ identifier });
       } catch (e) {
@@ -41,24 +42,24 @@ const Notify = {
     }
   },
 
-  // Called after any energy-spending action.
-  // Schedules an exact-time alert for when energy will be full.
-  async energyFull() {
-    if (!this._canNotify() || G.energy >= G.maxEnergy) return;
-    const secondsUntilFull = (G.maxEnergy - G.energy) * ENERGY_REGEN_SECONDS;
+  // Called after any Moves-spending action.
+  // Schedules an exact-time alert for when Moves will be full.
+  async movesFull() {
+    if (!this._canNotify() || G.moves.current >= G.moves.max) return;
+    const secondsUntilFull = secondsToFull('moves');
     const scheduledAt = new Date(Date.now() + secondsUntilFull * 1000).toISOString();
     try {
-      await JestSDK.notifications.unscheduleNotification({ identifier: 'energy_full' });
+      await JestSDK.notifications.unscheduleNotification({ identifier: 'moves_full' });
       await JestSDK.notifications.scheduleNotification({
-        identifier: 'energy_full',
+        identifier: 'moves_full',
         title: "You're ready to move",
-        body: 'Your energy is full. Get back out there.',
+        body: 'Your Moves are full. Get back out there.',
         ctaText: 'Play Now',
         scheduledAt,
         priority: 'medium',
       });
     } catch (e) {
-      console.warn('Notify.energyFull failed:', e);
+      console.warn('Notify.movesFull failed:', e);
     }
   },
 
@@ -87,7 +88,7 @@ const Notify = {
   // cancelling the previous session's so the timer resets each visit.
   async reEngage() {
     if (!this._canNotify()) return;
-    const rank = RANK_NAMES[Math.min(G.level - 1, RANK_NAMES.length - 1)] || 'Soldier';
+    const rank = rankForLevel(G.level) || 'Soldier';
     try {
       await JestSDK.notifications.unscheduleNotification({ identifier: 're_engage' });
       await JestSDK.notifications.scheduleNotification({
