@@ -49,6 +49,15 @@ const Payments = {
       toast('Purchases require the Jest platform.', true);
       return;
     }
+    // Refuse before charging when the effect can't grant anything — the removed
+    // gem flow pre-checked too. A pool can still fill during the verify
+    // round-trip; _grantAndComplete reports that case honestly.
+    const product = IAP_PRODUCTS.find(p => p.sku === sku);
+    const fx = product && product.effect;
+    if (fx && fx.type === 'refillPool' && G[fx.pool] && G[fx.pool].current >= G[fx.pool].max) {
+      toast('Already full — nothing to refill.', true);
+      return;
+    }
     let result;
     try {
       result = await JestSDK.payments.beginPurchase({ productSku: sku });
@@ -83,9 +92,12 @@ const Payments = {
 
     const product = IAP_PRODUCTS.find(p => p.sku === sku);
     if (product) {
-      this._applyEffect(product);
+      const applied = this._applyEffect(product);
       log(`Purchased ${product.name}`, 'gold');
-      toast(product.name + ' applied!');
+      // Don't claim a grant that clamped to nothing (pool filled during the
+      // verify round-trip, or a recovered purchase re-applied after the fact).
+      if (applied > 0) toast(product.name + ' applied!');
+      else toast(product.name + ': already full, nothing granted.', true);
       updateHUD();
       GameState.save();
       renderStore();
@@ -102,14 +114,15 @@ const Payments = {
     }
   },
 
+  // Returns the amount actually granted (0 when the effect clamped to nothing).
   _applyEffect(product) {
     const fx = product.effect || {};
     if (fx.type === 'refillPool' && G[fx.pool]) {
-      credit(fx.pool, G[fx.pool].max - G[fx.pool].current, REASON.IAP_GRANT,
+      return credit(fx.pool, G[fx.pool].max - G[fx.pool].current, REASON.IAP_GRANT,
              { ref: { sku: product.sku } });
-      return;
     }
     console.warn('Unknown purchase effect:', fx);
+    return 0;
   },
 
   // Returns display price: official from Jest if available, mock otherwise

@@ -29,6 +29,9 @@ var Sim = (function() {
 
   function start(threat) {
     if (_phase === 'run') return;
+    // A tap during the result window settles the finished fight now, rather than
+    // leaving its pending timer to fire mid-way through the new run.
+    if (_phase === 'done') end_(true);
     var lo = Math.max(5, Math.round((90 - threat * 7.5) / 5) * 5);
     var hi = Math.min(95, lo + 25);
     var win = Math.random() < (lo + hi) / 200;
@@ -164,7 +167,8 @@ var Sim = (function() {
     } else {
       var cashLost = Math.floor(G.cash * tune('loot.defeatLossRate'));
       cashLost = debit('cash', cashLost, REASON.FIGHT_DEFEAT_LOSS, { ref: { enemyId: enemy.id } });
-      debit('health', G.health.current - tune('combat.defeatHealthRemaining'),
+      // Never negative: a player already below the floor takes no further damage.
+      debit('health', Math.max(0, G.health.current - tune('combat.defeatHealthRemaining')),
             REASON.COMBAT_DAMAGE, { ref: { enemyId: enemy.id } });
       // Losing still teaches you something. Expressed as a share of the win so it
       // tracks content difficulty automatically instead of needing its own table.
@@ -219,7 +223,7 @@ function renderEnemies() {
 
 // ── Start combat ──────────────────────────────
 function startCombat(enemyId) {
-  if (G.health < 20) { toast('Too hurt to fight! Rest up first.', true); return; }
+  if (G.health.current < 20) { toast('Too hurt to fight! Rest up first.', true); return; }
   var e = ENEMIES.find(function(x) { return x.id === enemyId; });
   if (!e) return;
   combatEnemy = Object.assign({}, e);

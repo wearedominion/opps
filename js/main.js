@@ -158,6 +158,15 @@ async function init() {
   // from it. Stop rather than run the economy on whatever the code happens to hold.
   if (!assertTuningReady()) return;
 
+  // The level table gets the same gate: an empty PROGRESSION silently disables
+  // all levelling (syncLevel returns 0, the HUD reads "MAX"), which a shape
+  // change in a CDN-deployed progression.json would otherwise cause without a
+  // single console error.
+  if (!PROGRESSION.length) {
+    bootFail('data/progression.json is missing, empty, or has no `levels` array — the game cannot start.');
+    return;
+  }
+
   const saved = await GameState.load();
   if (saved) {
     GameState.apply(saved);

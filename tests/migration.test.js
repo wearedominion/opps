@@ -75,6 +75,9 @@ test('golden: a v1 fixture migrates all the way to the exact expected v3 save', 
     playerId: 'p_test_0001',
     lastSeen: 1757000000000,
     crewMemberCount: 3,
+    // Pre-v3 crew was never owed per-recruit Clout — the migration seeds the
+    // high-water mark to the existing count so nothing is back-paid on boot.
+    lieutenantsRewarded: 3,
     recruitedBy: null,
     skillPts: 5,
     equipped: { weapon: 'knife' },
@@ -99,6 +102,7 @@ test('golden: a v2 fixture produces the exact expected v3 save', () => {
     playerId: 'p_test_0002',
     lastSeen: 1757200000000,
     crewMemberCount: 5,
+    lieutenantsRewarded: 5,
     recruitedBy: null,
     skillPts: 35,
     equipped: { weapon: 'glock' },
@@ -303,7 +307,10 @@ test('all four curve shapes evaluate', () => {
 });
 
 test('curves are 1-indexed, and that is what matches the shipped table', () => {
-  const c = tune('progression.cloutToNext', TUNE);
+  // The generating curve is documentation (data/README.md), not a tuning key —
+  // data/progression.json is the single authority. This literal pins the
+  // 1-indexing convention against the table it generated.
+  const c = { type: 'geometric', base: 110, ratio: 1.1 };
   const bad = TABLE.filter(e => e.cloutToNext !== null && evalCurve(c, e.level) !== e.cloutToNext);
   assert.strictEqual(bad.length, 0, 'all 120 rows must reproduce');
   // base is the value AT level 1, not the value before it

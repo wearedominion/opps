@@ -492,7 +492,7 @@ function pfRenderConfirm() {
   const lines = SKILL_DEFS.filter(d => pfPending[d.id]).map(d => `
     <div class="pf-conf-line">
       <span class="k">${d.label}</span>
-      <span class="v">${G[d.field] || 0} → ${(G[d.field] || 0) + pfPending[d.id]}</span>
+      <span class="v">${pfSkillTarget(d)} → ${pfSkillTarget(d) + pfPending[d.id] * pfSkillGrant(d.id)}</span>
     </div>`).join('');
   return `
     <div class="pf-scrim confirm open" onclick="pfCloseConfirm()">

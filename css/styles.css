@@ -1717,7 +1717,7 @@ img.plug-portrait {
 }
 
 /* money in the metrics panel: --chrome at body size, never the hero clip */
-.metric-val.money { color: var(--chrome); }
+.metric-val.cash { color: var(--chrome); }
 
 .levelup-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 

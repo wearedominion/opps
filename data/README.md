@@ -26,11 +26,12 @@ The table is generated from the curve `cloutToNext(L) = round(100 · 1.10^L)`
 Retuned from `1.05` to `1.10` on 2026-09-11 — the 1.05 curve was judged too flat.
 Individual levels can be hand-tuned after generation — the formula is a
 starting point, not a constraint. If you regenerate the whole table, note the
-new curve parameters here. Expressed as a `tuning.json` curve object — which is 1-indexed —
-the same series is `{"type": "geometric", "base": 110, "ratio": 1.1}`. Writing `base: 100` there
-shifts every level by one step.
+new curve parameters here. **This table is the single authority for the level curve** —
+the generating formula is documentation, and it deliberately does NOT also live in
+`tuning.json`: nothing reads a curve object there, so a copy would only drift from
+the table the code actually uses.
 
-**The curve is settled, not open.** This file and `tuning.json` are the source of truth for it;
+**The curve is settled, not open.** This file is the source of truth for it;
 any doc that still describes an XP curve as undecided, or as `×1.6` per level, is stale — fix it
 rather than reopening the question. What is *not* settled is whether the Clout **grants** in
 `jobs.json` / `enemies.json` (10–220 per action) are scaled for this curve: at 1.10 the last level

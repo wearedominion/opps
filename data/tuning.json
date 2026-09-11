@@ -12,7 +12,6 @@
 
   "progression": {
     "maxLevel": 120,
-    "cloutToNext": { "type": "geometric", "base": 110, "ratio": 1.1 },
     "skillPointsPerLevel": 5,
     "levelsPerRank": 10,
     "levelUpRefillsPools": true,

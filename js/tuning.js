@@ -60,12 +60,9 @@ function missingTuningPaths(source) {
   });
 }
 
-// Boot gate. Returns true when the game may start.
-function assertTuningReady() {
-  const missing = missingTuningPaths();
-  if (!missing.length) return true;
-  const msg = 'data/tuning.json is missing or incomplete — the game cannot start.\n'
-            + missing.length + ' required value(s) unavailable:\n  ' + missing.join('\n  ');
+// Refuse to start, loudly: console plus a full-screen diagnostic overlay.
+// Shared by every data-file boot gate, not just tuning.
+function bootFail(msg) {
   console.error(msg);
   if (typeof document !== 'undefined' && document.body) {
     const el = document.createElement('pre');
@@ -76,6 +73,14 @@ function assertTuningReady() {
     el.textContent = msg;
     document.body.appendChild(el);
   }
+}
+
+// Boot gate. Returns true when the game may start.
+function assertTuningReady() {
+  const missing = missingTuningPaths();
+  if (!missing.length) return true;
+  bootFail('data/tuning.json is missing or incomplete — the game cannot start.\n'
+         + missing.length + ' required value(s) unavailable:\n  ' + missing.join('\n  '));
   return false;
 }
 

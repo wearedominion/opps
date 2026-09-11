@@ -107,6 +107,10 @@ const MIGRATIONS = {
     delete s.energy; delete s.maxEnergy; delete s.lastEnergyTick;
     delete s.maxStamina; delete s.maxHealth;
     delete s.gems;
+    // Crew recruited before v3 was never owed per-recruit Clout — seed the
+    // high-water mark so _awardNewLieutenants doesn't back-pay the whole crew
+    // on first boot. Same reasoning as levelGranted in the v1 migration.
+    s.lieutenantsRewarded = s.crewMemberCount || 0;
     s.schemaVersion = 3;
     return s;
   },
@@ -184,8 +188,12 @@ const GameState = {
     try {
       result = migrate(raw);
     } catch(e) {
-      console.warn('GameState.migrate failed, loading save as-is:', e);
-      return raw;
+      // A half-migrated save must never be loaded into current-shape code, and
+      // the intact stored save must never be clobbered by whatever this session
+      // does — start fresh in memory, write-protected.
+      console.warn('GameState.migrate failed; starting fresh in memory, stored save preserved:', e);
+      this._fromFuture = true;
+      return null;
     }
 
     this._fromFuture = result.fromFuture;
