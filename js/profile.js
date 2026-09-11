@@ -362,7 +362,7 @@ function pfRenderGear() {
         <span class="pf-inv-status${isEq ? ' on' : ''}">${isEq ? 'EQUIPPED' : 'EQUIP'}</span>
       </button>`;
   }).join('') : `
-      <div class="pf-empty" style="border:none">
+      <div class="pf-empty bare">
         <div class="pf-empty-label">EMPTY</div>
         <div class="pf-empty-hint">No gear yet. Hit the Plug to pick something up.</div>
       </div>`;
@@ -373,14 +373,14 @@ function pfRenderGear() {
         ${body.map(pfSlotBox).join('')}
         <div class="pf-figure">
           <svg width="84" height="196" viewBox="0 0 90 210" fill="none" role="img" aria-label="Equipment slots on a body outline">
-            <circle cx="45" cy="19" r="14" fill="#2b2723" stroke="rgba(245,144,42,0.28)"/>
-            <rect x="28" y="39" width="34" height="60" rx="7" fill="#2b2723" stroke="rgba(245,144,42,0.28)"/>
-            <rect x="13" y="43" width="11" height="54" rx="5.5" fill="#241f1c" stroke="rgba(245,144,42,0.22)"/>
-            <rect x="66" y="43" width="11" height="54" rx="5.5" fill="#241f1c" stroke="rgba(245,144,42,0.22)"/>
-            <rect x="30" y="103" width="13" height="72" rx="6" fill="#241f1c" stroke="rgba(245,144,42,0.22)"/>
-            <rect x="47" y="103" width="13" height="72" rx="6" fill="#241f1c" stroke="rgba(245,144,42,0.22)"/>
-            <rect x="27" y="178" width="17" height="9" rx="3" fill="#2b2723" stroke="rgba(245,144,42,0.22)"/>
-            <rect x="46" y="178" width="17" height="9" rx="3" fill="#2b2723" stroke="rgba(245,144,42,0.22)"/>
+            <circle cx="45" cy="19" r="14" fill="var(--control)" stroke="var(--border-ctrl)"/>
+            <rect x="28" y="39" width="34" height="60" rx="7" fill="var(--control)" stroke="var(--border-ctrl)"/>
+            <rect x="13" y="43" width="11" height="54" rx="5.5" fill="var(--panel)" stroke="var(--border)"/>
+            <rect x="66" y="43" width="11" height="54" rx="5.5" fill="var(--panel)" stroke="var(--border)"/>
+            <rect x="30" y="103" width="13" height="72" rx="6" fill="var(--panel)" stroke="var(--border)"/>
+            <rect x="47" y="103" width="13" height="72" rx="6" fill="var(--panel)" stroke="var(--border)"/>
+            <rect x="27" y="178" width="17" height="9" rx="4.5" fill="var(--control)" stroke="var(--border-ctrl)"/>
+            <rect x="46" y="178" width="17" height="9" rx="4.5" fill="var(--control)" stroke="var(--border-ctrl)"/>
           </svg>
         </div>
         <div class="pf-gearpow">
@@ -446,7 +446,7 @@ function pfRenderPicker() {
       <button class="pf-pick-row${owns ? '' : ' locked'}"
         ${owns ? `onclick="pfEquip('${slot.id}','${it.id}')"` : 'disabled'}>
         <div class="pf-inv-main">
-          <div class="pf-inv-name" style="font-size:15px">${pfEsc(it.name)}</div>
+          <div class="pf-inv-name lg">${pfEsc(it.name)}</div>
           <div class="pf-inv-meta">${pfEsc(it.buff)}</div>
         </div>
         <span class="pf-inv-tier tier-${it.tier}">${it.tier}</span>
@@ -462,14 +462,14 @@ function pfRenderPicker() {
     <div class="pf-scrim sheet open" onclick="pfClosePicker()">
       <div class="pf-panel sheet" onclick="event.stopPropagation()">
         <div class="pf-panel-head">
-          <div style="flex:1;min-width:0">
+          <div class="pf-fill">
             <div class="pf-panel-title">${slot.label}</div>
             <div class="pf-panel-sub">CHOOSE WHAT YOU CARRY</div>
           </div>
           ${eq[slot.id] ? `<button class="pf-unequip" onclick="pfUnequip('${slot.id}')">UNEQUIP</button>` : ''}
           <button class="pf-x" onclick="pfClosePicker()" aria-label="Close">✕</button>
         </div>
-        <div class="pf-panel-body" style="padding:0">
+        <div class="pf-panel-body flush">
           <div class="pf-pick-list">${rows}</div>
         </div>
       </div>
@@ -488,7 +488,7 @@ function pfRenderConfirm() {
     <div class="pf-scrim confirm open" onclick="pfCloseConfirm()">
       <div class="pf-panel lime" onclick="event.stopPropagation()">
         <div class="pf-panel-head">
-          <div style="flex:1;min-width:0">
+          <div class="pf-fill">
             <div class="pf-panel-title">LOCK IT IN</div>
             <div class="pf-panel-sub">SPENDING ${spent} ${spent === 1 ? 'POINT' : 'POINTS'}</div>
           </div>
@@ -496,7 +496,7 @@ function pfRenderConfirm() {
         </div>
         <div class="pf-panel-body">
           ${lines}
-          <div class="pf-warn" style="margin-top:12px">
+          <div class="pf-warn spaced">
             <span class="pf-warn-mark">▲</span>
             <span class="pf-warn-text">This is permanent. There is no respec — you cannot take these points back.</span>
           </div>
@@ -527,7 +527,7 @@ function pfRenderInfo() {
     <div class="pf-scrim info open" onclick="pfCloseInfo()">
       <div class="pf-panel" onclick="event.stopPropagation()">
         <div class="pf-panel-head">
-          <div style="flex:1;min-width:0"><div class="pf-panel-title">${title}</div></div>
+          <div class="pf-fill"><div class="pf-panel-title">${title}</div></div>
           <button class="pf-x" onclick="pfCloseInfo()" aria-label="Close">✕</button>
         </div>
         <div class="pf-panel-body">
@@ -600,7 +600,7 @@ function pfCommitSkills() {
   pfPending = {};
   pfConfirmOpen = false;
 
-  log('📈 Spent ' + spent + (spent === 1 ? ' point' : ' points') + ' — ' + summary.join(', '), 'gold');
+  log('SKILLS — spent ' + spent + (spent === 1 ? ' point' : ' points') + ' — ' + summary.join(', '), 'gold');
   toast(summary.join(' · '));
   if (typeof Sound !== 'undefined' && Sound.win) Sound.win();
   updateHUD();
@@ -627,11 +627,11 @@ function pfEquip(slotId, itemId) {
   G.equipped = G.equipped || {};
   if (G.equipped[slotId] === itemId) {   // tapping the equipped item unequips it
     delete G.equipped[slotId];
-    log('🎒 Took off ' + item.name, 'info');
+    log('GEAR — took off ' + item.name, 'info');
     toast(item.name + ' unequipped');
   } else {
     G.equipped[slotId] = itemId;
-    log('🎒 Equipped ' + item.name + ' — ' + item.buff, 'info');
+    log('GEAR — equipped ' + item.name + ' — ' + item.buff, 'info');
     toast(item.name + ' equipped');
   }
 
@@ -648,7 +648,7 @@ function pfUnequip(slotId) {
   if (!item) { pfGearPick = null; renderProfile(); return; }
   delete G.equipped[slotId];
   pfGearPick = null;
-  log('🎒 Took off ' + item.name, 'info');
+  log('GEAR — took off ' + item.name, 'info');
   toast(item.name + ' unequipped');
   updateHUD();
   renderProfile();

@@ -14,13 +14,25 @@
 | | |
 |---|---|
 | **Author** | Design handoff (Omelette), adopted and implemented by Claude Code |
-| **Date** | 2026-09-09 (drafted) · 2026-09-09 (updated post-implementation) |
+| **Date** | 2026-09-09 (drafted) · 2026-09-09 (updated post-implementation) · 2026-09-11 (re-issued against Chrome Money) |
 | **Status** | Implemented (v1 slice) — **needs review and sign-off** |
 | **Reviewers** | Bobby Babcock (spec owner) + maintainer |
-| **Related PRs** | — (working tree, uncommitted) |
+| **Related PRs** | wearedominion/opps#2 (merged 2026-09-11, screen shipped dark) |
 | **Type** | New system · New content type · State/economy |
 
 ---
+
+> **Visual re-issue, 2026-09-11 (DOM-49).** This TDD was written against
+> `OPPS_UI_Agent_Style_Guide.md`, which was deleted on 2026-09-10. Every visual claim below has
+> been re-stated against the Chrome Money contract in `CLAUDE.md`. Two things are worth knowing
+> before reading further:
+>
+> 1. **Most of the port had already happened.** The DOM-36 rewrite of `css/styles.css` collapsed
+>    the profile's parallel `--pf-*` token set into the global `:root` and carried the `pf-`
+>    classes over with it. The ticket for this re-issue assumed the CSS still had to be ported;
+>    it did not. What remained was in `js/profile.js`, not the stylesheet.
+> 2. **The screen ships dark.** It is on `main` but unreachable — the header entry point in
+>    `index.html` is commented out — until this TDD and DOM-40 are signed off.
 
 ## 1. Summary
 
@@ -57,10 +69,15 @@ STASH, backed by a full inventory list. Skill allocation is staged and confirmed
 no-respec warning. Fits the short-session async loop: level up, spend, re-equip, leave.
 See [`../design-handoff/SCREENS.md`](../design-handoff/SCREENS.md) §6 for full visual detail.
 
-**△ CHANGED FROM DRAFT — staging controls.** The draft described a lime `+` button only. The
-implementation follows the newer `.dc.html` prototype: each skill row has a **`−` and a `+`**,
-so a staged rank can be taken back before commit, plus a **RESET** button beside CONFIRM.
-Staged (uncommitted) values render lime; committed values render in the default text colour.
+**△ CHANGED FROM DRAFT — staging controls.** The draft described a single `+` button in the
+retired lime accent. The implementation follows the newer `.dc.html` prototype: each skill row
+has a **`−` and a `+`**, so a staged rank can be taken back before commit, plus a **RESET**
+button beside CONFIRM.
+
+**△ RE-SPECIFIED FOR CHROME MONEY (2026-09-11).** Staged state is now carried by three tokens,
+not one accent colour: the row border goes `--border-gold`, the staged value goes `--green`, and
+a staged rank pip fills `--chrome-fill`. Committed values render in `--text`. Lime is retired and
+must not reappear.
 
 ## 4. Tenet compliance
 
@@ -72,7 +89,7 @@ Staged (uncommitted) values render lime; committed values render in the default 
 | T4 JSON-first | **⚠️ EXCEPTION — see §7.** Content is temporarily hardcoded in `js/profile.js` at the maintainer's direction. This is a called-out, time-boxed deviation, not a precedent. |
 | T5 Graceful degradation | Verified: every tab renders against emptied content arrays and an empty `RANK_NAMES` without throwing. The `showTab()` hook is `typeof`-guarded so the game works if `profile.js` fails to load. |
 | T6 Single persistence seam | New fields on `G`; all writes via `GameState.save()`. No new storage key. No `localStorage`/`JestSDK.data` outside `js/state.js`. |
-| T7 Visual system | Built on the then-current `OPPS_UI_Agent_Style_Guide.md` tokens. **Superseded 2026-09-10** — re-port to the Chrome Money tokens in the UI Implementation Contract (`claude.md`). |
+| T7 Visual system | **Re-issued against Chrome Money 2026-09-11 (DOM-49).** The screen consumes the global token set declared in the single `:root` of `css/styles.css` — it declares no tokens of its own. Authority is the UI Implementation Contract in `CLAUDE.md`; the former `OPPS_UI_Agent_Style_Guide.md` was deleted 2026-09-10 and is not a live reference. Verified in-browser across all three tabs: no retired colour, no 2–4px radius, no opacity dimming, no shadow other than `--modal-shadow`. |
 | T8 Fiction stays fiction | Copy is in-fiction; no real-world claims. |
 | T9 CI/CD | **⚠️ NOT MET — see §13.** No automated tests were written; test infrastructure does not exist in the repo and standing it up was explicitly deferred by the maintainer. |
 
@@ -88,7 +105,7 @@ and `js/stats.js`; neither was touched, per §1.
 | `js/main.js` | `SKILL_POINTS_PER_LEVEL`; level-up grants points and refills pools; re-renders profile. |
 | `js/ui.js` | One `typeof`-guarded line in `showTab()`. |
 | `index.html` | Style-guide font link, nav item, tab container, overlay host, script registration. |
-| `css/styles.css` | 411 appended lines: style-guide tokens + profile classes. |
+| `css/styles.css` | Originally 411 appended lines carrying a parallel `--pf-*` token set. **Absorbed by the DOM-36 rewrite (2026-09-10):** the parallel tokens are gone and the `pf-` classes now consume the global set. Profile-specific layout modifiers (`.pf-fill`, `.pf-empty.bare`, …) were added 2026-09-11 to retire static inline styles from `js/profile.js`. |
 
 - **Module shape:** render + action functions (§5.2) — a tab-driven content system, as drafted.
   Pure math (`pfGearPower`, `pfPendingCost`, `pfPublicProjection`, `pfOwns`) is separated from
@@ -160,8 +177,10 @@ authored and will be added to the repo separately.
 
 ## 8. Assets
 
-Player portrait is a CSS placeholder (`repeating-linear-gradient` per the style guide's
-placeholder-imagery recipe) with an `aria-label`; real art still owed per `05-asset-spec.md`.
+Player portrait is a CSS placeholder — a `repeating-linear-gradient` in `#1f1f28`/`#17171c`,
+the same cold near-black pair the runtime map uses for building masses — with an `aria-label`;
+real art still owed per `05-asset-spec.md`. Once `data/portraits.json` is wired (DOM-60) the
+player portrait should resolve through it rather than through CSS.
 The body figure is inline SVG with `role="img"` and a label — no external asset.
 Gear rows do **not** surface the emoji `icon` field; the prototype avoids emoji.
 
