@@ -27,7 +27,7 @@
 
 ## 3. Player experience
 > What does the player see and do? Which tab/overlay? How does it fit the Mafia-Wars-style,
-> asynchronous, short-session loop? Reference the style guide for the visual treatment.
+> asynchronous, short-session loop? Reference the UI Implementation Contract in `claude.md` for the visual treatment.
 
 ## 4. Tenet compliance
 > State how the design honors each relevant tenet. Call out any tension and how it's resolved.

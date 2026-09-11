@@ -4,15 +4,33 @@
 
 function $(id) { return document.getElementById(id); }
 
+// Screen labels shown in the scroll body's section caption.
+// The map is deliberately absent — it is the one screen with no label.
+const SECTION_TITLES = {
+  map: 'THE HOOD', jobs: 'MAKE MOVES', fight: 'OPPS LIST', plugs: 'PLUGS',
+  crew: 'CREW', profile: 'PLAYER PROFILE', hood: 'ACTIVITIES',
+  props: 'SPOTS', store: 'THE PLUG', stats: 'STATS',
+};
+
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  $('tab-' + name).classList.add('active');
-  $('nav-' + name).classList.add('active');
+  const tab = $('tab-' + name);
+  if (tab) tab.classList.add('active');
+  const navItem = $('nav-' + name);
+  if (navItem) navItem.classList.add('active');
+
+  // The map fills the body: no padding, no scroll, no section label.
+  const app = $('app');
+  if (app) app.classList.toggle('is-map', name === 'map');
+
+  const title = $('section-title');
+  if (title) title.textContent = SECTION_TITLES[name] || '';
   if (name === 'stats')  renderStats();
   if (name === 'crew')   renderCrew();
   if (name === 'map')    GameMap.init();
   if (name === 'plugs')  renderPlugs();
+  if (name === 'profile' && typeof renderProfile === 'function') renderProfile();
   closeNav();
 }
 
@@ -56,4 +74,16 @@ function closeNav() {
 }
 function toggleNav() {
   document.querySelector('nav').classList.contains('open') ? closeNav() : openNav();
+}
+
+// ── METRICS / CURRENCIES PANEL ──────────────────
+function openMetrics() {
+  const el = $('metrics-overlay');
+  if (!el) return;
+  updateHUD();
+  el.classList.add('open');
+}
+function closeMetrics() {
+  const el = $('metrics-overlay');
+  if (el) el.classList.remove('open');
 }

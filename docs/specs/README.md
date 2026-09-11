@@ -38,7 +38,7 @@ diverge.
 
 Related existing docs:
 
-- [`../../OPPS_UI_Agent_Style_Guide.md`](../../OPPS_UI_Agent_Style_Guide.md) — the visual/CSS system spec. **Authoritative for all UI.** These specs never override it.
+- [`../../claude.md`](../../claude.md) — the **UI Implementation Contract** (Chrome Money design system). **Authoritative for all UI.** These specs never override it. It replaced the deleted `OPPS_UI_Agent_Style_Guide.md` on 2026-09-10.
 - [`../../README.md`](../../README.md) — quick-start, contribution workflow, roadmap.
 - [`../../CLAUDE.md`](../../CLAUDE.md) — context file for AI coding agents.
 

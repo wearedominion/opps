@@ -69,12 +69,12 @@ If you cannot answer all five in favor of adding it, don't.
 - ✅ **New vanilla-JS system files** in `js/`, following the module pattern and load-order rules
   in [`03-game-architecture.md`](./03-game-architecture.md).
 - ✅ **New JSON data files** in `data/` per [`04-game-data-spec.md`](./04-game-data-spec.md).
-- ✅ **New CSS** appended to `css/styles.css` using existing design tokens per
-  [`OPPS_UI_Agent_Style_Guide.md`](../../OPPS_UI_Agent_Style_Guide.md).
+- ✅ **New CSS** appended to `css/styles.css` using the design tokens in
+  [`claude.md` — UI Implementation Contract](../../claude.md).
 - ✅ **Standard Web Platform APIs** (Canvas, Web Audio, `fetch`, `localStorage`,
   `IntersectionObserver`, `requestAnimationFrame`, Pointer Events, etc.) — provided they are
   feature-detected and degrade gracefully.
-- ✅ **Additional Google Fonts weights** *already permitted by the style guide* (do not add new
+- ✅ **Additional Google Fonts weights** *already permitted by the UI Implementation Contract* (do not add new
   font families).
 
 ### 3.2 Third-party libraries (client) — narrow and conditional

@@ -12,6 +12,8 @@ let RANK_NAMES = [];
 //  MAIN — INIT
 // ─────────────────────────────────────────────
 
+const SKILL_POINTS_PER_LEVEL = 5;
+
 function addXP(amt) {
   G.xp += amt;
   while (G.xp >= G.xpNext) {
@@ -24,9 +26,18 @@ function addXP(amt) {
     G.health = G.maxHealth;
     G.attack += 3;
     G.defense += 2;
+    // Level-up grants 5 skill points and fully refills Stamina, Moves and Health
+    // (docs/profileScreen.md §4). Moves == G.energy, refilled above.
+    G.skillPts = (G.skillPts || 0) + SKILL_POINTS_PER_LEVEL;
+    G.maxStamina = G.maxStamina || 10;
+    G.stamina = G.maxStamina;
+    // BALANCE FLAG (Bobby): the automatic +3 attack / +2 defense / +15 maxHealth above
+    // competes with the 1-point ATTACK / DEFENSE / MAX HEALTH skill sinks, which grant +1.
+    // Left as-is deliberately — changing it is an economy decision, not an implementation one.
     showLevelUp();
     renderJobs();
     renderEnemies();
+    if (typeof renderProfile === 'function') renderProfile();
   }
   updateHUD();
 }

@@ -35,7 +35,7 @@ The TDD exists to catch tenet violations, architecture drift, and platform-contr
   validation + the data checklist.)
 - **Copy, tuning, and balance tweaks** that don't change schemas or curves materially.
 - **Bug fixes** that don't alter architecture, state shape, or a contract.
-- **Style/CSS fixes** that stay within [`OPPS_UI_Agent_Style_Guide.md`](../../OPPS_UI_Agent_Style_Guide.md).
+- **Style/CSS fixes** that stay within [`claude.md` — UI Implementation Contract](../../claude.md).
 
 If you're unsure whether your change needs a TDD, it needs a TDD (or at least a maintainer's
 one-line sign-off that it doesn't).
@@ -165,7 +165,7 @@ deploys (test → prod)**. Practical gates:
 - [ ] Optimized, correctly sized, correct format; named per convention
 - [ ] Lazy off-screen; emoji/placeholder fallback; alt text; no .DS_Store
 
-**UI** (OPPS_UI_Agent_Style_Guide.md)
+**UI** (`claude.md` — UI Implementation Contract)
 - [ ] Uses design tokens/components only; no new colors/fonts/radii
 
 **External systems** (07-external-systems.md)
