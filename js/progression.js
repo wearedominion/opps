@@ -1,0 +1,89 @@
+// ─────────────────────────────────────────────
+//  PROGRESSION — Clout → level
+//
+//  Clout is CUMULATIVE and monotonic: it is a lifetime total that is never
+//  spent and never decremented. Level is DERIVED from it against the table in
+//  data/progression.json — it is a cache, not a source of truth.
+//
+//  That derivation is the point. Retuning the curve reprices every level for
+//  every player on their next load, with no migration. The previous design
+//  decremented a remainder (G.xp -= G.xpNext), which froze each player at
+//  whatever level the curve happened to give them the day they earned it.
+//
+//  Consequence, deliberate: if the table is ever retuned UPWARD, a player's
+//  derived level can go DOWN on reload. Retune with that in mind.
+//
+//  Pure functions, table injected, so they are testable without a DOM.
+//  See docs/specs/08-economy-schema.md §3.
+// ─────────────────────────────────────────────
+
+// Total Clout required to have REACHED a given level (level 1 = 0).
+function cloutToReach(level, table) {
+  const rows = table || (typeof PROGRESSION !== 'undefined' ? PROGRESSION : null);
+  if (!rows || !rows.length) return 0;
+  let acc = 0;
+  for (let i = 0; i < rows.length && rows[i].level < level; i++) {
+    if (rows[i].cloutToNext === null) break;   // level cap: nothing further to clear
+    acc += rows[i].cloutToNext;
+  }
+  return acc;
+}
+
+// Level for a lifetime Clout total. Clamps at the table's last row.
+function levelFromClout(clout, table) {
+  const rows = table || (typeof PROGRESSION !== 'undefined' ? PROGRESSION : null);
+  // No table (fetch failed, or called before boot): report level 1 rather than
+  // inventing a curve. Callers must not overwrite a saved level with this.
+  if (!rows || !rows.length) return 1;
+  const total = Math.max(0, clout || 0);
+  let acc = 0;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].cloutToNext === null) return rows[i].level;   // cap
+    if (total < acc + rows[i].cloutToNext) return rows[i].level;
+    acc += rows[i].cloutToNext;
+  }
+  return rows[rows.length - 1].level;
+}
+
+// Progress within the current level — everything the HUD and Profile need.
+// `need` is 0 and `pct` 100 at the level cap.
+function cloutProgress(clout, table) {
+  const rows = table || (typeof PROGRESSION !== 'undefined' ? PROGRESSION : null);
+  const total = Math.max(0, clout || 0);
+  const level = levelFromClout(total, rows);
+  const row = rows && rows.length ? rows[level - 1] : null;
+  const need = row && row.cloutToNext !== null ? row.cloutToNext : 0;
+  const into = need ? total - cloutToReach(level, rows) : 0;
+  return {
+    level: level,
+    into: into,
+    need: need,
+    toNext: need ? need - into : 0,
+    pct: need ? Math.max(0, Math.min(100, (into / need) * 100)) : 100,
+    atCap: !need,
+  };
+}
+
+// Rank title for a level. Ranks are BANDS: each name covers
+// tuning.progression.levelsPerRank levels, and the last name absorbs everything
+// above the list — so the top rank is a long plateau rather than a title nobody
+// holds for more than one level.
+//
+// `names` is ordered and positional: ranks.json index 0 is the first band. Do not
+// reorder it (that retitles existing players), and note that widening or narrowing
+// levelsPerRank retitles everyone too — it is flavour, not a grant, so nothing is
+// lost, but it is visible.
+function rankForLevel(level, names, levelsPerRank) {
+  const list = names || (typeof RANK_NAMES !== 'undefined' ? RANK_NAMES : null);
+  if (!list || !list.length) return '';
+  const span = levelsPerRank
+    || (typeof TUNING !== 'undefined' && TUNING && TUNING.progression
+        && TUNING.progression.levelsPerRank)
+    || 10;
+  const idx = Math.floor((Math.max(1, level || 1) - 1) / Math.max(1, span));
+  return list[Math.min(idx, list.length - 1)];
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { cloutToReach, levelFromClout, cloutProgress, rankForLevel };
+}

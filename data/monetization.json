@@ -1,0 +1,27 @@
+[
+  {
+    "id": "refill_moves",
+    "sku": "refill_moves",
+    "name": "Refill Moves",
+    "desc": "Top your Moves pool straight back to full.",
+    "mockPrice": "$0.99",
+    "effect": { "type": "refillPool", "pool": "moves" }
+  },
+  {
+    "id": "refill_stamina",
+    "sku": "refill_stamina",
+    "name": "Refill Stamina",
+    "desc": "Back in the fight without waiting on regen.",
+    "mockPrice": "$0.99",
+    "badge": "POPULAR",
+    "effect": { "type": "refillPool", "pool": "stamina" }
+  },
+  {
+    "id": "full_heal",
+    "sku": "full_heal",
+    "name": "Full Heal",
+    "desc": "Restore Health to full immediately.",
+    "mockPrice": "$1.99",
+    "effect": { "type": "refillPool", "pool": "health" }
+  }
+]
