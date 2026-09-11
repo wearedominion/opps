@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "capabilities": {
+    "spotOfflineCapSeconds": { "type": "linear", "base": 3600, "step": 600 }
+  }
+}

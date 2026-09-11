@@ -72,7 +72,7 @@ place that knows whether we're on Jest or localStorage. Do not scatter `localSto
 `JestSDK.data` calls through the codebase. See [`03-game-architecture.md`](./03-game-architecture.md).
 
 ### T7 — Visual system is fixed
-All UI follows [`claude.md` — UI Implementation Contract](../../claude.md). No new
+All UI follows [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md). No new
 colors, fonts, radii, or shadows. The dark, gritty aesthetic is part of the product.
 
 ### T8 — Fiction stays fiction
@@ -110,8 +110,15 @@ Each feature maps to a tab in the UI (`index.html`) and one or more systems in `
 [`03-game-architecture.md`](./03-game-architecture.md) for the code behind each.
 
 ### 4.1 Core progression
-- **Ranks & XP** — 10 named ranks (`data/ranks.json`), XP curve scales ×1.6 per level. Leveling
-  grants +energy, +health, +attack, +defense.
+- **Clout & levels** — a single progression stat, **Clout** (the old `xp` + `rep`, merged
+  2026-09-11). Level is **derived** from lifetime Clout against `data/progression.json`
+  (120 levels, `round(100 · 1.10^L)`, ~92.7M lifetime to cap) — never stored, so the curve is
+  retunable with no migration. The `×1.6` curve this section used to describe is gone.
+  **The curve is decided; do not carry it as open.** See `data/README.md` and
+  [`08-economy-schema.md`](./08-economy-schema.md) §3.
+- **Ranks** — 10 names in `data/ranks.json` are **bands** of `tuning.progression.levelsPerRank`
+  (10) levels, layered on the Clout-driven level. Leveling grants +moves, +health, +attack,
+  +defense.
 - **Energy** — regenerates 1 per 60s, timestamp-based so it accrues while the game is closed.
   Gates most active play.
 - **Health** — depleted by combat, restored by resting (energy) or Gems.
@@ -193,6 +200,6 @@ A player-facing feature is not done until:
 1. It respects every tenet in §2.
 2. It works in the **plain-browser** fallback (no SDK) and on the **Jest** surface.
 3. Its content (if any) is in JSON per [`04-game-data-spec.md`](./04-game-data-spec.md).
-4. Its UI matches [`claude.md` — UI Implementation Contract](../../claude.md).
+4. Its UI matches [`CLAUDE.md` — UI Implementation Contract](../../CLAUDE.md).
 5. It persists correctly through `GameState` (or explicitly documents why it is session-only).
 6. It has a reviewed TDD (see [`06-technical-requirements.md`](./06-technical-requirements.md)).

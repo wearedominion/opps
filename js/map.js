@@ -19,7 +19,7 @@ const GameMap = (() => {
     const W = 1240, H = 2300;
     let s = 20260611 >>> 0;
     const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-    // Chrome Money map palette (claude.md, structural change #5).
+    // Chrome Money map palette (CLAUDE.md, structural change #5).
     // Values are literals because this SVG is built in JS — CSS custom
     // properties cannot reach it.
     const C = {

@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    OPPS — CHROME MONEY
-   Implements the UI Implementation Contract in claude.md.
+   Implements the UI Implementation Contract in CLAUDE.md.
    Cold near-black panels. One warm metal gradient reserved for
    money and the single primary action. Anton display over
    Space Grotesk UI. No emoji, no red outside combat.
@@ -71,7 +71,7 @@ body {
 }
 
 /* chrome-clipped text. Only four things use this: the OPPS wordmark,
-   the HUD bread figure, crew stat counters, gem pack amounts. */
+   the HUD bread figure, crew stat counters, purchase card amounts. */
 .chrome-text {
   background: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
   -webkit-background-clip: text;
@@ -124,7 +124,7 @@ header {
   color: transparent;
 }
 
-/* rank + gems header pills */
+/* header pills */
 .hdr-pills { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .hdr-pill {
   display: flex; align-items: center; gap: 5px;
@@ -735,14 +735,14 @@ main::-webkit-scrollbar { width: 0; height: 0; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.bad { border-color: var(--border-red); color: var(--red); }
 
-/* ── GEMS ── */
-.gem-grid {
+/* ── IN-APP PURCHASES ── */
+.iap-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--gap-list);
   margin-bottom: 4px;
 }
-.gem-card {
+.iap-card {
   background: var(--panel-fill);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
@@ -750,9 +750,9 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   text-align: center;
   position: relative;
 }
-.gem-card.gem-featured { border-color: var(--border-gold); }
+.iap-card.iap-featured { border-color: var(--border-gold); }
 /* the badge overhangs the top edge by 9px */
-.gem-badge {
+.iap-badge {
   position: absolute;
   top: -9px; left: 50%; transform: translateX(-50%);
   background: var(--chrome-fill);
@@ -764,7 +764,7 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   border-radius: var(--r-pill);
   white-space: nowrap;
 }
-.gem-amount {
+.iap-name {
   font-family: var(--display);
   font-size: 22px;
   letter-spacing: 1px;
@@ -774,26 +774,26 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   color: transparent;
   margin-bottom: 4px;
 }
-.gem-price {
+.iap-price {
   color: var(--chrome);
   font-family: var(--ui);
   font-weight: 500;
   font-size: 12px;
   margin-bottom: 10px;
 }
-.gem-balance-inline {
+.iap-balance-inline {
   color: var(--chrome);
   font-family: var(--ui);
   font-size: 13px;
   font-weight: 500;
   margin-left: 8px;
 }
-.gem-spend-grid {
+.iap-spend-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--gap-list);
 }
-.gem-spend-card {
+.iap-spend-card {
   background: var(--panel-fill);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
@@ -801,15 +801,15 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   text-align: center;
 }
 /* locked spends render at full contrast — the action names the gate */
-.gem-spend-card.gem-spend-locked { border-color: var(--border); }
-.gem-spend-label {
+.iap-spend-card.iap-spend-locked { border-color: var(--border); }
+.iap-spend-label {
   font-family: var(--display);
   font-size: 13px;
   letter-spacing: 1px;
   color: var(--text);
   margin-bottom: 4px;
 }
-.gem-spend-cost {
+.iap-spend-cost {
   color: var(--chrome);
   font-family: var(--ui);
   font-weight: 500;
@@ -1598,7 +1598,7 @@ img.plug-portrait {
 /* ═══════════════════════════════════════════════════════════
    METRICS / CURRENCIES PANEL
    The header's clout cluster opens this. It carries the stats the
-   design moved out of the header (BAG, MOVES, HEALTH, GEMS).
+   design moved out of the header (BAG, MOVES, HEALTH, STAMINA).
    ═══════════════════════════════════════════════════════════ */
 #metrics-overlay {
   display: none;
@@ -1709,7 +1709,7 @@ img.plug-portrait {
 /* Replaces inline style="" attributes swept out of the renderers
    (crew.js, jobs.js, stats.js). Static styling belongs here. */
 .card-note { color: var(--muted); font-size: 13px; }
-.gem-unit { font-family: var(--ui); font-size: 10px; letter-spacing: 2px; color: var(--faint); }
+.iap-unit { font-family: var(--ui); font-size: 10px; letter-spacing: 2px; color: var(--faint); }
 
 .job-locked-note {
   color: var(--disabled); font-size: 10px; letter-spacing: 2px;
@@ -1717,7 +1717,7 @@ img.plug-portrait {
 }
 
 /* money in the metrics panel: --chrome at body size, never the hero clip */
-.metric-val.money { color: var(--chrome); }
+.metric-val.cash { color: var(--chrome); }
 
 .levelup-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 

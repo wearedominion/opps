@@ -5,10 +5,9 @@
 function renderStore() {
   const container = $('store-list');
   container.innerHTML = '';
-  renderGemSection();
   STORE_ITEMS.forEach(item => {
     const owned = G.inventory.includes(item.id);
-    const canAfford = G.money >= item.price;
+    const canAfford = G.cash >= item.price;
     const div = document.createElement('div');
     div.className = 'store-item';
     div.innerHTML = `
@@ -26,13 +25,16 @@ function renderStore() {
 function buyItem(itemId) {
   const item = STORE_ITEMS.find(i => i.id === itemId);
   if (!item) return;
-  if (G.money < item.price) { toast("You're broke for that!", true); return; }
+  if (G.cash < item.price) { toast("You're broke for that!", true); return; }
   if (G.inventory.includes(itemId)) { toast('Already equipped!', true); return; }
-  G.money -= item.price;
+  debit('cash', item.price, REASON.GEAR_BUY, { ref: { itemId: item.id } });
   G.inventory.push(itemId);
   G.attack += item.atk || 0;
   G.defense += item.def || 0;
-  if (item.hpBonus) { G.maxHealth += item.hpBonus; G.health = Math.min(G.health + item.hpBonus, G.maxHealth); }
+  if (item.hpBonus) {
+    G.health.max += item.hpBonus;
+    credit('health', item.hpBonus, REASON.GEAR_BUY, { ref: { itemId: item.id } });
+  }
   log(`Bought ${item.name} — ATK +${item.atk} DEF +${item.def}`, 'info');
   toast(`${item.name} equipped!`);
   updateHUD();

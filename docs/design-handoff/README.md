@@ -1,21 +1,25 @@
 > **Provenance note (added when this was copied into the repo, 2026-09-09).**
 > This directory is a **verbatim copy** of the design-handoff bundle's written specs, brought in
-> so that references from `docs/tdds/` resolve. Two things to know:
+> so that references from `docs/tdds/` resolve. Three things to know:
 >
 > 1. **Only `README.md` and `SCREENS.md` were copied.** The three prototype files listed in the
 >    table below — `OPPS App.dc.html`, `MakeMoves.dc.html`, `OPPS App (standalone).html` — were
 >    **not** brought in. They total ~2.2 MB, they are reference-only, and this document itself
 >    says they must never be ported. They live in the `design_handoff_opps_game` bundle.
 > 2. **This is a design document, not a spec.** Where it disagrees with `docs/specs/` or
->    the UI Implementation Contract in `claude.md`, those win. See the correction immediately below.
+>    the UI Implementation Contract in `CLAUDE.md`, those win. See the correction immediately below.
+> 3. **The Chrome Money visual reference is in `chrome-money/`** (added 2026-09-11, DOM-38) —
+>    the style guide and concept board the UI Implementation Contract cites. That is the design
+>    the repo was actually built to; this document is the older amber/highlighter round.
 >
 > **The tokens section of this document is dead — do not use it.** It describes the amber /
 > highlighter system (`#f5902a` / `#e23b2e` / `#bfce1c`, Saira Condensed / Oswald / JetBrains
 > Mono) from `OPPS_UI_Agent_Style_Guide.md`, which was **deleted on 2026-09-10** and replaced by
-> the **Chrome Money** system in the UI Implementation Contract in `claude.md`. Chrome, Anton and
+> the **Chrome Money** system in the UI Implementation Contract in `CLAUDE.md`. Chrome, Anton and
 > Space Grotesk override every colour, font and radius named below. The shipped `index.html` and
-> `css/styles.css` match neither system yet — the port runs code → `claude.md`. Treat this
-> document as **layout and screen-inventory reference only**.
+> `css/styles.css` are now on Chrome Money — the port landed on `main` on 2026-09-11 — so where
+> this document and the code disagree, the code is right. Treat this document as **layout and
+> screen-inventory reference only**.
 >
 > Related: the build order below calls the app shell "mostly exists, align to the design." It is a
 > **replacement**, not an alignment, and it is the critical path for every other screen.
@@ -50,7 +54,7 @@ introduced to it**: the repo prohibits frameworks, bundlers, and build steps
 
 | Authority | Governs |
 |---|---|
-| `claude.md` (UI Implementation Contract) | **All UI.** Highest authority for visuals. |
+| `CLAUDE.md` (UI Implementation Contract) | **All UI.** Highest authority for visuals. |
 | `docs/specs/03-game-architecture.md` | Module pattern, action sequence, load order, state model |
 | `docs/specs/04-game-data-spec.md` | JSON-first content, schemas, save migration |
 | `docs/specs/02-tech-architecture.md` | What may and may not be added to the stack |

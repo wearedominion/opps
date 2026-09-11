@@ -4,14 +4,14 @@
 
 function renderStats() {
   const grid = $('stat-grid');
-  const rank = RANK_NAMES[Math.min(G.level - 1, RANK_NAMES.length - 1)];
+  const rank = rankForLevel(G.level);
   const stats = [
     ['RANK', rank],
     ['LEVEL', G.level],
-    ['REP', G.rep],
+    ['CLOUT', G.clout.toLocaleString()],
     ['ATTACK', G.attack],
     ['DEFENSE', G.defense],
-    ['MONEY', '$' + G.money.toLocaleString()],
+    ['CASH', '$' + G.cash.toLocaleString()],
     ['INCOME/COLLECT', '$' + collectIncome()],
     ['JOBS DONE', Object.values(G.jobProgress).reduce((a, b) => a + b, 0)],
   ];
