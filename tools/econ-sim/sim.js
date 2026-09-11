@@ -144,6 +144,7 @@ function simulateProgression(profile, horizonDays) {
   const staminaPerDay = STAMINA_PER_HOUR * 24 * profile.staminaUse;
   let clout = 0;
   const levelAtDay = [levelForClout(0)];
+  const cloutAtDay = [0];
   const daysToLevel = new Array(MAX_LEVEL + 1).fill(null);
   daysToLevel[1] = 0;
   for (let day = 1; day <= horizonDays; day++) {
@@ -155,9 +156,10 @@ function simulateProgression(profile, horizonDays) {
     clout += movesPerDay * cloutPerMove(jc) + fightsPerDay * fightCloutEV(e, p0);
     const newL = levelForClout(clout);
     levelAtDay[day] = newL;
+    cloutAtDay[day] = clout;
     for (let l = L + 1; l <= newL; l++) if (daysToLevel[l] === null) daysToLevel[l] = day;
   }
-  return { levelAtDay, daysToLevel };
+  return { levelAtDay, cloutAtDay, daysToLevel };
 }
 
 // ── C. Gear affordability ────────────────────────────────────────────────────
@@ -312,6 +314,16 @@ function run() {
   sims.forEach(([name, s]) => {
     say('    ' + pad(name, 10) + '  L' + s.levelAtDay[1] + ' / L' + s.levelAtDay[7] + ' / L' + s.levelAtDay[30]);
   });
+  const capTarget = TARGETS.daysToMaxLevel;
+  const capSim = sims.find(([n]) => n === capTarget.profile)[1];
+  const cloutAtTargetDay = capSim.cloutAtDay[capTarget.days];
+  const impliedCloutPerDay = cumClout[MAX_LEVEL] / capTarget.days;
+  const currentCloutPerDay = cloutAtTargetDay / capTarget.days;
+  say('\n  Target: level ' + MAX_LEVEL + ' in ' + capTarget.days + ' days (' + capTarget.profile + ') — actual: '
+    + (capSim.daysToLevel[MAX_LEVEL] === null ? '>' + horizon + ' days' : capSim.daysToLevel[MAX_LEVEL] + ' days')
+    + '. Implies ' + fmt(impliedCloutPerDay) + ' Clout/day average vs ' + fmt(currentCloutPerDay)
+    + ' today (×' + fmt(impliedCloutPerDay / currentCloutPerDay) + ' gap — DOM-71/DOM-81).');
+
   say('\n  Days to reach level (committed profile):');
   const committedSim = sims.find(([n]) => n === 'committed')[1];
   const marks = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 119, 120];
@@ -397,6 +409,7 @@ function run() {
     bands: BANDS.map(l => ratesAtLevel(l, 0)),
     levelByDay: Object.fromEntries(sims.map(([n, s]) => [n, { d1: s.levelAtDay[1], d7: s.levelAtDay[7], d30: s.levelAtDay[30] }])),
     daysToCap: Object.fromEntries(sims.map(([n, s]) => [n, s.daysToLevel[MAX_LEVEL]])),
+    capTarget: { ...capTarget, impliedCloutPerDay, currentCloutPerDay },
     ttl: Array.from({ length: MAX_LEVEL }, (_, i) => [i + 1,
       byName.casual.daysToLevel[i + 1], byName.committed.daysToLevel[i + 1], byName.grinder.daysToLevel[i + 1]]),
     fightRate: sustainableFightsPerHour(p0, T('start.health')),
@@ -460,7 +473,8 @@ function buildHtml(json, outDir) {
   const liveMovesShare = Math.round(liveJobs / (liveJobs + liveSpots) * 100);
 
   const paceFast = lb.d30 > t.levelByDay.day30;
-  const capDays = json.daysToCap.committed;
+  const capDays = json.daysToCap[t.daysToMaxLevel.profile];
+  const capTargetDays = t.daysToMaxLevel.days;
 
   const tokens = {
     GENERATED_DATE: json.generated.slice(0, 10),
@@ -493,9 +507,12 @@ function buildHtml(json, outDir) {
     PACE_CLASS: paceFast ? 'neg' : 'pos',
     PACE_VERDICT: paceFast ? 'too fast' : 'on pace',
     CAP_YEARS: years(json.daysToCap.grinder),
+    T_CAP: capTargetDays + ' days (' + t.daysToMaxLevel.profile + ')',
     CAP_DAYS: capDays === null ? '&gt;' + Math.round(json.horizonDays / 365) + ' years' : years(capDays).replace('~', ''),
-    CAP_CLASS: capDays === null || capDays > 365 * 3 ? 'neg' : 'pos',
-    CAP_VERDICT: capDays === null || capDays > 365 * 3 ? 'wall' : 'ok',
+    CAP_CLASS: capDays === null || capDays > capTargetDays * 1.25 ? 'neg' : capDays < capTargetDays * 0.75 ? 'neg' : 'pos',
+    CAP_VERDICT: capDays === null || capDays > capTargetDays * 1.25 ? 'wall'
+               : capDays < capTargetDays * 0.75 ? 'too fast' : 'on pace',
+    CAP_GAP: '×' + (Math.round(json.capTarget.impliedCloutPerDay / json.capTarget.currentCloutPerDay * 10) / 10),
     T_FAUCETS: [fShare.moves, fShare.fights, fShare.spots].map(v => Math.round(v * 100)).join(' / '),
     L_FAUCETS: '≈' + liveMovesShare + ' / − / ' + (100 - liveMovesShare),
     T_SESSIONS: t.session.sessionsPerDay + ' × ~' + t.session.minutesPerSession + ' min',

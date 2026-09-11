@@ -187,13 +187,13 @@
 
   <section>
     <div class="card">
-      <h2>PACING TARGETS — PROPOSED, AWAITING RATIFICATION</h2>
-      <p class="sub">Written down before tuning toward them (tools/econ-sim/targets.json · docs/specs/09-economy-pacing-targets.md). Live data vs target:</p>
+      <h2>PACING TARGETS — RATIFIED 2026-09-11</h2>
+      <p class="sub">Written down before tuning toward them; ratified by Jake with the level-%%MAX_LEVEL%%-in-one-year amendment (tools/econ-sim/targets.json · docs/specs/09-economy-pacing-targets.md). Hitting the cap target needs %%CAP_GAP%% today's Clout/day — that gap is DOM-71/DOM-81's brief. Live data vs target:</p>
       <table class="targets">
         <thead><tr><th>Target</th><th>Proposed</th><th>Live (committed)</th><th></th></tr></thead>
         <tbody>
           <tr><td>Level at day 1 / 7 / 30</td><td>%%T_D1%% / %%T_D7%% / %%T_D30%%</td><td>%%L_D1%% / %%L_D7%% / %%L_D30%%</td><td class="%%PACE_CLASS%%">%%PACE_VERDICT%%</td></tr>
-          <tr><td>Days to level %%MAX_LEVEL%%</td><td>reachable</td><td>%%CAP_DAYS%%</td><td class="%%CAP_CLASS%%">%%CAP_VERDICT%%</td></tr>
+          <tr><td>Days to level %%MAX_LEVEL%%</td><td>%%T_CAP%%</td><td>%%CAP_DAYS%%</td><td class="%%CAP_CLASS%%">%%CAP_VERDICT%%</td></tr>
           <tr><td>Faucet share (Moves/Fights/Spots)</td><td>%%T_FAUCETS%%</td><td>%%L_FAUCETS%%</td><td class="neg">off</td></tr>
           <tr><td>Sessions per day / length</td><td>%%T_SESSIONS%%</td><td colspan="2" style="text-align:right;color:var(--faint)">assumption, needs telemetry (DOM-78)</td></tr>
           <tr><td>Hospitalized share</td><td>≤ %%T_HOSPITAL%%</td><td colspan="2" style="text-align:right;color:var(--faint)">Hospital not built (DOM-72)</td></tr>

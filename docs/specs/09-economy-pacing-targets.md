@@ -1,6 +1,7 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.0 · Targets proposed, awaiting ratification · Simulator delivered (DOM-67)
+**Status:** v1.1 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+one year of committed play · Simulator delivered (DOM-67)
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-74.
@@ -16,17 +17,27 @@ and every table in this doc can be regenerated.
 ## 1. Pacing targets
 
 Written down **before** tuning toward them, per the DOM-67 brief. Proposed by the simulator
-work on 2026-09-11; each needs a ratify/adjust decision from design (Jake). Once ratified they
-are the spec, and a tuning change that misses them needs a reason.
+work on 2026-09-11 and **ratified the same day by Jake**, who amended one: level 120 lands in
+one year of committed play, not merely "reachable". These are now the spec — a tuning change
+that misses them needs a reason.
 
 | Target | Value | Why |
 |---|---|---|
 | Session length | ~8 min | Long enough to spend a session's pool regen, short for RCS/iMessage context |
 | Sessions per day | 3 | Matches the Spots collect-on-login loop and pool sizes |
 | Level at day 1 / 7 / 30 | **8 / 20 / 40** | Front-load early ranks, keep 41–120 as the long game |
+| Days to level 120 (committed) | **365** | The cap is a one-year chase, not a decade — ratified amendment 2026-09-11 |
 | Faucet share of Cash income | Moves 45% · Fights 30% · Spots 25% | Moves stay the backbone; fighting is meaningful but optional; Spots reward ownership without going idle-game |
 | Players hospitalized at any moment | ≤ 8% | Hospital is a beat, not a wall |
 | New-player offline accrual cap | ~1 h | The login-forcing lever; grows with level per `data/unlocks.json` |
+
+**What the one-year cap implies (simulator, 2026-09-11):** 92.7M lifetime Clout in 365 days is
+an average of **~254,000 Clout/day**; the current catalogs produce **~18,800 Clout/day**
+committed — a **×13.5 gap**, concentrated in the late game because Clout/day is flat from L7.
+That gap is the sizing brief for DOM-71 (Moves ladder) and DOM-81 (per-source Clout yields):
+late-game content must scale Clout income roughly with the ×1.1/level curve so the year is
+spent climbing, not stalled. Reconcile with the day-30 target: L40 costs only ~44k cumulative
+Clout, so the scaling belongs almost entirely to levels 40–120.
 
 ## 2. Where the live data lands against those targets
 
@@ -37,8 +48,9 @@ Simulator output, 2026-09-11, `tuning.json` v2 (values, not judgements — rerun
   play reaches L100 in ~733 days and **level 120 in >10 years** (grinding nonstop: ~9.4 years).
   The curve is not the problem; the catalogs are (§4 F4): jobs stop growing at `levelReq 7`
   and enemies at 5, so Clout/day is **flat from L7 to L120** while `cloutToNext` grows
-  ×1.1/level. **DOM-71 (Moves ladder) and DOM-81 (Clout yields) must extend earning with
-  level**, not retune the curve.
+  ×1.1/level. Against the ratified 365-day cap target that is a **×13.5 Clout/day shortfall**.
+  **DOM-71 (Moves ladder) and DOM-81 (Clout yields) must extend earning with level**, not
+  retune the curve.
 - **Faucet shares are wildly off target.** As built, exploit ceilings dominate (launder,
   Spots tap-farming, §4 F1–F2). Even exploits aside, fights at an empty wallet out-earn top
   jobs ($1.8k/h vs $1.6k/h at p=0.5) and Spots pay ~$6.4k/day intended vs jobs ~$34.6k/day
