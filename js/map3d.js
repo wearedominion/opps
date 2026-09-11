@@ -27,7 +27,7 @@ var Map3D = (function () {
     if (_host) {
       _host.innerHTML =
         '<div style="position:absolute;inset:0;display:flex;align-items:center;' +
-        'justify-content:center;color:#a39c91;font:12px \'Space Mono\',monospace;' +
+        'justify-content:center;color:#8e8e9a;font:12px \'Space Grotesk\',sans-serif;' +
         'text-align:center;padding:20px;">3D view failed to load.<br>' + msg + '</div>';
     }
   }
@@ -39,7 +39,7 @@ var Map3D = (function () {
     _active = true;
     hostEl.innerHTML =
       '<div style="position:absolute;inset:0;display:flex;align-items:center;' +
-      'justify-content:center;color:#615c54;font:11px \'Space Mono\',monospace;' +
+      'justify-content:center;color:#55555f;font:11px \'Space Grotesk\',sans-serif;' +
       'letter-spacing:2px;">LOADING 3D…</div>';
     _loadThree(_build);
   }
@@ -285,19 +285,19 @@ var Map3D = (function () {
     data.labels.forEach(function (l) {
       var op = l.op != null ? l.op : 0.55;
       var el = mkLabel(l.t.toUpperCase(),
-        'font:italic 800 ' + Math.round((l.size || 20) * 0.85) + 'px \'Barlow Condensed\',sans-serif;' +
+        'font:400 ' + Math.round((l.size || 20) * 0.85) + 'px Anton,sans-serif;' +
         'letter-spacing:2px;color:rgba(169,177,189,' + (op * 0.9).toFixed(2) + ');' +
         'text-shadow:0 1px 6px rgba(0,0,0,0.85);');
       tracked.push({ el: el, v: new THREE.Vector3(X(l.x), 5, Z(l.y)), dy: 0, cx: true });
     });
     data.pins.forEach(function (p) {
       var el = mkLabel(
-        '<div style="font:700 9px \'Bebas Neue\',sans-serif;letter-spacing:1px;color:' + p.color + '">' +
+        '<div style="font:400 9px Anton,sans-serif;letter-spacing:1px;color:' + p.color + '">' +
           p.label + '</div>' +
-        (p.sub ? '<div style="font:400 8px \'Space Mono\',monospace;color:#a39c91;margin-top:1px">' +
+        (p.sub ? '<div style="font:400 8px \'Space Grotesk\',sans-serif;color:#8e8e9a;margin-top:1px">' +
           p.sub + '</div>' : ''),
-        'background:rgba(10,9,8,0.82);border:1px solid rgba(255,255,255,0.1);' +
-        'border-radius:3px;padding:3px 7px;'
+        'background:rgba(17,17,22,0.9);border:1px solid #26262e;' +
+        'border-radius:999px;padding:4px 9px;'
       );
       tracked.push({ el: el, v: new THREE.Vector3(X(p.x), 122, Z(p.y)), dy: -14, cx: true });
     });
