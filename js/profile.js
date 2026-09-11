@@ -6,7 +6,7 @@
 
 // ═════════════════════════════════════════════
 //  CONTENT — TEMPORARY HARDCODE
-//  ⚠️ TENET T4 (JSON-first) EXCEPTION, called out per
+//  !! TENET T4 (JSON-first) EXCEPTION, called out per
 //     docs/specs/03-game-architecture.md §6 step 3.
 //  These three tables are placeholder content lifted from the design
 //  prototype. They are shaped to move verbatim into data/gear.json and
