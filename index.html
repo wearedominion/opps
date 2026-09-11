@@ -275,11 +275,20 @@
         </div>
         <button class="attack-btn wide" onclick="hitEm()">HIT 'EM</button>
       </div>
-      <div id="sim-canvas-wrap" hidden>
-        <canvas id="sim-canvas"></canvas>
-        <div id="sim-result"></div>
+      <!-- The sparkline well. One element, not two: this replaces the old
+           #sim-canvas-wrap canvas and the dead #combat-log div that sat
+           beside it. Lines are stroked from CSS tokens (.you / .opp) so the
+           palette can't drift out of the design system again. -->
+      <div class="combat-log" id="combat-log" hidden>
+        <svg class="combat-spark" id="combat-spark" aria-hidden="true">
+          <line class="combat-spark-mid" id="spark-mid"></line>
+          <path class="opp" id="spark-opp"></path>
+          <path class="you" id="spark-you"></path>
+          <circle class="combat-spark-dot opp" id="spark-dot-opp" r="3"></circle>
+          <circle class="combat-spark-dot you" id="spark-dot-you" r="3"></circle>
+        </svg>
+        <div class="combat-spark-result" id="sim-result"></div>
       </div>
-      <div class="combat-log" id="combat-log"></div>
       <div class="combat-result" id="combat-result"></div>
       <button class="close-combat" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
     </div>
