@@ -77,7 +77,6 @@ entries. All money ranges are `[min, max]` integer tuples.
   "id": "snitch",             // string, unique, permanent
   "name": "Local Snitch",     // string
   "role": "Informant",        // string, flavor subtitle
-  "icon": "🐀",               // string, emoji fallback when no portrait
   "hp": 40,                   // int > 0
   "atk": 6,                   // int ≥ 0
   "def": 3,                   // int ≥ 0
@@ -89,18 +88,21 @@ entries. All money ranges are `[min, max]` integer tuples.
   }
 }
 ```
-> **Note (known divergence):** each enemy also has a **portrait** and **threat rating** that today
-> live in `js/combat.js` (`ENEMY_PORTRAITS`, `ENEMY_THREAT`) keyed by `id`, not in the JSON. New
-> enemies require updating those maps too. This is a data-in-code divergence flagged for
-> migration (§6). If you add an enemy, either extend those maps **or** (preferred, via TDD) move
-> `portrait` and `threat` into `enemies.json` and update `combat.js` to read them.
+> **No `icon` field.** It was removed on 2026-09-11 — the UI Implementation Contract in
+> `CLAUDE.md` bans emoji, and it was only ever a fallback for enemies with no portrait. Every
+> enemy has one, so it never rendered. See `data/README.md`.
+>
+> **Note (known divergence, partly resolved):** each enemy also has a **portrait** and a
+> **threat rating** that live in `js/combat.js` (`ENEMY_PORTRAITS`, `ENEMY_THREAT`) keyed by
+> `id`, not in the JSON. Portraits now have a home in **`portraits.json`**; wiring the renderer
+> to read from it is tracked as DOM-60. `ENEMY_THREAT` is still data-in-code and unaddressed.
+> If you add an enemy today you must still extend `ENEMY_THREAT` in `combat.js`.
 
 ### 3.3 `store.json` — Gear (The Plug)
 ```jsonc
 {
   "id": "knife",             // string, unique, permanent
   "name": "Switchblade",     // string
-  "icon": "🔪",              // string, emoji
   "desc": "+5 ATK",          // string, short description
   "price": 200,              // int > 0, cost in bread ($)
   "atk": 5,                  // int ≥ 0, attack bonus on purchase
@@ -116,7 +118,6 @@ when zero (matches current data).
 {
   "id": "corner",            // string, unique, permanent
   "name": "Corner Store",    // string
-  "icon": "🏪",              // string, emoji
   "price": 800,              // int > 0, cost in bread ($)
   "income": 50,              // int > 0, income per collect (per unit owned)
   "desc": "$50 per collect"  // string — SHOULD match income; keep in sync

@@ -4,80 +4,66 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OPPS — Street Empire</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- The only two permitted families (claude.md, UI Implementation Contract).
+       Anton ships a single weight; its weight comes from the typeface. -->
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="logo">OPP<span>S</span></div>
-  <div class="hud">
-    <div class="hud-stat level">
-      <span>RANK</span>
-      <strong id="h-level">1</strong>
-    </div>
-    <div class="hud-stat money">
-      <span>BREAD</span>
-      <strong id="h-money">$500</strong>
-    </div>
-    <div class="hud-stat rep">
-      <span>REP</span>
-      <strong id="h-rep">0</strong>
-    </div>
-    <div class="hud-stat">
-      <span>ENERGY</span>
-      <strong id="h-energy">10/10</strong>
-    </div>
-    <div class="hud-stat">
-      <span>HEALTH</span>
-      <strong id="h-health">100/100</strong>
-    </div>
-    <div class="hud-stat gems">
-      <span>GEMS</span>
-      <strong id="h-gems">💎 0</strong>
-    </div>
-  </div>
-  <button id="nav-toggle" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
-</header>
+<div class="app" id="app">
 
-<div class="wrapper">
-  <!-- SIDEBAR NAV -->
-  <nav>
-    <div class="nav-section">Hustle</div>
-    <div class="nav-item active" onclick="showTab('hood')" id="nav-hood">
-      <span class="nav-icon">🏚️</span> THE HOOD
+  <!-- HEADER -->
+  <header>
+    <div class="hdr-row">
+      <div class="logo">OPPS</div>
+
+      <!-- rank + gems are header pills; everything else lives in the panel -->
+      <div class="hdr-pills">
+        <button class="hdr-pill" onclick="openMetrics()" aria-label="Rank and power">
+          <span id="h-level">SHORTY</span>
+        </button>
+        <button class="hdr-pill" onclick="openMetrics()" aria-label="Gems">
+          <span id="h-gems">0</span><span class="hdr-pill-k">GEMS</span>
+        </button>
+      </div>
+
+      <!-- Messages is a later system (build order item 8); shown disabled, not dead -->
+      <button class="hdr-btn" id="btn-msgs" disabled aria-label="Messages — not available yet">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.76L3 21l1.86-5.54A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+      </button>
+
+      <!-- PROFILE ENTRY POINT — DISABLED FOR THE CHROME MONEY MERGE.
+           js/profile.js ships on main but is unreachable: this button is the
+           only route into the profile screen. The screen itself has not been
+           reviewed against the Chrome Money contract (DOM-40, DOM-49, DOM-61).
+           To re-enable, delete this comment wrapper. Nothing else to change. -->
+      <!--
+      <button class="hdr-btn" onclick="showTab('profile')" aria-label="Player profile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </button>
+      -->
     </div>
-    <div class="nav-item" onclick="showTab('map')" id="nav-map">
-      <span class="nav-icon">🗺️</span> MAP
-    </div>
-    <div class="nav-item" onclick="showTab('jobs')" id="nav-jobs">
-      <span class="nav-icon">💼</span> MOVES
-    </div>
-    <div class="nav-section">Beef</div>
-    <div class="nav-item" onclick="showTab('fight')" id="nav-fight">
-      <span class="nav-icon">⚔️</span> OPPS LIST
-    </div>
-    <div class="nav-section">Empire</div>
-    <div class="nav-item" onclick="showTab('plugs')" id="nav-plugs">
-      <span class="nav-icon">🤝</span> PLUGS
-    </div>
-    <div class="nav-item" onclick="showTab('store')" id="nav-store">
-      <span class="nav-icon">🔫</span> PLUG
-    </div>
-    <div class="nav-item" onclick="showTab('props')" id="nav-props">
-      <span class="nav-icon">🏢</span> SPOTS
-    </div>
-    <div class="nav-item" onclick="showTab('stats')" id="nav-stats">
-      <span class="nav-icon">📊</span> STATS
-    </div>
-    <div class="nav-item" onclick="showTab('crew')" id="nav-crew">
-      <span class="nav-icon">👥</span> CREW
-    </div>
-  </nav>
+    <div class="hdr-rule"></div>
+    <div class="hdr-scrim"></div>
+  </header>
 
   <!-- MAIN -->
   <main>
+
+    <!-- Screen label — a caption, not a title -->
+    <div class="section-label"><h3 id="section-title">ACTIVITIES</h3><div class="rule"></div></div>
+
+    <!-- Empire sub-nav. Five fit a 390pt screen; do not add a sixth. -->
+    <div class="chip-row" id="empire-chips" hidden>
+      <button class="chip" onclick="showTab('plugs')" id="chip-plugs">PLUGS</button>
+      <button class="chip" onclick="showTab('store')" id="chip-store">GEAR</button>
+      <button class="chip" onclick="showTab('props')" id="chip-props">SPOTS</button>
+      <button class="chip" onclick="showTab('stats')" id="chip-stats">STATS</button>
+      <button class="chip" onclick="showTab('crew')"  id="chip-crew">CREW</button>
+    </div>
 
     <!-- FEED -->
     <div id="feed">
@@ -87,47 +73,31 @@
     <!-- HOOD TAB -->
     <div class="tab active" id="tab-hood">
       <div class="card">
-        <div class="card-title">⚡ YOUR STATUS</div>
-        <div class="xp-wrap">
-          <div class="xp-label"><span>XP</span><span id="xp-label">0 / 100</span></div>
-          <div class="bar-track"><div class="bar-fill" id="xp-bar" style="width:0%"></div></div>
-        </div>
-        <div class="xp-wrap">
-          <div class="xp-label"><span>ENERGY</span><span id="energy-label">10 / 10</span></div>
-          <div class="bar-track"><div class="bar-fill energy" id="energy-bar" style="width:100%"></div></div>
-        </div>
-        <div class="xp-wrap">
-          <div class="xp-label"><span>HEALTH</span><span id="health-label">100 / 100</span></div>
-          <div class="bar-track"><div class="bar-fill health" id="health-bar" style="width:100%"></div></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🏚️ HOOD ACTIVITIES</div>
+        <div class="card-title">HOOD ACTIVITIES</div>
         <div class="job-grid">
           <div class="job-card" onclick="doActivity('collect')">
             <div class="job-name">Collect From Spots</div>
             <div class="job-meta">
-              <span>💰 <span class="val" id="collect-income">$0</span></span>
-              <span>⚡ <span class="val">0</span></span>
+              <span>TAKE <span class="val" id="collect-income">$0</span></span>
+              <span>MOVES <span class="val">0</span></span>
             </div>
-            <div class="do-job-btn" style="text-align:center;background:#1c1c1c;border:1px solid var(--gold);color:var(--gold);padding:6px;border-radius:2px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:1rem;">COLLECT</div>
+            <div class="do-job-btn">COLLECT</div>
           </div>
           <div class="job-card" onclick="doActivity('rest')">
             <div class="job-name">Rest Up (Heal)</div>
             <div class="job-meta">
-              <span>❤️ <span class="val">+25 HP</span></span>
-              <span>⚡ <span class="val">1</span></span>
+              <span>HEAL <span class="val">+25 HP</span></span>
+              <span>MOVES <span class="val">1</span></span>
             </div>
-            <div class="do-job-btn" style="text-align:center;background:#1c1c1c;border:1px solid var(--green);color:var(--green);padding:6px;border-radius:2px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:1rem;">REST</div>
+            <div class="do-job-btn secondary">REST</div>
           </div>
           <div class="job-card" onclick="doActivity('launder')">
             <div class="job-name">Launder Money</div>
             <div class="job-meta">
-              <span>📈 <span class="val">+10% Cash</span></span>
-              <span>⚡ <span class="val">2</span></span>
+              <span>CASH <span class="val">+10% Cash</span></span>
+              <span>MOVES <span class="val">2</span></span>
             </div>
-            <div class="do-job-btn" style="text-align:center;background:#1c1c1c;border:1px solid #00b8ff;color:#00b8ff;padding:6px;border-radius:2px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:1rem;">LAUNDER</div>
+            <div class="do-job-btn secondary">LAUNDER</div>
           </div>
         </div>
       </div>
@@ -136,7 +106,7 @@
     <!-- MAP TAB -->
     <div class="tab" id="tab-map">
       <div class="map-outer">
-        <div id="map-container" style="position:absolute;inset:0;overflow:hidden;cursor:grab;background:#494741;">
+        <div id="map-container">
           <!-- SVG injected by map.js -->
         </div>
         <!-- Controls -->
@@ -155,7 +125,7 @@
     <!-- JOBS TAB -->
     <div class="tab" id="tab-jobs">
       <div class="card">
-        <div class="card-title">💼 MOVES — EARN YOUR BREAD</div>
+        <div class="card-title">MOVES — EARN YOUR BREAD</div>
         <div class="job-grid" id="job-list"></div>
       </div>
     </div>
@@ -163,7 +133,7 @@
     <!-- FIGHT TAB -->
     <div class="tab" id="tab-fight">
       <div class="card">
-        <div class="card-title">⚔️ OPPS LIST</div>
+        <div class="card-title">OPPS LIST</div>
         <div class="enemy-list" id="enemy-list"></div>
       </div>
     </div>
@@ -171,7 +141,7 @@
     <!-- PLUGS TAB -->
     <div class="tab" id="tab-plugs">
       <div class="card">
-        <div class="card-title">🤝 PLUGS — YOUR CONNECTS</div>
+        <div class="card-title">PLUGS — YOUR CONNECTS</div>
         <div class="plugs-grid" id="plugs-grid"></div>
       </div>
     </div>
@@ -179,7 +149,7 @@
     <!-- STORE TAB -->
     <div class="tab" id="tab-store">
       <div class="card">
-        <div class="card-title">🔫 THE PLUG — GEAR UP</div>
+        <div class="card-title">THE PLUG — GEAR UP</div>
         <div class="store-grid" id="store-list"></div>
       </div>
       <div id="gem-section"></div>
@@ -188,7 +158,7 @@
     <!-- PROPS TAB -->
     <div class="tab" id="tab-props">
       <div class="card">
-        <div class="card-title">🏢 SPOTS — PASSIVE INCOME</div>
+        <div class="card-title">SPOTS — PASSIVE INCOME</div>
         <div class="prop-grid" id="prop-list"></div>
       </div>
     </div>
@@ -196,82 +166,151 @@
     <!-- CREW TAB -->
     <div class="tab" id="tab-crew"></div>
 
+    <!-- PROFILE TAB -->
+    <div class="tab" id="tab-profile">
+      <div class="pf" id="pf-root"></div>
+    </div>
+
     <!-- STATS TAB -->
     <div class="tab" id="tab-stats">
       <div class="card">
-        <div class="card-title">📊 YOUR STATS</div>
+        <div class="card-title">YOUR STATS</div>
         <div class="stat-grid" id="stat-grid"></div>
       </div>
       <div class="card">
-        <div class="card-title">🎒 INVENTORY</div>
-        <div id="inventory-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        <div class="card-title">INVENTORY</div>
+        <div id="inventory-list"></div>
       </div>
     </div>
 
   </main>
-</div>
 
-<!-- COMBAT OVERLAY -->
-<div class="overlay" id="combat-overlay">
-  <div class="combat-box">
-    <div class="combat-title">GETTIN ACTIVE</div>
+  <!-- BOTTOM TABS -->
+  <nav class="tabbar">
+    <button class="tabbar-btn" onclick="showTab('hood')"  id="tab-btn-hood">HOOD</button>
+    <button class="tabbar-btn" onclick="showTab('map')"   id="tab-btn-map">MAP</button>
+    <button class="tabbar-btn" onclick="showTab('jobs')"  id="tab-btn-jobs">MOVES</button>
+    <button class="tabbar-btn" onclick="showTab('fight')" id="tab-btn-fight">OPPS</button>
+    <button class="tabbar-btn" onclick="showTab('plugs')" id="tab-btn-empire">EMPIRE</button>
+  </nav>
 
-    <div class="vs-row">
-      <div class="fighter">
-        <div class="fighter-icon">🤜</div>
-        <div class="fighter-name" id="c-player">YOU</div>
-        <div class="hp-bar"><div class="hp-fill" id="c-player-hp" style="width:100%"></div></div>
+  <!-- METRICS / CURRENCIES PANEL -->
+  <div id="metrics-overlay" onclick="closeMetrics()">
+    <div class="metrics-panel" onclick="event.stopPropagation()">
+      <div class="metrics-head">
+        <span class="caret">&#8250;</span>
+        <span class="ttl">POWER &amp; CURRENCIES</span>
+        <button class="metrics-close" onclick="closeMetrics()" aria-label="Close">&#10005;</button>
       </div>
-      <div class="vs-text">VS</div>
-      <div class="fighter">
-        <div class="fighter-portrait-wrap">
-          <img id="c-enemy-portrait" src="" alt="" style="display:none;width:56px;height:56px;object-fit:cover;border-radius:4px;border:2px solid var(--border);">
-          <div class="fighter-icon" id="c-enemy-icon">😤</div>
+      <div class="metrics-hero">
+        <div>
+          <div class="metric-label">TOTAL CLOUT</div>
+          <div class="hero-val" id="m-clout">0</div>
+          <div class="hero-sub">Street respect</div>
         </div>
-        <div class="fighter-name" id="c-enemy-name">OPP</div>
-        <div class="hp-bar"><div class="hp-fill enemy-hp" id="c-enemy-hp" style="width:100%"></div></div>
+        <div class="hero-right">
+          <div class="hero-lv">LEVEL <span id="m-level">1</span></div>
+          <div class="hero-rank" id="m-rank">SHORTY</div>
+        </div>
       </div>
-    </div>
-    <div id="combat-info-wrap" style="transition:opacity 0.3s;">
-      <div style="text-align:center;margin:6px 0 2px;">
-        <span style="font-size:11px;color:var(--muted);letter-spacing:2px;font-family:'Space Mono',monospace;">WIN ODDS </span>
-        <span id="c-odds" style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;"></span>
+      <div class="metric-row">
+        <div class="metric-top"><span class="metric-label">CLOUT TO NEXT</span><span class="metric-val" id="xp-label">0 / 100</span></div>
+        <div class="metric-track"><div class="metric-fill amber" id="xp-bar" style="width:0%"></div></div>
       </div>
-      <div style="text-align:center;margin-top:8px;">
-        <button class="attack-btn" onclick="hitEm()" style="width:100%;font-size:1.1rem;letter-spacing:3px;">HIT 'EM</button>
+      <div class="metric-row">
+        <div class="metric-top"><span class="metric-label">MOVES</span><span class="metric-val" id="energy-label">10 / 10</span></div>
+        <div class="metric-track"><div class="metric-fill lime" id="energy-bar" style="width:100%"></div></div>
       </div>
-    </div>
-    <div id="sim-canvas-wrap" style="display:none;position:relative;height:80px;margin:8px 0;">
-      <canvas id="sim-canvas" style="width:100%;height:100%;display:block;border-radius:4px;background:#0d0d0d;"></canvas>
-      <div id="sim-result" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:6px;opacity:0;transition:opacity 0.4s;text-shadow:0 0 20px currentColor;"></div>
-    </div>
-    <div class="combat-log" id="combat-log"></div>
-    <div class="combat-result" id="combat-result"></div>
-    <button class="close-combat" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
-  </div>
-</div>
-<div class="overlay" id="plug-overlay">
-  <div class="plug-modal">
-    <button class="plug-modal-close" onclick="closePlug()">&#x2715;</button>
-    <div class="plug-modal-portrait-wrap">
-      <img id="plug-modal-portrait" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
-    </div>
-    <div class="plug-modal-body">
-      <div class="plug-modal-name" id="plug-modal-name">NAME</div>
-      <div class="plug-modal-moniker" id="plug-modal-moniker">TITLE</div>
-      <div class="plug-modal-text" id="plug-modal-text"></div>
-      <div class="plug-modal-footer">
-        <span class="plug-modal-count" id="plug-modal-count">1 / 4</span>
-        <button class="plug-modal-cta" id="plug-modal-cta" onclick="advancePlug()">NEXT</button>
+      <div class="metric-row">
+        <div class="metric-top"><span class="metric-label">HEALTH</span><span class="metric-val" id="health-label">100 / 100</span></div>
+        <div class="metric-track"><div class="metric-fill gold" id="health-bar" style="width:100%"></div></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-top"><span class="metric-label">BAG</span><span class="metric-val money" id="h-money">$500</span></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-top"><span class="metric-label">REP</span><span class="metric-val" id="h-rep">0</span></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-top"><span class="metric-label">GEMS</span><span class="metric-val" id="m-gems">0</span></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-top"><span class="metric-label">STAMINA</span><span class="metric-val" id="h-stamina">10 / 10</span></div>
+      </div>
+      <div class="metric-row" style="display:none">
+        <span class="metric-val" id="h-energy">10/10</span><span class="metric-val" id="h-health">100/100</span>
       </div>
     </div>
   </div>
+
+
+  <!-- ══ OVERLAYS ══
+       All overlays render INSIDE the app frame, never as browser dialogs
+       (design handoff: "all rendered inside the phone frame"). -->
+  <!-- COMBAT OVERLAY -->
+  <div class="overlay" id="combat-overlay">
+    <div class="combat-box">
+      <div class="combat-title">GETTIN ACTIVE</div>
+
+      <div class="vs-row">
+        <div class="fighter">
+          <div class="fighter-portrait-wrap ally"></div>
+          <div class="fighter-name" id="c-player">YOU</div>
+          <div class="hp-bar"><div class="hp-fill" id="c-player-hp" style="width:100%"></div></div>
+        </div>
+        <div class="vs-text">VS</div>
+        <div class="fighter">
+          <div class="fighter-portrait-wrap opp">
+            <img id="c-enemy-portrait" src="" alt="" hidden>
+            <div class="fighter-icon" id="c-enemy-icon"></div>
+          </div>
+          <div class="fighter-name" id="c-enemy-name">OPP</div>
+          <div class="hp-bar"><div class="hp-fill enemy-hp" id="c-enemy-hp" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div id="combat-info-wrap">
+        <div class="combat-odds">
+          <span class="combat-odds-k">WIN ODDS</span>
+          <span id="c-odds"></span>
+        </div>
+        <button class="attack-btn wide" onclick="hitEm()">HIT 'EM</button>
+      </div>
+      <div id="sim-canvas-wrap" hidden>
+        <canvas id="sim-canvas"></canvas>
+        <div id="sim-result"></div>
+      </div>
+      <div class="combat-log" id="combat-log"></div>
+      <div class="combat-result" id="combat-result"></div>
+      <button class="close-combat" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
+    </div>
+  </div>
+  <div class="overlay" id="plug-overlay">
+    <div class="plug-modal">
+      <button class="plug-modal-close" onclick="closePlug()">&#x2715;</button>
+      <div class="plug-modal-portrait-wrap">
+        <img id="plug-modal-portrait" src="" alt="">
+      </div>
+      <div class="plug-modal-body">
+        <div class="plug-modal-name" id="plug-modal-name">NAME</div>
+        <div class="plug-modal-moniker" id="plug-modal-moniker">TITLE</div>
+        <div class="plug-modal-text" id="plug-modal-text"></div>
+        <div class="plug-modal-footer">
+          <span class="plug-modal-count" id="plug-modal-count">1 / 4</span>
+          <button class="plug-modal-cta" id="plug-modal-cta" onclick="advancePlug()">NEXT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="levelup-banner" id="levelup-banner">
+    <div class="levelup-text">RANKED UP</div>
+    <div class="levelup-sub" id="levelup-sub">You are now Rank 2</div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <!-- Player Profile overlays: equip picker, confirm allocation, stat info -->
+  <div id="pf-overlays"></div>
+
 </div>
-<div class="levelup-banner" id="levelup-banner">
-  <div class="levelup-text">&#x1F525; RANKED UP! &#x1F525;</div>
-  <div style="font-size:13px;color:var(--muted);margin-top:4px;" id="levelup-sub">You are now Rank 2</div>
-</div>
-<div class="toast" id="toast"></div>
+
 <script src="https://cdn.jest.com/sdk/latest/jestsdk.js"></script>
 <script src="js/state.js"></script>
 <script src="js/ui.js"></script>
@@ -284,12 +323,12 @@
 <script src="js/properties.js"></script>
 <script src="js/hood.js"></script>
 <script src="js/stats.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/crew.js"></script>
 <script src="js/plugs.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/payments.js"></script>
 <script src="js/map3d.js"></script>
 <script src="js/main.js"></script>
-<div id="nav-overlay" onclick="closeNav()"></div>
 </body>
 </html>

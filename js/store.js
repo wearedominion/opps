@@ -12,7 +12,6 @@ function renderStore() {
     const div = document.createElement('div');
     div.className = 'store-item';
     div.innerHTML = `
-      <div class="item-icon">${item.icon}</div>
       <div class="item-name">${item.name}</div>
       <div class="item-desc">${item.desc}</div>
       <div class="item-price">$${item.price.toLocaleString()}</div>

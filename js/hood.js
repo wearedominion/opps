@@ -7,7 +7,7 @@ function doActivity(type) {
     const income = collectIncome();
     if (income === 0) { toast('You got no spots yet. Buy some!', true); return; }
     G.money += income;
-    log(`💰 Collected $${income} from your spots`, 'gold');
+    log(`Collected $${income} from your spots`, 'gold');
     toast('+$' + income + ' collected!');
     updateHUD();
   }
@@ -17,7 +17,7 @@ function doActivity(type) {
     G.energy--;
     const heal = Math.min(25, G.maxHealth - G.health);
     G.health += heal;
-    log(`❤️ Rested up, healed ${heal} HP`);
+    log(`Rested up, healed ${heal} HP`, 'win');
     toast('+' + heal + ' HP restored');
     updateHUD();
   }
@@ -27,7 +27,7 @@ function doActivity(type) {
     if (bonus < 1) { toast('Not enough money to launder.', true); return; }
     G.energy -= 2;
     G.money += bonus;
-    log(`📈 Laundered money, gained $${bonus}`, 'win');
+    log(`Laundered money, gained $${bonus}`, 'win');
     toast('+$' + bonus + ' laundered!');
     updateHUD();
   }

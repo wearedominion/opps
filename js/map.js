@@ -19,11 +19,14 @@ const GameMap = (() => {
     const W = 1240, H = 2300;
     let s = 20260611 >>> 0;
     const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    // Chrome Money map palette (claude.md, structural change #5).
+    // Values are literals because this SVG is built in JS — CSS custom
+    // properties cannot reach it.
     const C = {
-      road: '#494741', block: '#121214', blockEdge: '#1b1c20',
-      bldg: '#262a31', bldgEdge: '#31363e', bldgY: '#39352a', bldgYEdge: '#474132',
-      water: '#073245', park: '#1d2419', parkEdge: '#272f20',
-      label: '#8a919c', laneY: '#d1b55d', ave: '#63666d'
+      road: '#17171c', block: '#0b0b0c', blockEdge: '#15151a',
+      bldg: '#1f1f28', bldgEdge: '#2a2a34', bldgY: '#241f16', bldgYEdge: '#332c1f',
+      water: '#0e2430', park: '#141a17', parkEdge: '#1b231d',
+      label: '#8e8e9a', laneY: '#a8873f', ave: '#26262e'
     };
     const px = [0], py = [0];
     let ax = 0;
@@ -87,13 +90,13 @@ const GameMap = (() => {
       ['M600 1208', 'L716 1244'], ['M478 1500', 'L604 1488'], ['M414 2012', 'L548 1996']
     ];
     const pins = [
-      { x: 430, y: 1010, color: '#f5902a', label: 'BASE',          sub: 'Your turf',    pulse: true },
-      { x: 560, y: 860,  color: '#e23b2e', label: 'RIVAL CREW',    sub: 'Threat 3/8' },
-      { x: 700, y: 580,  color: '#e23b2e', label: 'UNDERCOVER',    sub: 'Threat 8/8' },
-      { x: 1080,y: 420,  color: '#e23b2e', label: 'RIVAL BOSS',    sub: 'Threat 6/8' },
-      { x: 820, y: 2040, color: '#e23b2e', label: 'AUTO RING',     sub: 'Threat 6/8' },
-      { x: 700, y: 1500, color: '#bfce1c', label: 'DROP',          sub: 'Reward · 19:48' },
-      { x: 260, y: 1840, color: '#bfce1c', label: 'STASH',         sub: 'Reward · $400' }
+      { x: 430, y: 1010, color: '#e8c98a', label: 'BASE',          sub: 'Your turf',    pulse: true },
+      { x: 560, y: 860,  color: '#e0523f', label: 'RIVAL CREW',    sub: 'Threat 3/8' },
+      { x: 700, y: 580,  color: '#e0523f', label: 'UNDERCOVER',    sub: 'Threat 8/8' },
+      { x: 1080,y: 420,  color: '#e0523f', label: 'RIVAL BOSS',    sub: 'Threat 6/8' },
+      { x: 820, y: 2040, color: '#e0523f', label: 'AUTO RING',     sub: 'Threat 6/8' },
+      { x: 700, y: 1500, color: '#4fd39a', label: 'DROP',          sub: 'Reward · 19:48' },
+      { x: 260, y: 1840, color: '#4fd39a', label: 'STASH',         sub: 'Reward · $400' }
     ];
     const labels = [
       { x: 80,   y: 170,  t: 'Northside',   size: 22 },
@@ -149,7 +152,7 @@ const GameMap = (() => {
 
     // Major road lane markings (vertical)
     out += '<g>';
-    d.vLines.forEach(x => { out += el('line', { x1: x, y1: 0, x2: x, y2: H, stroke: '#ffffff', 'stroke-width': 1.6, 'stroke-dasharray': '11 13', opacity: 0.65 }); });
+    d.vLines.forEach(x => { out += el('line', { x1: x, y1: 0, x2: x, y2: H, stroke: '#a8873f', 'stroke-width': 1.6, 'stroke-dasharray': '11 13', opacity: 0.65 }); });
     out += '</g>';
 
     // Major road lane markings (horizontal)
@@ -159,7 +162,7 @@ const GameMap = (() => {
 
     // Crosswalks
     out += '<g>';
-    d.cross.forEach(c => { out += el('line', { x1: c.x1, y1: c.y1, x2: c.x2, y2: c.y2, stroke: '#ffffff', 'stroke-width': 7, 'stroke-dasharray': '2.4 2.6', opacity: 0.7 }); });
+    d.cross.forEach(c => { out += el('line', { x1: c.x1, y1: c.y1, x2: c.x2, y2: c.y2, stroke: '#a8873f', 'stroke-width': 7, 'stroke-dasharray': '2.4 2.6', opacity: 0.7 }); });
     out += '</g>';
 
     // River (back shadow)
@@ -174,7 +177,7 @@ const GameMap = (() => {
 
     // Bridges
     out += '<g>';
-    d.bridges.forEach(([m, l]) => { out += el('path', { d: m + l, fill: 'none', stroke: '#8a8070', 'stroke-width': 10, 'stroke-linecap': 'round' }); });
+    d.bridges.forEach(([m, l]) => { out += el('path', { d: m + l, fill: 'none', stroke: '#2a2a34', 'stroke-width': 10, 'stroke-linecap': 'round' }); });
     out += '</g>';
 
     // Pulse animation style
@@ -186,16 +189,17 @@ const GameMap = (() => {
       if (p.pulse) {
         out += el('circle', { cx: p.x, cy: p.y, r: 9, fill: 'none', stroke: p.color, 'stroke-width': 2, style: 'transform-box:fill-box;transform-origin:center;animation:mappulse 2.4s ease-out infinite' });
       }
-      out += el('ellipse', { cx: p.x, cy: p.y + 13, rx: 7, ry: 2.4, fill: 'rgba(70,80,100,0.28)' });
+      out += el('ellipse', { cx: p.x, cy: p.y + 13, rx: 7, ry: 2.4, fill: 'rgba(0,0,0,0.35)' });
       out += `<path d="M${p.x - 6} ${p.y + 2} L${p.x + 6} ${p.y + 2} L${p.x} ${p.y + 14} Z" fill="${p.color}"/>`;
-      out += el('circle', { cx: p.x, cy: p.y - 1, r: 8.5, fill: p.color, stroke: '#ffffff', 'stroke-width': 2 });
-      out += el('circle', { cx: p.x, cy: p.y - 1, r: 3, fill: '#15120e' });
+      out += el('circle', { cx: p.x, cy: p.y - 1, r: 8.5, fill: p.color, stroke: '#161208', 'stroke-width': 2 });
+      out += el('circle', { cx: p.x, cy: p.y - 1, r: 3, fill: '#161208' });
       if (p.label) {
         const lw = p.label.length * 6.6 + 18;
         out += '<g>';
-        out += el('rect', { x: p.x + 12, y: p.y - 12, width: lw, height: p.sub ? 26 : 16, rx: 2, fill: 'rgba(10,9,8,0.82)', stroke: 'rgba(255,255,255,0.08)', 'stroke-width': 1 });
-        out += el('text', { x: p.x + 19, y: p.y - 1, fill: p.color, style: `font:700 9px 'Bebas Neue',sans-serif;letter-spacing:1px` }, p.label);
-        if (p.sub) out += el('text', { x: p.x + 19, y: p.y + 10, fill: '#a39c91', style: `font:400 8px 'Space Mono',monospace` }, p.sub);
+        const lh = p.sub ? 26 : 16;
+        out += el('rect', { x: p.x + 12, y: p.y - 12, width: lw, height: lh, rx: lh / 2, fill: 'rgba(17,17,22,0.9)', stroke: '#26262e', 'stroke-width': 1 });
+        out += el('text', { x: p.x + 19, y: p.y - 1, fill: p.color, style: `font:400 9px Anton,sans-serif;letter-spacing:1px` }, p.label);
+        if (p.sub) out += el('text', { x: p.x + 19, y: p.y + 10, fill: '#8e8e9a', style: `font:400 8px 'Space Grotesk',sans-serif` }, p.sub);
         out += '</g>';
       }
       out += '</g>';
@@ -203,7 +207,7 @@ const GameMap = (() => {
 
     // District labels
     d.labels.forEach(l => {
-      out += el('text', { x: l.x, y: l.y, fill: C.label, style: `font:italic 800 ${l.size}px 'Barlow Condensed',sans-serif;letter-spacing:2px;opacity:0.55;text-transform:uppercase` }, l.t);
+      out += el('text', { x: l.x, y: l.y, fill: C.label, style: `font:400 ${l.size}px Anton,sans-serif;letter-spacing:2px;opacity:0.55;text-transform:uppercase` }, l.t);
     });
 
     out += '</svg>';

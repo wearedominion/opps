@@ -4,7 +4,7 @@
 **Read before:** adding any art — buttons, screens, menus, portraits, icons, textures, models.
 
 This document governs **visual assets**: formats, sizes, naming, placement, and optimization.
-It works alongside — and never overrides — [`OPPS_UI_Agent_Style_Guide.md`](../../OPPS_UI_Agent_Style_Guide.md),
+It works alongside — and never overrides — [`claude.md` — UI Implementation Contract](../../claude.md),
 which is authoritative for **how things look** (color, type, components). This doc is about the
 **files**.
 
@@ -62,7 +62,7 @@ assets/
 **Rules:**
 - **No uncompressed or oversized source art** in the shipped `assets/` tree. Export at display
   resolution, optimized.
-- **No new font files** — fonts come from Google Fonts per the style guide (tenet T7).
+- **No new font files** — fonts come from Google Fonts per the UI Implementation Contract (tenet T7).
 - **Prefer vector/emoji/CSS** for anything that doesn't need raster detail.
 
 ---
@@ -81,13 +81,13 @@ Observed component sizes (from the current export set and code) — match the in
 | Standard button | 186×58 (`StandardButton_186x58.png`) | Export at the named size; 2× acceptable if optimized. |
 | Location button | 16×16 (`LocationButton_16x16.png`) | Tiny — keep bytes minimal. |
 | Sidebar selected option | 324×64 (`SideBar_SelectedOption_324x64.png`) | Match slot. |
-| Full header bar | 1536×100 (`FullHeaderBar_1536x100.png`) | Wide chrome — ensure it scales/crops responsibly; prefer CSS gradients where the style guide provides them. |
+| Full header bar | 1536×100 (`FullHeaderBar_1536x100.png`) | Wide chrome — ensure it scales/crops responsibly; prefer CSS gradients where the UI Implementation Contract provides them. |
 
 **Rules:**
 - **Don't ship art larger than it displays.** Downscaling in the browser wastes bytes and memory.
-- **Respect the layout.** Portraits render inside fixed-radius frames (radius 4 px per style
-  guide); export with that crop/aspect in mind.
-- Prefer the style guide's **CSS backgrounds, gradients, and placeholder textures** over raster
+- **Respect the layout.** Portraits render as circles (62 px allies with a chrome ring, 58 px opps) per the
+  UI Implementation Contract; export with that crop/aspect in mind.
+- Prefer the UI Implementation Contract's **CSS backgrounds, gradients, and placeholder textures** over raster
   images for panels, scrims, and fills — they cost zero bytes and are theme-consistent.
 
 ---
@@ -145,7 +145,7 @@ LocationButton_16x16.png
   update the code map when adding a portrait.
 - **Always** provide the fallback path (emoji/placeholder) so a missing file degrades gracefully,
   and add `loading="lazy"` to off-screen `<img>` tags.
-- **Always** include meaningful `alt` text on `<img>` (accessibility floor in the style guide).
+- **Always** include meaningful `alt` text on `<img>` (accessibility floor in the UI Implementation Contract).
 
 ---
 
@@ -161,7 +161,7 @@ LocationButton_16x16.png
 - [ ] Referenced with a relative path; has an emoji/placeholder fallback and `alt` text; lazy where
       off-screen.
 - [ ] No `.DS_Store` or editor cruft committed.
-- [ ] Matches [`OPPS_UI_Agent_Style_Guide.md`](../../OPPS_UI_Agent_Style_Guide.md) (framing, radii,
+- [ ] Matches [`claude.md` — UI Implementation Contract](../../claude.md) (framing, radii,
       scrims, placeholder textures).
 
 ---

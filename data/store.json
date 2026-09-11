@@ -1,8 +1,51 @@
 [
-  { "id": "knife", "name": "Switchblade", "icon": "🔪", "desc": "+5 ATK", "price": 200, "atk": 5, "def": 0 },
-  { "id": "vest", "name": "Bulletproof Vest", "icon": "🦺", "desc": "+10 DEF", "price": 500, "atk": 0, "def": 10 },
-  { "id": "glock", "name": "Glock 19", "icon": "🔫", "desc": "+15 ATK", "price": 1000, "atk": 15, "def": 0 },
-  { "id": "burner", "name": "Burner Phone", "icon": "📱", "desc": "+5 ATK +5 DEF", "price": 600, "atk": 5, "def": 5 },
-  { "id": "bando", "name": "Safe House", "icon": "🏚️", "desc": "+20 DEF, +10 HP regen", "price": 2000, "atk": 0, "def": 20, "hpBonus": 10 },
-  { "id": "ak", "name": "Draco", "icon": "🪖", "desc": "+30 ATK", "price": 3500, "atk": 30, "def": 0 }
+  {
+    "id": "knife",
+    "name": "Switchblade",
+    "desc": "+5 ATK",
+    "price": 200,
+    "atk": 5,
+    "def": 0
+  },
+  {
+    "id": "vest",
+    "name": "Bulletproof Vest",
+    "desc": "+10 DEF",
+    "price": 500,
+    "atk": 0,
+    "def": 10
+  },
+  {
+    "id": "glock",
+    "name": "Glock 19",
+    "desc": "+15 ATK",
+    "price": 1000,
+    "atk": 15,
+    "def": 0
+  },
+  {
+    "id": "burner",
+    "name": "Burner Phone",
+    "desc": "+5 ATK +5 DEF",
+    "price": 600,
+    "atk": 5,
+    "def": 5
+  },
+  {
+    "id": "bando",
+    "name": "Safe House",
+    "desc": "+20 DEF, +10 HP regen",
+    "price": 2000,
+    "atk": 0,
+    "def": 20,
+    "hpBonus": 10
+  },
+  {
+    "id": "ak",
+    "name": "Draco",
+    "desc": "+30 ATK",
+    "price": 3500,
+    "atk": 30,
+    "def": 0
+  }
 ]

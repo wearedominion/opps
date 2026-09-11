@@ -71,7 +71,7 @@ function renderCrew() {
           <div class="crew-stat-label">SOLDIERS</div>
         </div>
         <div class="crew-stat">
-          <div class="crew-stat-val" style="color:var(--accent)">+${bonus.attack}</div>
+          <div class="crew-stat-val" style="color:var(--chrome)">+${bonus.attack}</div>
           <div class="crew-stat-label">CREW ATK</div>
         </div>
         <div class="crew-stat">
