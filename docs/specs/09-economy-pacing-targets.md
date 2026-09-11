@@ -99,11 +99,22 @@ shield **at current numbers** — recheck if `defeatLossRate` or starting balanc
 | F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. | DOM-71, DOM-81 |
 | F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. | DOM-73 |
 
-## 5. What DOM-79 should take from this
+## 5. DOM-79 decision record — ratified 2026-09-11 (Jake)
 
-The break-even mechanism works exactly as designed — proportional drain vs absolute faucet —
-but at current rewards it sits at $3.5k–$15k, which mid-game wallets blow past almost
-immediately (a committed player earns that in a few hours). Once win rewards scale with
-opponent power (DOM-71/DOM-79), rerun the simulator and set `loot.defeatLossRate` so the
-break-even lands where design wants wallets to settle. The simulator's `breakEven()` and
-Q2/Q3 outputs are the tooling for that decision.
+The four decisions the ticket demanded, recorded:
+
+| # | Decision | Outcome |
+|---|---|---|
+| 1 | Break-even as the primary endgame sink | **Confirmed**, anchored at **8 hours of best-job income** at the player's level (nominal p = 0.5). Anchor in `tools/econ-sim/targets.json` → `breakEven`; mechanism in `08` §4.2. |
+| 2 | `loot.defeatLossCap` | **Uncapped (`null`) for v1.** A flat cap erodes the sink exactly where wallets grow. Revisit with DOM-78 telemetry if big single losses correlate with churn. |
+| 3 | Hard stat cap on gear upgrades | **Confirmed at `gear.statCapLevel` = 10.** Past it, upgrades are pure prestige — non-negotiable, or layer 2 becomes a matchmaking hazard. |
+| 4 | Sequence layers 2 and 3 | **Layer 2 (gear upgrades) first** — no art dependency, and it is the recurring sink the economy needs now. Layer 3 (tiered profile cosmetics) follows when art exists. Both spun out as sub-tasks under DOM-64. |
+
+**What the anchor implies today** (simulator §BE, tuning v2): `loot.defeatLossRate` stays
+0.10 and win rewards rescale by roughly ×1.6–×2.9 per band (L1: $115 → $336 · L3: $275 → $720
+· L5: $650 → $1,056 · L7: $650 → $1,280). Execution of the rescale rides with the
+DOM-71/DOM-81 catalog pass; for real-player snapshots the reward is priced from the opponent's
+band by the same formula, `R = BE·(1−p)·L/p`, when matchmaking lands. Reroll fee and Hospital
+heal are already level-indexed curves in tuning (`matchmaking.rerollFee`,
+`hospital.healCost`); nothing reads them yet because neither feature is built — the wiring
+lands with matchmaking and DOM-72.

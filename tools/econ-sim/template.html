@@ -170,7 +170,13 @@
 %%BE_ROWS%%
         </tbody>
       </table>
-      <p class="sub" style="margin:10px 0 0">A committed player earns the nominal break-even in ~%%BE_HOURS%% hours — the sink starts biting far too early. DOM-79 sets where this lands once win rewards scale with opponent power.</p>
+      <p class="sub" style="margin:10px 0 0">A committed player earns the nominal break-even in ~%%BE_HOURS%% hours — the sink starts biting far too early. <b style="color:var(--text)">DOM-79 (ratified 2026-09-11): break-even sits at %%BE_ANCHOR%% hours of job income; loss stays %%LOSS_RATE%% uncapped in v1.</b> Win rewards rescale to hit it (DOM-71/DOM-81):</p>
+      <table style="margin-top:10px">
+        <thead><tr><th>Level band</th><th>Job $/h</th><th>Target break-even</th><th>Implied win reward</th><th>Current reward</th><th>Rescale</th></tr></thead>
+        <tbody>
+%%BE_PLAN_ROWS%%
+        </tbody>
+      </table>
     </div>
   </section>
 

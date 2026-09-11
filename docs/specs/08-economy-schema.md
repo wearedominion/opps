@@ -84,10 +84,10 @@ do not treat the current values as balance.
 |---|---|
 | `combat.winProbability.beta` / `.bias` | `P(win) = σ(β·ln ρ + bias)`. Shape is locked, values are not. |
 | `combat.damageScale`, `combat.maxRounds` | Placeholder until the combat sim runs. |
-| `loot.defeatLossRate` | With an absolute win reward against a proportional loss, this sets the **break-even balance** — where the Cash supply settles (§4.2). The single most load-bearing number in the economy, and simulator-owned (DOM-67). |
-| `loot.defeatLossCap` | `null` = uncapped. An uncapped proportion is correct economically but reads as punishing; a cap is the usual mitigation. Unowned. |
+| `loot.defeatLossRate` | **Decided (DOM-79, 2026-09-11): stays 0.10.** With an absolute win reward against a proportional loss, this sets the **break-even balance** (§4.2), now anchored at **8 hours of best-job income** at the player's level (`tools/econ-sim/targets.json` → `breakEven`). Win rewards are the knob that moves to hit the anchor (DOM-71/DOM-81), not this rate. |
+| `loot.defeatLossCap` | **Decided (DOM-79, 2026-09-11): `null` (uncapped) for v1.** An uncapped proportion is economically correct; the Hospital shield and the banded win rate are the harshness mitigations. Revisit with DOM-78 telemetry if large single losses correlate with churn. |
 | `matchmaking.rerollFee`, `hospital.healCost` | Indexed to level so they keep biting; the index ratio matches the Clout curve so the fee tracks wealth. Base values unowned. |
-| `gear.upgradeCost`, `gear.statCapLevel` | Cost must rise geometrically while wallets rise arithmetically. `ratio` is the property that matters; `1.6` is a guess. |
+| `gear.upgradeCost`, `gear.statCapLevel` | `statCapLevel` is **decided (DOM-79, 2026-09-11): 10, confirmed hard** — upgrades past it are pure prestige, which is what keeps the unbounded track a sink rather than a matchmaking hazard. `upgradeCost.ratio` (1.6) is still a guess; it lands with the layer-2 sub-task. |
 | `skills.grant.health` | `1` matches the code and [`../profileScreen.md`](../profileScreen.md) §4, which itself flags the per-point value as an open data decision — Health pools run larger than Stamina/Moves, so it is probably more than +1. |
 | `progression.autoStatGainPerLevel` | Set to the **current shipped behaviour** (+3 ATK / +2 DEF / +15 HP / +2 Moves), so wiring it up changed nothing. See §6.2 — zeroing it is the recommendation, and now a one-line edit. |
 | `hoodActions.launderRate` | **An unbounded, compounding Cash faucet**: 10% of the player's own balance for a flat Moves cost, with no drain attached. Tunable to zero without a release. `oppsDefinitions.md` has launder as "TBD" on migration; it should not survive in this form. |
@@ -300,7 +300,16 @@ break-even balance = p·R / ((1 − p)·L)
 ```
 
 **This is now the single most important number in the economy** — it is where the Cash supply
-settles, and it is what DOM-67 has to find.
+settles.
+
+> **Decided (DOM-79, 2026-09-11): the break-even balance is the primary endgame sink**, and it
+> is anchored at **8 hours of best-job income at the player's level**, evaluated at the nominal
+> win probability (0.5). The anchor lives in `tools/econ-sim/targets.json` (`breakEven`); the
+> live inputs are `loot.defeatLossRate` (fixed at 0.10) and the win rewards, which must be
+> sized per level band as `R = BE·(1−p)·L/p`. For authored enemies that is `enemies.json`
+> rewards (rescale: DOM-81/DOM-71); for real-player snapshots, the same formula prices the
+> reward from the opponent's band when matchmaking lands. The simulator's "break-even
+> placement" section scores the live data against the anchor.
 
 > **Reward MUST scale with the opponent's power.** A win mints Cash from nothing, so any ability
 > to steer toward weak opponents is an uncapped faucet — and unlike real PvP, farming a weak target

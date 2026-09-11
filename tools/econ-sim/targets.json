@@ -17,6 +17,11 @@
     "days": 365
   },
 
+  "breakEven": {
+    "_comment": "DOM-79, ratified 2026-09-11 (Jake): fighting's break-even wallet sits at this many hours of best-job income at the player's level, evaluated at the nominal win probability. Win rewards (enemies.json, and the snapshot-reward formula when matchmaking lands) are sized to hit it; loot.defeatLossRate stays the fixed proportional drain. defeatLossCap stays null (uncapped) for v1 — revisit with DOM-78 telemetry.",
+    "hoursOfJobIncome": 8
+  },
+
   "faucetShareOfCashIncome": {
     "moves": 0.45,
     "fights": 0.30,
