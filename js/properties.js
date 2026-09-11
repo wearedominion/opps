@@ -34,4 +34,7 @@ function buyProp(propId) {
   renderProps();
   GameState.save();
   Notify.incomeReady();
+  // Passive income is worth being reminded about — nudge guests to register so
+  // they can actually receive that reminder. Throttled + guarded inside Auth.
+  if (typeof Auth !== 'undefined') Auth.promptRegister('bought_spot');
 }

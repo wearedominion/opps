@@ -17,6 +17,8 @@ let PROGRESSION = [];
 let IAP_PRODUCTS = [];
 // Level -> capability gates (data/unlocks.json). Content gates stay on their own rows.
 let UNLOCKS = null;
+// Platform-login config (data/platform.json); Auth falls back to defaults.
+let PLATFORM = {};
 
 // ─────────────────────────────────────────────
 //  MAIN — INIT
@@ -87,13 +89,21 @@ function syncLevel() {
 function addClout(amt, reason, ref) {
   if (!(amt > 0)) return;
   credit('clout', amt, reason, { ref: ref || null });
-  if (syncLevel() > 0) {
+  const leveledUp = syncLevel() > 0;
+  if (leveledUp) {
     showLevelUp();
     renderJobs();
     renderEnemies();
     if (typeof renderProfile === 'function') renderProfile();
   }
   updateHUD();
+
+  // Rank milestones are a natural "you're invested — claim your account" moment.
+  // Throttled + guarded inside Auth; a no-op for registered players and in
+  // plain-browser dev.
+  if (leveledUp && typeof Auth !== 'undefined' && G.level >= Auth.rankThreshold()) {
+    Auth.promptRegister('rank_' + G.level);
+  }
 }
 
 // Regen lives in js/regen.js — one lazy, timestamp-driven implementation for
@@ -109,12 +119,12 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 9) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 10) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks] = await Promise.all([
+    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks, platform] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/store.json').then(r => r.json())),
@@ -124,6 +134,8 @@ async function loadGameData() {
       track(fetch('data/progression.json').then(r => r.json())),
       track(fetch('data/monetization.json').then(r => r.json())),
       track(fetch('data/unlocks.json').then(r => r.json())),
+      // Optional config — a miss must not block core data or the loader (T5).
+      track(fetch('data/platform.json').then(r => r.json()).catch(() => ({}))),
     ]);
 
     JOBS        = jobs;
@@ -135,6 +147,7 @@ async function loadGameData() {
     PROGRESSION = (progression && progression.levels) || [];
     IAP_PRODUCTS = monetization;
     UNLOCKS      = unlocks;
+    PLATFORM    = platform || {};
 
   } catch (err) {
     console.error('Failed to load game data:', err);
@@ -151,6 +164,9 @@ async function init() {
     JestSDK.setLoadingProgress(0);
     G.playerId = JestSDK.getPlayer().playerId;
   }
+
+  // Read guest vs registered before anything schedules notifications.
+  await Auth.init();
 
   await loadGameData(); // progress: 0 → 80%
 
@@ -187,9 +203,9 @@ async function init() {
   // Init payments — fetches product list, recovers any incomplete purchases
   await Payments.init();
 
-  // Schedule re-engagement (resets timer each session) + income reminder if player has spots
-  Notify.reEngage();
-  Notify.incomeReady();
+  // Schedule everything that applies (re-engagement, income, energy) — or, for
+  // a guest, clear anything an older build scheduled for them.
+  Notify.scheduleAll();
 
   if (typeof JestSDK !== 'undefined') JestSDK.setLoadingProgress(90);
 

@@ -32,6 +32,7 @@ const G = {
   crewMemberCount: 0,
   lieutenantsRewarded: 0,   // high-water mark: Lieutenants already paid Clout for
   recruitedBy: null,
+  lastRegisterPromptAt: 0, // throttles guest register/sign-in nudges (Auth); additive, no SCHEMA_VERSION bump
 
   // ── Player Profile (docs/tdds/2026-09-09-player-profile.md) ──
   skillPts: 0,          // unspent skill points, +5 per level

@@ -76,8 +76,18 @@ const Crew = {
 function renderCrew() {
   const count = Crew.getCount();
   const bonus = Crew.getBonus();
+  const pc = (typeof Auth !== 'undefined') ? Auth.copy() : {};
+  const isGuest = typeof Auth !== 'undefined' && Auth.canPrompt();
 
   $('tab-crew').innerHTML = `
+    ${isGuest ? `
+    <div class="card">
+      <div class="card-title">${pc.crewTitle}</div>
+      <p class="card-note">${pc.crewBody}</p>
+      <button class="crew-claim-btn" onclick="Auth.promptRegister('crew', { force: true })">${pc.crewCta}</button>
+    </div>
+    ` : ''}
+
     <div class="card">
       <div class="card-title">YOUR CREW</div>
       <div class="crew-stats">
