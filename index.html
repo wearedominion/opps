@@ -35,9 +35,16 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.76L3 21l1.86-5.54A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
       </button>
 
+      <!-- PROFILE ENTRY POINT — DISABLED FOR THE CHROME MONEY MERGE.
+           js/profile.js ships on main but is unreachable: this button is the
+           only route into the profile screen. The screen itself has not been
+           reviewed against the Chrome Money contract (DOM-40, DOM-49, DOM-61).
+           To re-enable, delete this comment wrapper. Nothing else to change. -->
+      <!--
       <button class="hdr-btn" onclick="showTab('profile')" aria-label="Player profile">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
       </button>
+      -->
     </div>
     <div class="hdr-rule"></div>
     <div class="hdr-scrim"></div>
