@@ -9,10 +9,10 @@
     "levelReq": 1,
     "reward": {
       "cash": [
-        30,
-        60
+        135,
+        200
       ],
-      "clout": 25
+      "clout": 11
     }
   },
   {
@@ -25,26 +25,10 @@
     "levelReq": 1,
     "reward": {
       "cash": [
-        80,
-        150
+        270,
+        405
       ],
-      "clout": 50
-    }
-  },
-  {
-    "id": "oppcrew",
-    "name": "Opp Crew",
-    "role": "Gang of Hooligans",
-    "hp": 120,
-    "atk": 20,
-    "def": 10,
-    "levelReq": 3,
-    "reward": {
-      "cash": [
-        200,
-        350
-      ],
-      "clout": 110
+      "clout": 21
     }
   },
   {
@@ -57,26 +41,26 @@
     "levelReq": 2,
     "reward": {
       "cash": [
-        150,
-        280
+        405,
+        605
       ],
-      "clout": 80
+      "clout": 23
     }
   },
   {
-    "id": "rival",
-    "name": "Rival Boss",
-    "role": "Gang Leader",
-    "hp": 200,
-    "atk": 30,
-    "def": 15,
-    "levelReq": 5,
+    "id": "oppcrew",
+    "name": "Opp Crew",
+    "role": "Gang of Hooligans",
+    "hp": 120,
+    "atk": 20,
+    "def": 10,
+    "levelReq": 3,
     "reward": {
       "cash": [
-        500,
-        800
+        575,
+        865
       ],
-      "clout": 220
+      "clout": 25
     }
   },
   {
@@ -89,10 +73,202 @@
     "levelReq": 4,
     "reward": {
       "cash": [
-        300,
-        600
+        575,
+        865
       ],
-      "clout": 170
+      "clout": 25
+    }
+  },
+  {
+    "id": "rival",
+    "name": "Rival Boss",
+    "role": "Gang Leader",
+    "hp": 200,
+    "atk": 30,
+    "def": 15,
+    "levelReq": 5,
+    "reward": {
+      "cash": [
+        845,
+        1270
+      ],
+      "clout": 27
+    }
+  },
+  {
+    "id": "corner",
+    "name": "Corner Captain",
+    "role": "Block Chief",
+    "hp": 240,
+    "atk": 35,
+    "def": 18,
+    "levelReq": 10,
+    "reward": {
+      "cash": [
+        1360,
+        2040
+      ],
+      "clout": 30
+    }
+  },
+  {
+    "id": "trapboss",
+    "name": "Trap House Boss",
+    "role": "Rival Operator",
+    "hp": 350,
+    "atk": 50,
+    "def": 25,
+    "levelReq": 20,
+    "reward": {
+      "cash": [
+        3530,
+        5300
+      ],
+      "clout": 30
+    }
+  },
+  {
+    "id": "cartel",
+    "name": "Cartel Runner",
+    "role": "Supply Muscle",
+    "hp": 505,
+    "atk": 70,
+    "def": 35,
+    "levelReq": 30,
+    "reward": {
+      "cash": [
+        9160,
+        13700
+      ],
+      "clout": 31
+    }
+  },
+  {
+    "id": "detective",
+    "name": "Dirty Detective",
+    "role": "Crooked Cop",
+    "hp": 735,
+    "atk": 97,
+    "def": 49,
+    "levelReq": 40,
+    "reward": {
+      "cash": [
+        23800,
+        35600
+      ],
+      "clout": 31
+    }
+  },
+  {
+    "id": "syndicate",
+    "name": "Dock Syndicate",
+    "role": "Waterfront Crew",
+    "hp": 1060,
+    "atk": 135,
+    "def": 68,
+    "levelReq": 50,
+    "reward": {
+      "cash": [
+        61700,
+        92600
+      ],
+      "clout": 32
+    }
+  },
+  {
+    "id": "kingpin",
+    "name": "Club Kingpin",
+    "role": "Nightlife Boss",
+    "hp": 1540,
+    "atk": 190,
+    "def": 95,
+    "levelReq": 60,
+    "reward": {
+      "cash": [
+        160000,
+        240000
+      ],
+      "clout": 74
+    }
+  },
+  {
+    "id": "fixer",
+    "name": "The Fixer",
+    "role": "City Hall Broker",
+    "hp": 2240,
+    "atk": 265,
+    "def": 135,
+    "levelReq": 70,
+    "reward": {
+      "cash": [
+        415000,
+        623000
+      ],
+      "clout": 191
+    }
+  },
+  {
+    "id": "gunchief",
+    "name": "Gun Runner Chief",
+    "role": "Arms Ring Boss",
+    "hp": 3250,
+    "atk": 375,
+    "def": 185,
+    "levelReq": 80,
+    "reward": {
+      "cash": [
+        1080000,
+        1620000
+      ],
+      "clout": 495
+    }
+  },
+  {
+    "id": "enforcer",
+    "name": "Commission Enforcer",
+    "role": "Syndicate Muscle",
+    "hp": 4710,
+    "atk": 525,
+    "def": 260,
+    "levelReq": 90,
+    "reward": {
+      "cash": [
+        2790000,
+        4190000
+      ],
+      "clout": 1283
+    }
+  },
+  {
+    "id": "shadowboss",
+    "name": "Shadow Boss",
+    "role": "Underworld Power",
+    "hp": 6820,
+    "atk": 735,
+    "def": 365,
+    "levelReq": 100,
+    "reward": {
+      "cash": [
+        7240000,
+        10900000
+      ],
+      "clout": 3329
+    }
+  },
+  {
+    "id": "thedon",
+    "name": "The Don",
+    "role": "The Last Boss",
+    "hp": 9890,
+    "atk": 1030,
+    "def": 515,
+    "levelReq": 110,
+    "reward": {
+      "cash": [
+        18800000,
+        28200000
+      ],
+      "clout": 8635
     }
   }
 ]

@@ -1,7 +1,8 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.1 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
-one year of committed play · Simulator delivered (DOM-67)
+**Status:** v1.2 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
+the targets (DOM-71/DOM-81, §6)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-74.
@@ -40,6 +41,9 @@ spent climbing, not stalled. Reconcile with the day-30 target: L40 costs only ~4
 Clout, so the scaling belongs almost entirely to levels 40–120.
 
 ## 2. Where the live data lands against those targets
+
+> **Superseded 2026-09-11 by the DOM-71/DOM-81 catalog pass (§6)** — kept as the before-state
+> record. The catalogs below no longer exist in this form; rerun the sim for current numbers.
 
 Simulator output, 2026-09-11, `tuning.json` v2 (values, not judgements — rerun to refresh):
 
@@ -96,7 +100,7 @@ shield **at current numbers** — recheck if `defeatLossRate` or starting balanc
 | F1 | **Launder compounds ×2.3·10⁵ per day** (+10% of balance per 2 Moves, ~130/day committed). Every other number is noise until `hoodActions.launderRate` is zeroed. | tuning, one field — already flagged in `08` §2 |
 | F2 | **Spots as built are a $127k/h tap-farm** (full income per tap, 60s min). No accrual rate exists in tuning — the intended collect-on-login model cannot be tuned until DOM-74 defines one. | DOM-74 |
 | F3 | **Health, not Stamina, paces fighting**: at p=0.5 health regen sustains ~5.6 fights/h vs stamina's 20/h. The Hospital/heal loop is the real combat governor — price heals accordingly. | DOM-72 |
-| F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. | DOM-71, DOM-81 |
+| F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. **RESOLVED 2026-09-11** — the DOM-71/DOM-81 catalog pass (§6) extends both catalogs to L110 and lands the cap at exactly 365 committed days. | ~~DOM-71, DOM-81~~ closed |
 | F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. | DOM-73 |
 
 ## 5. DOM-79 decision record — ratified 2026-09-11 (Jake)
@@ -118,3 +122,44 @@ band by the same formula, `R = BE·(1−p)·L/p`, when matchmaking lands. Reroll
 heal are already level-indexed curves in tuning (`matchmaking.rerollFee`,
 `hospital.healCost`); nothing reads them yet because neither feature is built — the wiring
 lands with matchmaking and DOM-72.
+
+## 6. DOM-71 / DOM-81 decision record — ratified 2026-09-11 (Jake)
+
+The Moves ladder and the per-source Clout yields were decided together and solved as one system
+by `tools/econ-sim/gen-catalog.js` (the sim is the oracle; the catalogs are its output). Schema
+and contracts: `08-economy-schema.md` §9.
+
+| # | Decision | Outcome |
+|---|---|---|
+| 1 | Ladder shape | **Static tiers.** 19 jobs / 16 tiers, gates at 1–7 (legacy) then every 10 levels to L110. Payouts fixed per entry, geometric in the gate level — a new tier is a content beat. |
+| 2 | Clout income mix | **60 : 35 : 5 moves : fights : recruiting, grind-led** — held at every checkpoint (realized 63/37 at L10/L50/L100, recruiting's 5 is headroom). Late game reachable without fighting, just slower. |
+| 3 | Mastery (`times`) | **Cosmetic in v1.** Meter fills once, job stays runnable, completion pays nothing. Real mastery bonuses wait for telemetry. |
+| 4 | Recruiting | **Flavour, not income.** `crew.cloutPerRecruit` stays a flat 250 — an unbounded faucet on an unbuilt social loop is risk with no data. Revisit when invites exist. |
+
+**How the solve works.** Three knobs against the ratified targets: early gates (1–7) hit casual
+L8 at day 1; mid gates (10–30) hit casual L40 at day 30; late gates (40–110) hit committed L120
+at day 365. The early clout shape is deliberately near-flat (~7–11 Clout/Move from L1 to L50):
+early levels are fast because the *cost* curve is low, not because income ramps — the legacy ×3
+income ramp to L7 is what made day 30 overshoot. The hockey stick starts at L60.
+
+**Time-to-level, committed (simulator, post-solve):** L10 day 1 · L20 day 2 · L30 day 5 ·
+L40 day 12 · L50 day 29 · L60 day 72 · L80 day 169 · L100 day 267 · **L120 day 365** — the late
+game is a straight ~5 days/level climb. Casual lands L8 / L26 / L41 at days 1 / 7 / 30 against
+targets 8 / 20 / 40: **day 7 runs ~6 levels hot** and is pinned between the day-1 and day-30
+solutions — accepted, front-loading was the point.
+
+**Fight rewards** are priced per band from the DOM-79 anchor (`R = BE·(1−p)·L/p` at 8h of the
+band's job income) — the ×1.6–2.9 rescale recorded in §5 is delivered, and break-even placement
+now scores ×1.0 on every banded level. Win Clout is ~3.0× the band's job Clout/Move, which is
+what holds the 63/37 mix.
+
+**Consequences priced in, owners elsewhere:**
+
+- Cash income now scales ×1.1/level to L110 while every one-time price is static — the gear and
+  Spot catalogs (DOM-73, DOM-74) and the upgrade track (DOM-88) must gain level-scaled pricing,
+  and the launder rate (F1) compounds proportionally bigger balances: zero it first.
+- The $0.99 Stamina-refresh mint (Q1) grows with the reward rescale (~34h of top-job income at a
+  60-stamina pool) — the refresh grant/cap decision (DOM-69/DOM-76) is now more urgent, not less.
+- Enemy `hp/atk/def` above L5 are trend extrapolations; matchmaking (DOM-72) owns real stats.
+- Server-side payout and drop rolls (DOM-71 execution requirement) remain open — the prototype
+  resolves everything client-side; drops ride in `doJob()` until resolution moves as a whole.

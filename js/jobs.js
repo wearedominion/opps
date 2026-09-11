@@ -20,12 +20,10 @@ function renderJobs() {
       </div>
       ${locked ? `<div class="job-locked-note">${lockLabel(job)}</div>` : `
       <div class="job-progress-wrap">
-        <div class="job-progress-label"><span>Progress</span><span>${prog}/${job.times}</span></div>
+        <div class="job-progress-label"><span>${maxed ? 'Mastered' : 'Progress'}</span><span>${maxed ? '' : prog + '/' + job.times}</span></div>
         <div class="job-bar"><div class="job-bar-fill" style="width:${maxed ? 100 : Math.floor(prog / job.times * 100)}%"></div></div>
       </div>
-      <button class="do-job-btn secondary" onclick="doJob('${job.id}')" ${maxed ? 'disabled' : ''}>
-        ${maxed ? 'MASTERED ✓' : 'DO IT'}
-      </button>`}
+      <button class="do-job-btn secondary" onclick="doJob('${job.id}')">DO IT</button>`}
     `;
     container.appendChild(div);
   });
@@ -36,17 +34,28 @@ function doJob(jobId) {
   if (!job) return;
   if (G.moves.current < job.moves) { toast('Not enough Moves!', true); return; }
   if (!isUnlocked(job)) { toast(lockLabel(job), true); return; }
+  // Mastery is cosmetic (DOM-71): the meter fills once, the job stays runnable.
   const prog = G.jobProgress[job.id] || 0;
-  if (prog >= job.times) { toast('Job mastered already!', true); return; }
 
   debit('moves', job.moves, REASON.MOVE_COST, { ref: { jobId: job.id } });
   const earned = rand(job.cash[0], job.cash[1]);
   credit('cash', earned, REASON.MOVE_PAYOUT, { ref: { jobId: job.id } });
-  G.jobProgress[job.id] = prog + 1;
+  G.jobProgress[job.id] = Math.min(prog + 1, job.times);
   addClout(job.clout, REASON.MOVE_PAYOUT, { jobId: job.id });
 
   log(`${job.name} — earned $${earned} + ${job.clout} Clout`, 'win');
   toast(`+$${earned} | +${job.clout} CLOUT`);
+
+  // Drop tables (DOM-71). Rolled here only because ALL resolution is
+  // client-side in the prototype; this moves server-side with the rest of it.
+  for (const d of (job.drops || [])) {
+    if (G.inventory.includes(d.item) || Math.random() >= d.rate) continue;
+    G.inventory.push(d.item);
+    const item = STORE_ITEMS.find(i => i.id === d.item);
+    const label = item ? item.name : d.item;
+    log(`${job.name} — found ${label}`, 'win');
+    toast(`FOUND: ${label}`);
+  }
   updateHUD();
   renderJobs();
   GameState.save();
