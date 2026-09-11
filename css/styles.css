@@ -1527,6 +1527,15 @@ img.plug-portrait {
 /* locked rows render at full contrast — the chip names the gate */
 .pf-pick-row.locked { cursor: default; }
 .pf-pick-row.locked:hover { border-color: var(--border); }
+/* Profile layout modifiers — these were inline style="" attributes in
+   js/profile.js. Static styling belongs here; the only inline styles left in
+   that file are genuinely dynamic (bar width %, grid-area per slot). */
+.pf-fill { flex: 1; min-width: 0; }
+.pf-empty.bare { border: none; }
+.pf-inv-name.lg { font-size: 15px; }
+.pf-panel-body.flush { padding: 0; }
+.pf-warn.spaced { margin-top: 12px; }
+
 .pf-pick-list { display: flex; flex-direction: column; gap: var(--gap-list); padding: 12px var(--gap-section) 20px; }
 
 .pf-conf-line {
