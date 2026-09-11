@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "note": "Portrait art, keyed by entity id. Mirrors what was hardcoded in js/combat.js (ENEMY_PORTRAITS) and js/plugs.js at the time of writing, so the renderers can move to this file without losing any art. Wiring is tracked separately; see the Chrome Money epic.",
+  "enemies": {
+    "snitch": "assets/portraits/enemy-snitch.png",
+    "stick": "assets/portraits/enemy-stick.png",
+    "oppcrew": "assets/portraits/enemy-oppcrew.png",
+    "jackers": "assets/portraits/enemy-jackers.png",
+    "rival": "assets/portraits/enemy-rival.png",
+    "fed": "assets/portraits/enemy-fed.png"
+  },
+  "plugs": {
+    "plug-tommy": "assets/portraits/plug-tommy.webp",
+    "plug-theresa": "assets/portraits/plug-theresa.webp",
+    "plug-kylie": "assets/portraits/plug-kylie.webp",
+    "plug-marco": "assets/portraits/plug-marco.webp",
+    "plug-dex": "assets/portraits/plug-dex.webp"
+  }
+}
