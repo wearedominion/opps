@@ -864,6 +864,7 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   transition: filter .16s;
 }
 .crew-invite-btn:hover { filter: brightness(1.06); }
+.crew-claim-btn,
 .crew-refresh-btn {
   width: 100%;
   margin-top: 8px;
@@ -878,6 +879,7 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   border-radius: var(--r-pill);
   transition: border-color .16s;
 }
+.crew-claim-btn:hover,
 .crew-refresh-btn:hover { border-color: var(--border-gold); }
 .crew-empty { color: var(--muted); font-size: 13px; margin: 8px 0; }
 .crew-active { color: var(--green); font-size: 13px; margin: 8px 0; }

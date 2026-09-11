@@ -151,9 +151,9 @@ async function init() {
   // Init payments — fetches product list, recovers any incomplete purchases
   await Payments.init();
 
-  // Schedule re-engagement (resets timer each session) + income reminder if player has spots
-  Notify.reEngage();
-  Notify.incomeReady();
+  // Schedule everything that applies (re-engagement, income, energy) — or, for
+  // a guest, clear anything an older build scheduled for them.
+  Notify.scheduleAll();
 
   if (typeof JestSDK !== 'undefined') JestSDK.setLoadingProgress(90);
 

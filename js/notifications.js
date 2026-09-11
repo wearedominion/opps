@@ -15,6 +15,32 @@ const Notify = {
       && Auth.isRegistered();
   },
 
+  // Everything that currently applies, in one place — called on boot and again
+  // by Auth when a guest registers, so the two sites can't drift. Each
+  // scheduler self-guards, so calling all of them is always safe. For a known
+  // guest, instead cancel anything an older build (which scheduled for every
+  // SDK-present player) may have left pending for them.
+  scheduleAll() {
+    if (this._canNotify()) {
+      this.reEngage();
+      this.incomeReady();
+      this.energyFull();
+    } else if (typeof Auth !== 'undefined' && Auth.canPrompt()) {
+      this._clearStale();
+    }
+  },
+
+  // Unscheduling an absent identifier is a no-op, so this is safe every boot.
+  async _clearStale() {
+    for (const identifier of ['energy_full', 'income_ready', 're_engage']) {
+      try {
+        await JestSDK.notifications.unscheduleNotification({ identifier });
+      } catch (e) {
+        console.warn('Notify._clearStale failed:', e);
+      }
+    }
+  },
+
   // Called after any energy-spending action.
   // Schedules an exact-time alert for when energy will be full.
   async energyFull() {
