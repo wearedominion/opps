@@ -6,7 +6,7 @@
 // remove, re-key, unit change) and add the matching entry to MIGRATIONS below.
 // Additive changes — a new field with a default in the G literal — are NOT breaking
 // and MUST NOT bump this. See docs/specs/03-game-architecture.md §3.4.
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 const G = {
   schemaVersion: SCHEMA_VERSION,
@@ -24,7 +24,10 @@ const G = {
   health:  { current: 100, max: 100, lastTick: 0 },   // combat HP
 
   attack: 10, defense: 5,
-  inventory: [],
+  // { itemId: { level, duplicates } } — per-instance gear state (DOM-88).
+  // `level` is the upgrade level (0 = as bought); `duplicates` counts spare
+  // copies for when tuning.gear.duplicatesRequired turns on.
+  inventory: {},
   properties: {},
   jobProgress: {},
   playerId: null,
@@ -115,7 +118,36 @@ const MIGRATIONS = {
     s.schemaVersion = 3;
     return s;
   },
+
+  // v3 -> v4: inventory array-of-ids -> per-instance map (DOM-88 gear upgrades).
+  //   ["knife", "vest"]  ->  { "knife": { "level": 0, "duplicates": 0 },
+  //                            "vest":  { "level": 0, "duplicates": 0 } }
+  // Every pre-v4 item starts at upgrade level 0 with no spare copies — exactly
+  // the state a fresh purchase creates, so nothing is gained or lost. A junk
+  // inventory (not an array) becomes empty rather than crashing the chain.
+  3: (s) => {
+    const inv = {};
+    if (Array.isArray(s.inventory)) {
+      for (const id of s.inventory) inv[id] = { level: 0, duplicates: 0 };
+    }
+    s.inventory = inv;
+    s.schemaVersion = 4;
+    return s;
+  },
 };
+
+// ── Gear ownership helpers (DOM-88) ──────────────────────────────────────────
+// The one place that knows the inventory's shape; everything else asks these.
+function ownsGear(itemId) {
+  return !!(G.inventory && G.inventory[itemId]);
+}
+function gearInstance(itemId) {
+  return (G.inventory && G.inventory[itemId]) || null;
+}
+function grantGear(itemId) {
+  if (!G.inventory[itemId]) G.inventory[itemId] = { level: 0, duplicates: 0 };
+  return G.inventory[itemId];
+}
 
 // Runs the chain fully in memory. Never persists intermediate versions.
 function migrate(saved) {

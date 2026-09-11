@@ -1,8 +1,9 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.3 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.4 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
-the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)**
+the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
+**Upgrade sink live, ratio confirmed (DOM-88, §8)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
@@ -187,3 +188,25 @@ every item is level-gated and priced by rule; §2's "no gates" reading is histor
 **Still open, owners elsewhere:** one-time Spot prices (DOM-74) and the upgrade track pricing
 (DOM-88, now against a real catalog); server-side purchase/drop validation (gameplay server);
 enemy and gear stats above L5 are trend extrapolations until DOM-72 does matchmaking.
+
+## 8. DOM-88 decision record — 2026-09-11
+
+The gear upgrade track (DOM-79 layer 2) shipped against the DOM-73 catalog. Everything except the
+cost ratio was already ratified (DOM-79: `statCapLevel` 10 hard, layer 2 before layer 3;
+`duplicatesRequired` false until drops feed duplicates). What DOM-88 settled:
+
+- **Cost ratio 1.6 confirmed by the simulator** (§C2 of the report): because DOM-73 prices items
+  as hours-of-income at their gate, upgrade costs are band-invariant in player-time — first
+  levels on a kit ≈ 28h, kit to LV 5 ≈ 20 committed days, kit to the stat cap ≈ 235 days, each
+  prestige level beyond ≈ months of maxed income. 1.4 lets the cap arrive in ~90 days and cheapens
+  prestige; 1.8 turns LV 5 into a 29-day mid-game wall.
+- **Q2 (inflation, "nothing left to buy") is resolved**: past the one-time catalog the geometric
+  prestige ladder always offers a next level. The one-time-sink "outgrown in 2.1 days" reading in
+  §3 is now historical.
+- **Save schema v4**: inventory is a per-instance map (`{id: {level, duplicates}}`), migrated from
+  the v3 array with golden-file tests. Stats bank incrementally on upgrade, capped at LV 10;
+  prestige levels are display-only and public on the Profile projection.
+
+Still open, owners elsewhere: duplicates as an upgrade input (needs drop-fed duplicates — drops
+currently skip owned items per 08 §9.3); server-side upgrade validation (gameplay server);
+matchmaking consuming the inflated stats (DOM-72).

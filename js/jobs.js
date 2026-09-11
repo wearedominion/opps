@@ -49,8 +49,8 @@ function doJob(jobId) {
   // Drop tables (DOM-71). Rolled here only because ALL resolution is
   // client-side in the prototype; this moves server-side with the rest of it.
   for (const d of (job.drops || [])) {
-    if (G.inventory.includes(d.item) || Math.random() >= d.rate) continue;
-    G.inventory.push(d.item);
+    if (ownsGear(d.item) || Math.random() >= d.rate) continue;
+    grantGear(d.item);
     const item = STORE_ITEMS.find(i => i.id === d.item);
     const label = item ? item.name : d.item;
     log(`${job.name} — found ${label}`, 'win');

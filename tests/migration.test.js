@@ -38,6 +38,7 @@ function test(name, fn) {
 const { migrate, SCHEMA_VERSION, G } = loadState();
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/save-v1.json'), 'utf8'));
 const FIXTURE_V2 = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/save-v2.json'), 'utf8'));
+const FIXTURE_V3 = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/save-v3.json'), 'utf8'));
 const clone = o => JSON.parse(JSON.stringify(o));
 // state.js runs in a vm context, so objects the migration CREATES carry that
 // realm's Object.prototype and deepStrictEqual rejects them as not
@@ -45,7 +46,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 // loosening value comparison.
 const plain = o => JSON.parse(JSON.stringify(o));
 
-console.log('\nsave migration — full chain v1 -> v3');
+console.log('\nsave migration — full chain v1 -> v4');
 
 test('fixture migrates to the current schema version', () => {
   const { save, upgraded, fromFuture } = migrate(clone(FIXTURE));
@@ -54,13 +55,14 @@ test('fixture migrates to the current schema version', () => {
   assert.strictEqual(fromFuture, false);
 });
 
-test('golden: a v1 fixture migrates all the way to the exact expected v3 save', () => {
+test('golden: a v1 fixture migrates all the way to the exact expected v4 save', () => {
   const save = plain(migrate(clone(FIXTURE)).save);
   // v1 -> v2: level 5 under the v1 curve had cleared 100+160+256+409 = 925,
   //           plus xp remainder 200 plus rep 340 = 1465 clout.
   // v2 -> v3: money -> cash, and the three pools collapse to {current, max, lastTick}.
+  // v3 -> v4: inventory array -> per-instance {level, duplicates} map.
   assert.deepStrictEqual(save, {
-    schemaVersion: 3,
+    schemaVersion: 4,
     level: 5,
     clout: 1465,
     levelGranted: 5,
@@ -69,7 +71,7 @@ test('golden: a v1 fixture migrates all the way to the exact expected v3 save', 
     stamina: { current: 8,   max: 10,  lastTick: 0 },
     health:  { current: 130, max: 160, lastTick: 0 },
     attack: 22, defense: 13,
-    inventory: ['knife', 'vest'],
+    inventory: { knife: { level: 0, duplicates: 0 }, vest: { level: 0, duplicates: 0 } },
     properties: { corner: 2 },
     jobProgress: { lookout: 10, runner: 4 },
     playerId: 'p_test_0001',
@@ -84,10 +86,10 @@ test('golden: a v1 fixture migrates all the way to the exact expected v3 save', 
   });
 });
 
-test('golden: a v2 fixture produces the exact expected v3 save', () => {
+test('golden: a v2 fixture produces the exact expected v4 save', () => {
   const save = plain(migrate(clone(FIXTURE_V2)).save);
   assert.deepStrictEqual(save, {
-    schemaVersion: 3,
+    schemaVersion: 4,
     level: 11,
     clout: 1465,
     levelGranted: 11,
@@ -96,7 +98,8 @@ test('golden: a v2 fixture produces the exact expected v3 save', () => {
     stamina: { current: 2,  max: 6,   lastTick: 0 },
     health:  { current: 90, max: 205, lastTick: 0 },
     attack: 40, defense: 25,
-    inventory: ['knife', 'vest', 'glock'],
+    inventory: { knife: { level: 0, duplicates: 0 }, vest: { level: 0, duplicates: 0 },
+                 glock: { level: 0, duplicates: 0 } },
     properties: { corner: 3 },
     jobProgress: { lookout: 10, runner: 8 },
     playerId: 'p_test_0002',
@@ -106,6 +109,32 @@ test('golden: a v2 fixture produces the exact expected v3 save', () => {
     recruitedBy: null,
     skillPts: 35,
     equipped: { weapon: 'glock' },
+  });
+});
+
+test('golden: a v3 fixture produces the exact expected v4 save', () => {
+  const save = plain(migrate(clone(FIXTURE_V3)).save);
+  const expected = clone(FIXTURE_V3);
+  expected.schemaVersion = 4;
+  // The ONLY change v3 -> v4 makes: every owned id becomes a fresh instance.
+  expected.inventory = {
+    knife: { level: 0, duplicates: 0 }, vest:  { level: 0, duplicates: 0 },
+    glock: { level: 0, duplicates: 0 }, bando: { level: 0, duplicates: 0 },
+    mac11: { level: 0, duplicates: 0 },
+  };
+  assert.deepStrictEqual(save, expected);
+});
+
+test('v3 -> v4: an empty inventory array becomes an empty map', () => {
+  const { save } = migrate({ schemaVersion: 3, level: 1, clout: 0, inventory: [] });
+  assert.deepStrictEqual(plain(save.inventory), {});
+  assert.strictEqual(save.schemaVersion, 4);
+});
+
+test('v3 -> v4: a junk inventory becomes empty rather than crashing the chain', () => {
+  [undefined, null, 'knife', 42, { knife: true }].forEach(junk => {
+    const { save } = migrate({ schemaVersion: 3, level: 1, clout: 0, inventory: junk });
+    assert.deepStrictEqual(plain(save.inventory), {}, String(junk));
   });
 });
 
@@ -157,12 +186,12 @@ test('a level-1 v1 save keeps exactly what it earned', () => {
   const { save } = migrate({ schemaVersion: 1, level: 1, xp: 50, xpNext: 100, rep: 20 });
   assert.strictEqual(save.clout, 70);
   assert.strictEqual(save.levelGranted, 1);
-  assert.strictEqual(save.schemaVersion, 3);
+  assert.strictEqual(save.schemaVersion, SCHEMA_VERSION);
 });
 
 test('a pre-versioning save (no schemaVersion) runs the whole chain', () => {
   const { save } = migrate({ level: 1, xp: 10, rep: 5 });
-  assert.strictEqual(save.schemaVersion, 3);
+  assert.strictEqual(save.schemaVersion, SCHEMA_VERSION);
   assert.strictEqual(save.clout, 15);
   assert.strictEqual(save.cash, 0);
 });

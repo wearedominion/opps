@@ -347,22 +347,23 @@ served stronger targets and returns to the same band, so power inflation self-ne
 { "upgradeable": true }   // bool, required
 ```
 
-Added to all six items. Per-item so limited/premium gear can opt out later without a code change.
-The cost curve is **global** (`tuning.gear.upgradeCost`, scaled by the item's own `price`) — an
-item's upgrade cost is a property of the system, not of the item.
+Added to all 38 items (the DOM-73 catalog generates it). Per-item so limited/premium gear can opt
+out later without a code change. The cost curve is **global** (`tuning.gear.upgradeCost`, scaled
+by the item's own `price`) — an item's upgrade cost is a property of the system, not of the item.
 
-### 5.2 Owned-instance shape — **not yet built**
+### 5.2 Owned-instance shape — **built (DOM-88, 2026-09-11)**
 
-`G.inventory` is today an **array of item ids**. Upgrade levels need per-instance state:
+`G.inventory` is a per-instance map:
 
 ```jsonc
 "inventory": { "knife": { "level": 3, "duplicates": 1 } }
 ```
 
-Array → object is a **breaking save change**: `SCHEMA_VERSION` 1 → 2, one migration
-(`["knife","vest"]` → `{"knife":{"level":0,"duplicates":0}, …}`), and a golden-file test, per
-[`04-game-data-spec.md`](./04-game-data-spec.md) §7. Not done here — it lands with the gear system
-(DOM-73), not with the schema.
+The array → object migration shipped as `SCHEMA_VERSION` 3 → 4 with golden-file tests
+(`tests/fixtures/save-v3.json`), per [`04-game-data-spec.md`](./04-game-data-spec.md) §7. Every
+pre-v4 item lands at `{level: 0, duplicates: 0}` — the state a fresh purchase creates. The shape
+is only touched through the `state.js` helpers (`ownsGear` / `gearInstance` / `grantGear`);
+nothing else may assume it.
 
 ### 5.3 Effective stats
 
@@ -370,8 +371,24 @@ Array → object is a **breaking save change**: `SCHEMA_VERSION` 1 → 2, one mi
 effective(stat) = base + Σ over equipped items of (item[stat] + gain[stat] × min(level, statCapLevel))
 ```
 
-with `gain` = `tuning.gear.statGainPerLevel` and `statCapLevel` = `tuning.gear.statCapLevel`.
-Levels beyond `statCapLevel` cost Cash and grant nothing but display.
+with `gain` = `tuning.gear.statGainPerLevel` and `statCapLevel` = `tuning.gear.statCapLevel`
+(**10, hard** — DOM-79 decision 3). Levels beyond `statCapLevel` cost Cash and grant nothing but
+display — the prestige track, shown on the item and in the public Profile projection (the level is
+deliberately public; raw stats stay private).
+
+**Implementation note:** the client banks stats incrementally (`G.attack += gain` on each level up
+to the cap), the same way purchases apply item stats — the formula above is the invariant the
+increments maintain, not a recomputation that runs anywhere. `upgradeGear()` in `js/store.js`
+writes the `gear_upgrade` ledger row; the upgrade cost of level *n* is
+`tuneCurve('gear.upgradeCost', n, item.price)` (curves are 1-indexed).
+
+**The cost ratio is owned by the simulator** (`sim.js` §C2, DOM-88): because item prices are
+hours-of-income at their gate (DOM-73), the upgrade sink costs the same in player-time at every
+band — first levels on a full kit ≈ 28h of jobs, kit to LV 5 ≈ 20 committed days, kit to the stat
+cap ≈ 235 days, and each prestige level beyond absorbs months of maxed income. Ratio 1.6
+confirmed against 1.4 (caps out in ~90 days, prestige cheapens) and 1.8 (LV 5 becomes a 29-day
+wall): LV 5 stays an in-band goal, the cap a season-long one, and the sink never runs out — which
+resolves Q2's "nothing left to buy".
 
 ### 5.4 Duplicates
 

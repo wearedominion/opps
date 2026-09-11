@@ -131,7 +131,7 @@ function pfFindItem(itemId) {
 // `owned` flag is prototype seed data and goes away with the JSON migration.
 function pfOwns(item) {
   if (!item) return false;
-  return (G.inventory || []).includes(item.id) || item.owned === true;
+  return ownsGear(item.id) || item.owned === true;
 }
 
 function pfSlotLabel(slotId) {
@@ -186,9 +186,12 @@ function pfPublicProjection(state) {
     rank: rankForLevel(s.level),
     gear: GEAR_SLOTS.map(sl => {
       const it = pfFindItem(eq[sl.id]);
-      return it && it.slot === sl.id
-        ? { slot: sl.id, slotLabel: sl.label, name: it.name, tier: it.tier }
-        : null;
+      if (!it || it.slot !== sl.id) return null;
+      // Upgrade level is public by design (DOM-88): prestige levels exist to be
+      // seen. Raw stats stay private; the level number carries the flex.
+      const inst = (s.inventory || {})[it.id];
+      return { slot: sl.id, slotLabel: sl.label, name: it.name, tier: it.tier,
+               level: inst ? inst.level : 0 };
     }).filter(Boolean),
     // Deliberately absent: attack, defense, the health / moves / stamina pools,
     // cash, skillPts and unequipped inventory.

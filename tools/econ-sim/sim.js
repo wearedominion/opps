@@ -177,6 +177,47 @@ function gearAffordability(L) {
   });
 }
 
+// ── C2. Gear upgrade sink (DOM-88) ───────────────────────────────────────────
+// The recurring Cash drain from DOM-79 layer 2: geometric per-item upgrade
+// levels, cost scaled by the item's own price, stat gains hard-capped at
+// tuning.gear.statCapLevel, unbounded prestige beyond it. Because item prices
+// are hours-of-income at their gate (DOM-73), every metric here is expressed
+// in that same currency — hours or committed days of income at the band.
+function upgradeSink(ratioOverride) {
+  const curve = { ...T('gear.upgradeCost') };
+  if (ratioOverride) curve.ratio = ratioOverride;
+  const cap = T('gear.statCapLevel');
+  const cum = n => Array.from({ length: n }, (_, i) => curve.base * Math.pow(curve.ratio, i))
+    .reduce((a, b) => a + b, 0);
+  const committedShare = TARGETS.playerProfiles.committed.movesUse;
+
+  const bands = [10, 50, MAX_LEVEL_BAND].map(L => {
+    const kit = STORE.filter(i => (i.levelReq || 1) === L && i.upgradeable);
+    const kitPrice = kit.reduce((s, i) => s + i.price, 0);
+    const dayIncome = ratesAtLevel(L, 0).jobCashPerHour * 24 * committedShare;
+    return {
+      band: L, items: kit.length, kitPrice,
+      firstLevelHours: kitPrice * curve.base / ratesAtLevel(L, 0).jobCashPerHour,
+      toLevel5Days: kitPrice * cum(5) / dayIncome,
+      toCapDays: kitPrice * cum(cap) / dayIncome,
+    };
+  });
+
+  // Endgame absorption: the maxed player's income vs the next prestige level
+  // on the top-band kit — the reason Q2's "nothing left to buy" no longer holds.
+  const top = bands[bands.length - 1];
+  const maxedDay = ratesAtLevel(MAX_LEVEL, 0).jobCashPerHour * 24 * committedShare;
+  const prestige = [cap + 1, cap + 2, cap + 5].map(n => ({
+    level: n,
+    kitCostThatLevel: top.kitPrice * curve.base * Math.pow(curve.ratio, n - 1),
+    daysOfMaxedIncome: top.kitPrice * curve.base * Math.pow(curve.ratio, n - 1) / maxedDay,
+  }));
+
+  return { ratio: curve.ratio, base: curve.base, statCapLevel: cap,
+           capMultiple: cum(cap), bands, prestige };
+}
+const MAX_LEVEL_BAND = Math.max(...STORE.map(i => i.levelReq || 1));
+
 // ── D. The four questions ────────────────────────────────────────────────────
 
 // Q1 — Can paid Stamina out-earn its price?
@@ -359,6 +400,27 @@ function run() {
     say('    L' + l + ': ' + rows.join(' · '));
   });
 
+  say('\n■ C2. Gear upgrade sink (DOM-88) — geometric per level, scaled by item price');
+  const us = upgradeSink();
+  say('    ratio ' + us.ratio + ', stat cap LV ' + us.statCapLevel
+    + ' (capping an item costs ×' + fmt(us.capMultiple) + ' its price; levels beyond are prestige)');
+  us.bands.forEach(b => {
+    say('    L' + b.band + ' kit (' + b.items + ' items, $' + fmt(b.kitPrice) + '): first levels '
+      + fmt(b.firstLevelHours) + 'h of jobs · all to LV 5 = ' + fmt(b.toLevel5Days)
+      + ' committed days · to stat cap = ' + fmt(b.toCapDays) + ' days');
+  });
+  say('    Endgame absorption (maxed income, top kit): '
+    + us.prestige.map(p => 'LV ' + p.level + ' = ' + fmt(p.daysOfMaxedIncome) + 'd').join(' · ')
+    + ' — the sink no longer runs out (see Q2).');
+  say('    Ratio check (kit to LV 5 / to cap / next prestige level, committed days):');
+  [1.4, 1.6, 1.8].forEach(r => {
+    const alt = upgradeSink(r);
+    say('      r=' + r + ':  LV5 ' + fmt(alt.bands[0].toLevel5Days) + 'd · cap '
+      + fmt(alt.bands[0].toCapDays) + 'd · prestige LV ' + (alt.statCapLevel + 1) + ' '
+      + fmt(alt.prestige[0].daysOfMaxedIncome) + 'd'
+      + (r === us.ratio ? '   ← shipped: LV 5 in-band, cap a season-long goal, prestige absorbs for months' : ''));
+  });
+
   say('\n■ Q1. Can paid Stamina out-earn its price?  YES — and it scales with the pool.');
   const a1 = q1();
   say('    Best fight EV (p=0.70 band ceiling, empty wallet): $' + fmt(a1.perFightMax) + '/fight vs ' + a1.bestEnemy);
@@ -372,6 +434,8 @@ function run() {
     + '  →  $' + fmt(a2.cashPerWeek) + '/week with nothing to buy.');
   say('    Entire one-time sink catalog (all gear + all spots) = $' + fmt(a2.oneTimeSinkTotal)
     + ' — outgrown in ' + fmt(a2.weeksToOutgrowAllSinks * 7) + ' days.');
+  say('    RESOLVED by the upgrade track (C2/DOM-88): past the one-time catalog the geometric'
+    + ' prestige ladder always offers a next level — the sink never runs out.');
 
   say('\n■ Q3. Do bots mint more than players destroy?  YES below break-even.');
   const a3 = q3();
@@ -453,6 +517,7 @@ function run() {
     q1: q1(), q2: q2(), q3: q3(), q4: q4(),
     breakEvenPlan: breakEvenPlan(),
     launder: launder(), spotsExploit: spotsExploit(),
+    upgradeSink: upgradeSink(),
     targets: TARGETS,
   };
   fs.writeFileSync(path.join(outDir, 'results.json'), JSON.stringify(json, null, 2) + '\n');
@@ -579,6 +644,9 @@ function buildHtml(json, outDir) {
     F4_JOB_CEIL: String(jobCeiling),
     F4_ENEMY_CEIL: String(enemyCeiling),
     F5_HOURS: String(Math.max(...gearAffordability(jobCeiling).map(g => Math.round(g.hoursOfJobs * 10) / 10))),
+    UPG_RATIO: String(json.upgradeSink.ratio),
+    UPG_NEXT_LV: String(json.upgradeSink.statCapLevel + 1),
+    UPG_NEXT_DAYS: fmt(json.upgradeSink.prestige[0].daysOfMaxedIncome),
 
     DATA: JSON.stringify({
       maxLevel: MAX_LEVEL,
