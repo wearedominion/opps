@@ -70,7 +70,8 @@ const cloutPerMove = j => j.clout / j.moves;
 const cashPerMove  = j => mean(j.cash) / j.moves;
 
 // Best unlocked enemy by mean cash reward, at level L.
-// NOTE: the catalog tops out at levelReq 5 — rewards flatline from there (finding F2).
+// Bands run to levelReq 110 since DOM-71/DOM-81; tools/econ-sim/gen-catalog.js
+// prices each band's reward from the DOM-79 break-even anchor.
 function bestEnemy(level) {
   const open = ENEMIES.filter(e => e.levelReq <= level);
   return open.reduce((a, b) => (mean(b.reward.cash) > mean(a.reward.cash) ? b : a), open[0]);
@@ -381,8 +382,8 @@ function run() {
   say(table(['lvl', 'job $/h', 'target BE $', 'implied R $', 'current R $', 'R scale ×'],
     plan.map(r => [r.level, r.jobPerHour, r.targetBE, r.impliedR, r.currentR, Math.round(r.scale * 100) / 100]),
     [4, 8, 12, 12, 12, 10]));
-  say('    Win rewards need rescaling by the last column — execution lands with the');
-  say('    DOM-71/DOM-81 catalog pass; loot.defeatLossRate stays ' + DEFEAT_LOSS_RATE + '.');
+  say('    Rewards are priced from the band\'s job income by gen-catalog.js (DOM-71/DOM-81);');
+  say('    a scale off ×1 is band granularity or drift. loot.defeatLossRate stays ' + DEFEAT_LOSS_RATE + '.');
 
   say('\n■ Q4. Does a wiped new player recover?  YES — within one session.');
   const a4 = q4();

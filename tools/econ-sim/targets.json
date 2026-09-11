@@ -28,6 +28,13 @@
     "spots": 0.25
   },
 
+  "cloutIncomeMix": {
+    "_comment": "DOM-81, ratified 2026-09-11 (Jake): target share of a committed player's earned Clout per day, held at every checkpoint level. Grind-led — the late game stays reachable without fighting, just slower. Recruiting is recorded as FLAVOUR (crew.cloutPerRecruit stays a flat 250, not an income source); its 0.05 is headroom, so moves and fights are sized to carry the whole target at 60:35. tools/econ-sim/gen-catalog.js realizes this mix in data/jobs.json and data/enemies.json.",
+    "moves": 0.60,
+    "fights": 0.35,
+    "recruiting": 0.05
+  },
+
   "hospitalizedShareOfPlayers": 0.08,
 
   "newPlayerOfflineCapHours": 1.0,

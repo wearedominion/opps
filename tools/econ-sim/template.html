@@ -131,7 +131,7 @@
   <section>
     <div class="card">
       <h2>DAYS TO REACH LEVEL — ALL %%MAX_LEVEL%% LEVELS</h2>
-      <p class="sub">Log-scale days. Gold diamonds are the pacing targets (L%%T_D1%% day 1 · L%%T_D7%% day 7 · L%%T_D30%% day 30) — every profile beats them early, then hits the flat-catalog wall (F4): the cap is %%CAP_YEARS%% away even grinding nonstop.</p>
+      <p class="sub">Log-scale days. Gold diamonds are the pacing targets (L%%T_D1%% day 1 · L%%T_D7%% day 7 · L%%T_D30%% day 30). The DOM-71/DOM-81 ladder carries the climb all the way: committed lands L%%MAX_LEVEL%% in %%CAP_DAYS%% days against the %%T_CAP%% target.</p>
       <div class="chart-well" id="ttl-well">
         <svg id="ttl" viewBox="0 0 900 380" role="img" aria-label="Days to reach each level, three player profiles, log scale"></svg>
         <div class="tip" id="ttl-tip" hidden></div>
@@ -148,7 +148,7 @@
   <section>
     <div class="card">
       <h2>CASH PER HOUR BY ACTIVITY — AND WHERE IT STOPS GROWING</h2>
-      <p class="sub">Best available job vs fighting (win p = %%P_NOMINAL%%, empty wallet) at each level. Both flatline at L%%JOB_CEILING%% because the job and enemy catalogs end there — while Clout-to-next grows every level. Fight EV falls with wealth: past the break-even wallet (%%BE_NOMINAL%% at p=%%P_NOMINAL%%) fighting destroys Cash.</p>
+      <p class="sub">Best available job vs fighting (win p = %%P_NOMINAL%%, empty wallet) at each level. The catalogs now climb to L%%JOB_CEILING%% (DOM-71/DOM-81), payouts geometric in the gate level. Fight EV falls with wealth: past the break-even wallet (%%BE_NOMINAL%% at p=%%P_NOMINAL%%) fighting destroys Cash.</p>
       <div class="chart-well" id="rates-well">
         <svg id="rates" viewBox="0 0 900 300" role="img" aria-label="Cash per hour for jobs and fights across level bands"></svg>
         <div class="tip" id="rates-tip" hidden></div>
@@ -170,7 +170,7 @@
 %%BE_ROWS%%
         </tbody>
       </table>
-      <p class="sub" style="margin:10px 0 0">A committed player earns the nominal break-even in ~%%BE_HOURS%% hours — the sink starts biting far too early. <b style="color:var(--text)">DOM-79 (ratified 2026-09-11): break-even sits at %%BE_ANCHOR%% hours of job income; loss stays %%LOSS_RATE%% uncapped in v1.</b> Win rewards rescale to hit it (DOM-71/DOM-81):</p>
+      <p class="sub" style="margin:10px 0 0"><b style="color:var(--text)">DOM-79 (ratified 2026-09-11): break-even sits at %%BE_ANCHOR%% hours of job income; loss stays %%LOSS_RATE%% uncapped in v1.</b> Win rewards are priced to hit it by the DOM-71/DOM-81 catalog pass — a scale off ×1 below is band granularity, not drift:</p>
       <table style="margin-top:10px">
         <thead><tr><th>Level band</th><th>Job $/h</th><th>Target break-even</th><th>Implied win reward</th><th>Current reward</th><th>Rescale</th></tr></thead>
         <tbody>
@@ -186,7 +186,7 @@
       <div class="finding hot"><span class="fchip">F1</span><p><b style="color:var(--text)">Launder compounds ×%%F1_MULT%% per day.</b> +%%F1_RATE%% of balance per %%F1_COST%% Moves ≈ %%F1_PER_DAY%% launders/day committed. Zero <code>hoodActions.launderRate</code> before any other number matters. <span class="owner">tuning, one field</span></p></div>
       <div class="finding hot"><span class="fchip">F2</span><p><b style="color:var(--text)">Spots as built are a %%F2_CEILING%%/hour tap-farm</b> — full income per tap, %%F2_MIN%%s minimum, vs %%F2_TOPJOB%%/h from the top job. No accrual rate exists in tuning to fix it with. <span class="owner">DOM-74</span></p></div>
       <div class="finding"><span class="fchip">F3</span><p><b style="color:var(--text)">Health, not Stamina, paces fighting</b> — health regen sustains ~%%F3_BY_HEALTH%% fights/h at p=%%P_NOMINAL%%; stamina alone would allow %%F3_BY_STAMINA%%/h. The Hospital loop is the real combat governor. <span class="owner">DOM-72</span></p></div>
-      <div class="finding"><span class="fchip">F4</span><p><b style="color:var(--text)">The catalogs starve the curve.</b> Jobs stop at levelReq %%F4_JOB_CEIL%%, enemies at %%F4_ENEMY_CEIL%% — Clout/day is flat from L%%F4_JOB_CEIL%% to L%%MAX_LEVEL%% against ever-growing level costs. Extend earning with level; don't retune the curve. <span class="owner">DOM-71 · DOM-81</span></p></div>
+      <div class="finding"><span class="fchip">F4</span><p><b style="color:var(--text)">The catalogs starve the curve — resolved.</b> The DOM-71/DOM-81 pass extends jobs and enemies to levelReq %%F4_JOB_CEIL%%; Clout/day now tracks the ×1.1/level cost curve (Clout/day vs cap target: %%CAP_GAP%%). <span class="owner">closed 2026-09-11</span></p></div>
       <div class="finding"><span class="fchip">F5</span><p><b style="color:var(--text)">Gear is trivially affordable</b> — the priciest item costs ~%%F5_HOURS%%h of jobs at L%%JOB_CEILING%%, and store.json has no level gates to pace it. <span class="owner">DOM-73</span></p></div>
     </div>
   </section>
@@ -194,7 +194,7 @@
   <section>
     <div class="card">
       <h2>PACING TARGETS — RATIFIED 2026-09-11</h2>
-      <p class="sub">Written down before tuning toward them; ratified by Jake with the level-%%MAX_LEVEL%%-in-one-year amendment (tools/econ-sim/targets.json · docs/specs/09-economy-pacing-targets.md). Hitting the cap target needs %%CAP_GAP%% today's Clout/day — that gap is DOM-71/DOM-81's brief. Live data vs target:</p>
+      <p class="sub">Written down before tuning toward them; ratified by Jake with the level-%%MAX_LEVEL%%-in-one-year amendment (tools/econ-sim/targets.json · docs/specs/09-economy-pacing-targets.md). The Clout/day gap that was DOM-71/DOM-81's brief is closed — the catalogs are generated against these targets by gen-catalog.js. Live data vs target:</p>
       <table class="targets">
         <thead><tr><th>Target</th><th>Proposed</th><th>Live (committed)</th><th></th></tr></thead>
         <tbody>
@@ -316,7 +316,7 @@ const fmtD = d => d >= 365 ? (d / 365).toFixed(1) + 'y' : d + 'd';
     const fy = y(Math.max(DATA.bands[flatFrom].job, DATA.bands[flatFrom].fight));
     svg.appendChild(el('line', { x1: fx + 4, x2: xEnd, y1: fy - 12, y2: fy - 12, stroke: '#55555f', 'stroke-dasharray': '3 3' }));
     const ft = el('text', { x: (fx + xEnd) / 2, y: fy - 18, 'text-anchor': 'middle', fill: '#8e8e9a' });
-    ft.textContent = 'flat from L' + DATA.bands[flatFrom].l + ' to L' + DATA.maxLevel + ' — the catalogs end (F4)'; svg.appendChild(ft);
+    ft.textContent = 'flat from L' + DATA.bands[flatFrom].l + ' to L' + DATA.maxLevel + ' — the catalog ceiling'; svg.appendChild(ft);
   }
 
   const well = document.getElementById('rates-well'), tip = document.getElementById('rates-tip');

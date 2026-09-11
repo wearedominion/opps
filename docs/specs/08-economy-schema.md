@@ -307,9 +307,10 @@ settles.
 > win probability (0.5). The anchor lives in `tools/econ-sim/targets.json` (`breakEven`); the
 > live inputs are `loot.defeatLossRate` (fixed at 0.10) and the win rewards, which must be
 > sized per level band as `R = BE·(1−p)·L/p`. For authored enemies that is `enemies.json`
-> rewards (rescale: DOM-81/DOM-71); for real-player snapshots, the same formula prices the
-> reward from the opponent's band when matchmaking lands. The simulator's "break-even
-> placement" section scores the live data against the anchor.
+> rewards — **rescaled 2026-09-11 by the DOM-71/DOM-81 catalog pass** (`gen-catalog.js` prices
+> every band, §9.2); for real-player snapshots, the same formula prices the reward from the
+> opponent's band when matchmaking lands. The simulator's "break-even placement" section scores
+> the live data against the anchor.
 
 > **Reward MUST scale with the opponent's power.** A win mints Cash from nothing, so any ability
 > to steer toward weak opponents is an uncapped faucet — and unlike real PvP, farming a weak target
@@ -528,3 +529,62 @@ to land in an easier band has no downside for the player doing it.
 The mitigation is the reward curve, not infrastructure: **scale the win reward to the opponent's
 power** so weak opponents pay proportionally less and band-gaming stops paying. Stamina is a weak
 second limiter — 1 per fight at 180s regen is roughly 480 fights a day. See the note in §4.2.
+
+---
+
+## 9. Faucet catalogs — `jobs.json` and `enemies.json` (DOM-71 / DOM-81, 2026-09-11)
+
+Both catalogs are **generated, not hand-tuned**: `tools/econ-sim/gen-catalog.js` solves them
+against the ratified pacing targets (`tools/econ-sim/targets.json`) using the simulator as the
+oracle, and writes them as plain data the game reads unchanged. Hand-editing a payout invalidates
+the solve — change the targets or the generator and rerun, then validate with
+`node tools/econ-sim/sim.js`.
+
+### 9.1 `jobs.json` — the Moves ladder
+
+19 jobs across 16 tiers; static tier gates at levels 1, 2, 3, 5, 7, then every 10 levels from
+L10 to L110 (ratified: static catalog, not level-scaled payouts — a new tier is a content beat).
+
+| Field | Meaning |
+|---|---|
+| `tier` | 1-based index of the job's level gate, in gate order. |
+| `moves` | Pool cost per run. |
+| `cash` | `[min, max]` roll per run. Geometric in the gate level at the progression curve's own ratio, anchored to the legacy L7 rate — the cash economy has no seam at the old catalog boundary. |
+| `clout` | Flat payout per run. Near-flat ~7–11 per Move from L1 to L50 (early levels are fast because the **cost** curve is low, not because income ramps), then geometric from L60 so the ratified 365-day cap holds. |
+| `levelReq` | The tier gate. |
+| `times` | **Mastery is cosmetic (DOM-71 decision):** the meter fills once at `times` runs and the job stays runnable forever. `jobProgress` caps at `times`; completion pays nothing in v1. |
+| `drops` | `[{ item, rate }]` — see 9.3. |
+
+### 9.2 `enemies.json` — fight rewards
+
+17 enemies; bands at levels 1–5 (legacy ids kept) then every 10 levels from L10 to L110.
+
+- `reward.cash` is `[0.8·R, 1.2·R]` where **R = BE·(1−p)·L/p** at the band's best-job income —
+  the DOM-79 anchor (§4.2), priced by the generator. A break-even placement scale off ×1 in the
+  sim is band granularity (e.g. L7 fights the L5 band until L10 opens), not drift.
+- `reward.clout` is ~3.0× the band's best job clout-per-Move — the ratio that realizes the
+  ratified Clout mix (9.4) for the committed reference player.
+- `hp`/`atk`/`def` continue the legacy power trend and are **matchmaking inputs, not economy
+  data** — DOM-72 owns them.
+
+### 9.3 Drop tables
+
+`drops` on a job is the only non-purchase route to gear in v1. Contract: one roll per entry per
+run, **server-side** with the rest of move resolution; an item the player already owns never
+drops (inventory is one-of-each). Tables sit on tier-top jobs and end at tier 7 (`ak`) because
+the gear catalog ends there — DOM-73 extends both together.
+
+> The prototype rolls drops in `js/jobs.js` `doJob()` because *all* resolution is client-side
+> pre-server; the roll moves server-side wholesale with the rest of it (DOM-71 execution
+> requirement, still open). Drops are not ledger rows — inventory is not a ledger resource.
+
+### 9.4 Clout income mix — DOM-81 decision record (ratified 2026-09-11, Jake)
+
+Target share of a committed player's earned Clout, held at every checkpoint level (grind-led —
+the late game is reachable without fighting, just slower):
+
+| Source | Share | Realized (L10 / L50 / L100) |
+|---|---|---|
+| Moves (`jobs.json` `clout`) | 0.60 | 63% at every checkpoint (60:35 normalized) |
+| Fight win + loss (`reward.clout`, `combat.defeatCloutShare` = 0.25 unchanged) | 0.35 | 37% at every checkpoint |
+| Recruiting (`crew.cloutPerRecruit`) | 0.05 headroom | **Flavour, not income** — stays a flat 250. An unbounded faucet on an unbuilt social loop is risk with no data; revisit when invites exist. |
