@@ -1,0 +1,97 @@
+# 09 — Economy Pacing Targets & Simulator Findings
+
+**Status:** v1.0 · Targets proposed, awaiting ratification · Simulator delivered (DOM-67)
+**Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
+`data/enemies.json`, `data/properties.json` or `data/progression.json`.
+**Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-74.
+
+The simulator is `tools/econ-sim/sim.js` — run `node tools/econ-sim/sim.js` from the repo
+root. It reads every game constant from `data/*.json` through the game's own `js/tuning.js`
+(no drifting copy), reads the targets from `tools/econ-sim/targets.json`, and writes
+`tools/econ-sim/out/results.json` + `time-to-level.csv`. Change a number in tuning, re-run,
+and every table in this doc can be regenerated.
+
+---
+
+## 1. Pacing targets
+
+Written down **before** tuning toward them, per the DOM-67 brief. Proposed by the simulator
+work on 2026-09-11; each needs a ratify/adjust decision from design (Jake). Once ratified they
+are the spec, and a tuning change that misses them needs a reason.
+
+| Target | Value | Why |
+|---|---|---|
+| Session length | ~8 min | Long enough to spend a session's pool regen, short for RCS/iMessage context |
+| Sessions per day | 3 | Matches the Spots collect-on-login loop and pool sizes |
+| Level at day 1 / 7 / 30 | **8 / 20 / 40** | Front-load early ranks, keep 41–120 as the long game |
+| Faucet share of Cash income | Moves 45% · Fights 30% · Spots 25% | Moves stay the backbone; fighting is meaningful but optional; Spots reward ownership without going idle-game |
+| Players hospitalized at any moment | ≤ 8% | Hospital is a beat, not a wall |
+| New-player offline accrual cap | ~1 h | The login-forcing lever; grows with level per `data/unlocks.json` |
+
+## 2. Where the live data lands against those targets
+
+Simulator output, 2026-09-11, `tuning.json` v2 (values, not judgements — rerun to refresh):
+
+- **Early game is ~40% too fast, late game is unreachable.** A casual player hits **L11 on
+  day 1** (target 8) and **L56 by day 30** (target 40); then progress collapses — committed
+  play reaches L100 in ~733 days and **level 120 in >10 years** (grinding nonstop: ~9.4 years).
+  The curve is not the problem; the catalogs are (§4 F4): jobs stop growing at `levelReq 7`
+  and enemies at 5, so Clout/day is **flat from L7 to L120** while `cloutToNext` grows
+  ×1.1/level. **DOM-71 (Moves ladder) and DOM-81 (Clout yields) must extend earning with
+  level**, not retune the curve.
+- **Faucet shares are wildly off target.** As built, exploit ceilings dominate (launder,
+  Spots tap-farming, §4 F1–F2). Even exploits aside, fights at an empty wallet out-earn top
+  jobs ($1.8k/h vs $1.6k/h at p=0.5) and Spots pay ~$6.4k/day intended vs jobs ~$34.6k/day
+  committed — Moves ≈ 82%, Spots ≈ 15%, fights swing negative with wealth.
+
+## 3. The four questions, answered numerically
+
+**Q1 — Can paid Stamina out-earn its price? YES, and it scales with the pool.**
+At the matchmaking band ceiling (p = 0.70) vs the best-paying enemy, fight EV at an empty
+wallet is ~$455. A $0.99 Stamina refresh grants max-pool fights: **$1,365 with the base pool
+of 3 — $27,300 with a skill-built pool of 60** (≈17 hours of top-job income per refresh).
+Caveats that soften but don't fix it: defeats interrupt the burst (health floor blocks
+fighting under 20 HP), and the EV shrinks as the wallet grows. Mitigations, in order of
+force: win reward must scale with opponent power (already a MUST in `08` §4.2), and the
+refresh grant or stamina `maxCap` (60) needs a look in DOM-69/DOM-76.
+
+**Q2 — How fast does Cash inflate with no recurring sink?**
+A maxed committed player earns **~$286k/week** (jobs ~$34.6k/day + Spots ~$6.4k/day at 3
+collects) with nothing left to buy: the entire one-time sink catalog — all six gear items
+plus one of each Spot — totals **$28,100 and is outgrown in under a day** of committed play.
+This is the argument for DOM-79's recurring sinks (break-even fighting + the unbounded gear
+upgrade track).
+
+**Q3 — Do bots mint more than players destroy? YES, below the break-even balance.**
+Every fight is vs a snapshot: a win mints from nothing, a loss destroys 10% of the player's
+own wallet. Vs the best enemy (mean reward $650): break-even sits at **$3,500 (p=0.35) /
+$6,500 (p=0.5) / $15,167 (p=0.7)**. A player holding $1k nets +$162 to +$425 per fight
+depending on band position; at $50k every band is deeply Cash-negative (−$1,045 to −$3,022).
+Population net therefore depends entirely on the wealth distribution — early/mid wallets all
+mint, and nothing self-limits it because the snapshot loses nothing. The reward-scales-with-
+opponent rule is the mitigation; the break-even level itself is DOM-79's number to set.
+
+**Q4 — Does a wiped new player recover? YES, within one session.**
+Worst realistic run: lose all 3 starting fights → $500 → $365 (−$135, proportional loss can
+never reach $0). The 10 starting Moves alone earn back ~$350 on the best L1 job; the defeat
+health lockout is ~3 minutes of regen. There is no wipe state and no need for a new-player
+shield **at current numbers** — recheck if `defeatLossRate` or starting balances move.
+
+## 4. Findings beyond the brief
+
+| # | Finding | Owner |
+|---|---|---|
+| F1 | **Launder compounds ×2.3·10⁵ per day** (+10% of balance per 2 Moves, ~130/day committed). Every other number is noise until `hoodActions.launderRate` is zeroed. | tuning, one field — already flagged in `08` §2 |
+| F2 | **Spots as built are a $127k/h tap-farm** (full income per tap, 60s min). No accrual rate exists in tuning — the intended collect-on-login model cannot be tuned until DOM-74 defines one. | DOM-74 |
+| F3 | **Health, not Stamina, paces fighting**: at p=0.5 health regen sustains ~5.6 fights/h vs stamina's 20/h. The Hospital/heal loop is the real combat governor — price heals accordingly. | DOM-72 |
+| F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. | DOM-71, DOM-81 |
+| F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. | DOM-73 |
+
+## 5. What DOM-79 should take from this
+
+The break-even mechanism works exactly as designed — proportional drain vs absolute faucet —
+but at current rewards it sits at $3.5k–$15k, which mid-game wallets blow past almost
+immediately (a committed player earns that in a few hours). Once win rewards scale with
+opponent power (DOM-71/DOM-79), rerun the simulator and set `loot.defeatLossRate` so the
+break-even lands where design wants wallets to settle. The simulator's `breakEven()` and
+Q2/Q3 outputs are the tooling for that decision.

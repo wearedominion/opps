@@ -1,0 +1,38 @@
+{
+  "_comment": "DOM-67 pacing targets. These are DESIGN TARGETS, not game constants — the game never reads this file. They are written down before tuning so the first numbers that feel okay do not become the spec by default. Ratified targets graduate into docs/specs/09-economy-pacing-targets.md; the simulator scores the live tuning against them.",
+
+  "session": {
+    "minutesPerSession": 8,
+    "sessionsPerDay": 3
+  },
+
+  "levelByDay": {
+    "day1": 8,
+    "day7": 20,
+    "day30": 40
+  },
+
+  "faucetShareOfCashIncome": {
+    "moves": 0.45,
+    "fights": 0.30,
+    "spots": 0.25
+  },
+
+  "hospitalizedShareOfPlayers": 0.08,
+
+  "newPlayerOfflineCapHours": 1.0,
+
+  "playerProfiles": {
+    "_comment": "Share of daily pool regen actually spent. Committed ~= plays every session to empty pools; casual logs in twice and leaves regen on the table; grinder is the ceiling case for exploit math.",
+    "casual":    { "movesUse": 0.40, "staminaUse": 0.20 },
+    "committed": { "movesUse": 0.90, "staminaUse": 0.60 },
+    "grinder":   { "movesUse": 1.00, "staminaUse": 1.00 }
+  },
+
+  "assumptions": {
+    "_comment": "Modelling assumptions where the game data is silent. Each one is a gap the sim surfaces; none is a decision.",
+    "winProbabilityNominal": 0.50,
+    "spotCollectsPerDay": 3,
+    "spotAccrualNote": "Spots have no accrual rate in tuning.json — the prototype pays full income per tap, min 60s apart. The sim models the INTENDED design (collect on login, sessionsPerDay collects) and separately prints the prototype exploit ceiling (60 collects/hour)."
+  }
+}

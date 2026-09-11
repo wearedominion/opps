@@ -1,0 +1,329 @@
+<title>OPPS Economy Simulator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&display=swap">
+<style>
+  /* Chrome Money — single-theme dark by design (the game's own system).
+     Every surface and ink painted explicitly so the page holds on any host ground. */
+  :root {
+    --bg: #0b0b0c; --well: #0d0d11; --panel-top: #181820; --panel: #111116;
+    --border: #26262e; --border-ctrl: #33333d; --border-gold: #3d3627; --border-red: #5a2b24;
+    --text: #f2f0ec; --body-ink: #d8d6d0; --muted: #8e8e9a; --faint: #7a7a86; --ghost: #55555f;
+    --chrome: #e8c98a; --chrome-ink: #161208; --red: #e0523f; --green: #4fd39a;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;  /* validated categorical trio */
+    --chrome-fill: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
+    --panel-fill: linear-gradient(180deg,#181820,#111116);
+    --display: 'Anton', 'Arial Narrow', sans-serif;
+    --ui: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  }
+  html { color-scheme: dark; }
+  body {
+    margin: 0; background: var(--bg); color: var(--body-ink);
+    font: 15px/1.5 var(--ui);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.012), rgba(255,255,255,.012) 1px, transparent 1px, transparent 2px);
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .wordmark {
+    font-family: var(--display); font-size: 27px; letter-spacing: 4px;
+    background: var(--chrome-fill); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  h1 { font-family: var(--display); font-size: 19px; letter-spacing: 2px; color: var(--text); margin: 0; font-weight: 400; }
+  .meta { font-size: 11px; color: var(--faint); margin: 0 0 26px; }
+  .meta code { color: var(--muted); font-family: var(--ui); }
+
+  section { margin-bottom: 30px; }
+  .label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 9px; }
+  .tile { background: var(--panel-fill); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; }
+  .tile .q { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint); }
+  .tile .verdict { font-family: var(--display); font-size: 15px; letter-spacing: 1px; margin: 6px 0 2px; }
+  .tile .fig { font-family: var(--display); font-size: 26px; letter-spacing: .5px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .tile .fig.money { background: var(--chrome-fill); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tile .note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .bad  { color: var(--red); }
+  .good { color: var(--green); }
+
+  .card { background: var(--panel-fill); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; }
+  .card h2 { font-family: var(--display); font-size: 15px; letter-spacing: 1px; color: var(--text); margin: 0 0 2px; font-weight: 400; }
+  .card .sub { font-size: 11px; color: var(--muted); margin: 0 0 12px; }
+  .chart-well { background: var(--well); border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px 4px; position: relative; }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { font-family: var(--ui); font-size: 10px; fill: var(--faint); }
+  svg .tick { stroke: #1f1f27; stroke-width: 1; }
+  svg .axis { fill: var(--faint); }
+  svg .dlabel { font-size: 10.5px; font-weight: 700; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin: 10px 4px 0; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  .tip {
+    position: absolute; pointer-events: none; background: #181820; border: 1px solid var(--border-gold);
+    border-radius: 10px; padding: 7px 10px; font-size: 11px; color: var(--body-ink);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6); white-space: nowrap; z-index: 3;
+    font-variant-numeric: tabular-nums;
+  }
+  .tip b { color: var(--text); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--faint); font-weight: 500; text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  td { padding: 7px 10px; text-align: right; color: var(--body-ink); border-bottom: 1px solid #1a1a20; }
+  tr:last-child td { border-bottom: none; }
+  td.money { color: var(--chrome); }
+  td.neg { color: var(--red); }
+  td.pos { color: var(--green); }
+
+  .findings { display: grid; gap: 9px; }
+  .finding { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
+             background: var(--panel-fill); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+  .finding.hot { border-color: var(--border-red); }
+  .fchip { font-family: var(--display); font-size: 12px; letter-spacing: 1px; padding: 3px 10px; border-radius: 999px;
+           background: #1b1b22; border: 1px solid var(--border-ctrl); color: var(--text); margin-top: 1px; }
+  .finding.hot .fchip { border-color: var(--border-red); color: var(--red); }
+  .finding p { margin: 0; font-size: 13px; }
+  .finding .owner { color: var(--faint); font-size: 11px; }
+
+  .targets td:first-child { color: var(--muted); }
+  footer { font-size: 11px; color: var(--ghost); margin-top: 34px; line-height: 1.7; }
+  footer code { color: var(--faint); }
+  @media (prefers-reduced-motion: no-preference) { .tip { transition: opacity .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="wordmark">OPPS</span>
+    <h1>ECONOMY SIMULATOR</h1>
+  </header>
+  <p class="meta">DOM-67 · generated %%GENERATED_DATE%% against <code>data/tuning.json v%%TUNING_VERSION%%</code> · rerun with <code>node tools/econ-sim/sim.js --html</code> — every constant is read live from the game's own data files</p>
+
+  <section>
+    <div class="label">The four questions, answered</div>
+    <div class="tiles">
+      <div class="tile">
+        <div class="q">Q1 · Paid stamina arbitrage</div>
+        <div class="verdict bad">YES — IT PAYS</div>
+        <div class="fig money">%%Q1_CAP%%</div>
+        <div class="note">Cash per $0.99 refresh with a skill-built %%Q1_CAP_POOL%%-stamina pool (base pool of %%Q1_BASE_POOL%%: %%Q1_BASE%%). Equal to %%Q1_HOURS%% hours of top-job income.</div>
+      </div>
+      <div class="tile">
+        <div class="q">Q2 · Inflation, no recurring sink</div>
+        <div class="verdict bad">%%Q2_PER_WEEK%% / WEEK</div>
+        <div class="fig money">%%Q2_OUTGROW_DAYS%% days</div>
+        <div class="note">to outgrow the entire one-time sink catalog (%%Q2_SINK_TOTAL%%: all gear + all spots) at maxed committed play.</div>
+      </div>
+      <div class="tile">
+        <div class="q">Q3 · Do bots mint on net?</div>
+        <div class="verdict bad">YES, BELOW BREAK-EVEN</div>
+        <div class="fig">%%Q3_RANGE%%</div>
+        <div class="note">Break-even wallet across the win band. Every wallet below it mints per fight; the snapshot opponent loses nothing.</div>
+      </div>
+      <div class="tile">
+        <div class="q">Q4 · Wiped new player</div>
+        <div class="verdict good">RECOVERS</div>
+        <div class="fig">1 session</div>
+        <div class="note">Worst run (all %%Q4_LOSSES%% starting fights lost) costs %%Q4_LOST%% of %%Q4_START%%; starting Moves earn back %%Q4_EARNBACK%%. No wipe state exists.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>DAYS TO REACH LEVEL — ALL %%MAX_LEVEL%% LEVELS</h2>
+      <p class="sub">Log-scale days. Gold diamonds are the pacing targets (L%%T_D1%% day 1 · L%%T_D7%% day 7 · L%%T_D30%% day 30) — every profile beats them early, then hits the flat-catalog wall (F4): the cap is %%CAP_YEARS%% away even grinding nonstop.</p>
+      <div class="chart-well" id="ttl-well">
+        <svg id="ttl" viewBox="0 0 900 380" role="img" aria-label="Days to reach each level, three player profiles, log scale"></svg>
+        <div class="tip" id="ttl-tip" hidden></div>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:#3987e5"></i>Casual (%%P_CASUAL%%)</span>
+        <span><i class="swatch" style="background:#d95926"></i>Committed (%%P_COMMITTED%%)</span>
+        <span><i class="swatch" style="background:#199e70"></i>Grinder (%%P_GRINDER%%)</span>
+        <span><i class="swatch" style="background:#e8c98a;border-radius:50%"></i>Pacing target</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>CASH PER HOUR BY ACTIVITY — AND WHERE IT STOPS GROWING</h2>
+      <p class="sub">Best available job vs fighting (win p = %%P_NOMINAL%%, empty wallet) at each level. Both flatline at L%%JOB_CEILING%% because the job and enemy catalogs end there — while Clout-to-next grows every level. Fight EV falls with wealth: past the break-even wallet (%%BE_NOMINAL%% at p=%%P_NOMINAL%%) fighting destroys Cash.</p>
+      <div class="chart-well" id="rates-well">
+        <svg id="rates" viewBox="0 0 900 300" role="img" aria-label="Cash per hour for jobs and fights across level bands"></svg>
+        <div class="tip" id="rates-tip" hidden></div>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:#3987e5"></i>Best job $/h</span>
+        <span><i class="swatch" style="background:#d95926"></i>Fights $/h (empty wallet)</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>THE BREAK-EVEN WALLET</h2>
+      <p class="sub">Snapshot combat: a win mints an absolute reward, a loss burns %%LOSS_RATE%% of your own Cash — so fighting flips from faucet to drain at p·R / ((1−p)·L). Where that lands today, vs the best-paying opponent (mean reward %%Q3_REWARD%%):</p>
+      <table>
+        <thead><tr><th>Win probability</th><th>Break-even wallet</th><th>Net per fight @ $1k</th><th>@ $10k</th><th>@ $50k</th></tr></thead>
+        <tbody>
+%%BE_ROWS%%
+        </tbody>
+      </table>
+      <p class="sub" style="margin:10px 0 0">A committed player earns the nominal break-even in ~%%BE_HOURS%% hours — the sink starts biting far too early. DOM-79 sets where this lands once win rewards scale with opponent power.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">Findings beyond the brief</div>
+    <div class="findings">
+      <div class="finding hot"><span class="fchip">F1</span><p><b style="color:var(--text)">Launder compounds ×%%F1_MULT%% per day.</b> +%%F1_RATE%% of balance per %%F1_COST%% Moves ≈ %%F1_PER_DAY%% launders/day committed. Zero <code>hoodActions.launderRate</code> before any other number matters. <span class="owner">tuning, one field</span></p></div>
+      <div class="finding hot"><span class="fchip">F2</span><p><b style="color:var(--text)">Spots as built are a %%F2_CEILING%%/hour tap-farm</b> — full income per tap, %%F2_MIN%%s minimum, vs %%F2_TOPJOB%%/h from the top job. No accrual rate exists in tuning to fix it with. <span class="owner">DOM-74</span></p></div>
+      <div class="finding"><span class="fchip">F3</span><p><b style="color:var(--text)">Health, not Stamina, paces fighting</b> — health regen sustains ~%%F3_BY_HEALTH%% fights/h at p=%%P_NOMINAL%%; stamina alone would allow %%F3_BY_STAMINA%%/h. The Hospital loop is the real combat governor. <span class="owner">DOM-72</span></p></div>
+      <div class="finding"><span class="fchip">F4</span><p><b style="color:var(--text)">The catalogs starve the curve.</b> Jobs stop at levelReq %%F4_JOB_CEIL%%, enemies at %%F4_ENEMY_CEIL%% — Clout/day is flat from L%%F4_JOB_CEIL%% to L%%MAX_LEVEL%% against ever-growing level costs. Extend earning with level; don't retune the curve. <span class="owner">DOM-71 · DOM-81</span></p></div>
+      <div class="finding"><span class="fchip">F5</span><p><b style="color:var(--text)">Gear is trivially affordable</b> — the priciest item costs ~%%F5_HOURS%%h of jobs at L%%JOB_CEILING%%, and store.json has no level gates to pace it. <span class="owner">DOM-73</span></p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>PACING TARGETS — PROPOSED, AWAITING RATIFICATION</h2>
+      <p class="sub">Written down before tuning toward them (tools/econ-sim/targets.json · docs/specs/09-economy-pacing-targets.md). Live data vs target:</p>
+      <table class="targets">
+        <thead><tr><th>Target</th><th>Proposed</th><th>Live (committed)</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Level at day 1 / 7 / 30</td><td>%%T_D1%% / %%T_D7%% / %%T_D30%%</td><td>%%L_D1%% / %%L_D7%% / %%L_D30%%</td><td class="%%PACE_CLASS%%">%%PACE_VERDICT%%</td></tr>
+          <tr><td>Days to level %%MAX_LEVEL%%</td><td>reachable</td><td>%%CAP_DAYS%%</td><td class="%%CAP_CLASS%%">%%CAP_VERDICT%%</td></tr>
+          <tr><td>Faucet share (Moves/Fights/Spots)</td><td>%%T_FAUCETS%%</td><td>%%L_FAUCETS%%</td><td class="neg">off</td></tr>
+          <tr><td>Sessions per day / length</td><td>%%T_SESSIONS%%</td><td colspan="2" style="text-align:right;color:var(--faint)">assumption, needs telemetry (DOM-78)</td></tr>
+          <tr><td>Hospitalized share</td><td>≤ %%T_HOSPITAL%%</td><td colspan="2" style="text-align:right;color:var(--faint)">Hospital not built (DOM-72)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Simulator: <code>tools/econ-sim/sim.js</code> · outputs in <code>tools/econ-sim/out/</code> ·
+    spec: <code>docs/specs/09-economy-pacing-targets.md</code> · ticket: DOM-67 under Economy v.1 (DOM-64).<br>
+    Model notes: win p = %%P_NOMINAL%% nominal within the %%BAND_MIN%%–%%BAND_MAX%% matchmaking band · Spots at %%SPOT_COLLECTS%% collects/day intended design · base pools; skill allocation raises fight throughput.
+  </footer>
+</div>
+
+<script>
+const DATA = %%DATA%%;
+const NS = 'http://www.w3.org/2000/svg';
+const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const SERIES = ['#3987e5', '#d95926', '#199e70'];
+const fmtD = d => d >= 365 ? (d / 365).toFixed(1) + 'y' : d + 'd';
+
+// ── Chart 1: days-to-level, log y ──────────────────────────────
+(function () {
+  const svg = document.getElementById('ttl');
+  const W = 900, H = 380, m = { t: 16, r: 16, b: 34, l: 52 };
+  const LMAX = DATA.maxLevel;
+  const x = l => m.l + (W - m.l - m.r) * (l - 1) / (LMAX - 1);
+  const yMax = Math.log10(DATA.horizonDays * 1.1);
+  const y = d => H - m.b - (H - m.b - m.t) * (Math.log10(Math.max(d, 0.8))) / yMax;
+
+  [[1,'1d'],[7,'7d'],[30,'30d'],[90,'90d'],[365,'1y'],[1095,'3y'],[3650,'10y']].forEach(([d, lab]) => {
+    if (d > DATA.horizonDays * 1.1) return;
+    svg.appendChild(el('line', { x1: m.l, x2: W - m.r, y1: y(d), y2: y(d), class: 'tick' }));
+    const t = el('text', { x: m.l - 8, y: y(d) + 3, 'text-anchor': 'end' }); t.textContent = lab; svg.appendChild(t);
+  });
+  [1, 20, 40, 60, 80, 100, LMAX].forEach(l => {
+    const t = el('text', { x: x(l), y: H - m.b + 16, 'text-anchor': 'middle' }); t.textContent = 'L' + l; svg.appendChild(t);
+  });
+
+  const terminal = [];
+  [1, 2, 3].forEach((col, i) => {
+    let d = '';
+    DATA.ttl.forEach(r => { if (r[col] !== null) d += (d ? 'L' : 'M') + x(r[0]).toFixed(1) + ' ' + y(Math.max(r[col], 1)).toFixed(1); });
+    svg.appendChild(el('path', { d, fill: 'none', stroke: SERIES[i], 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+    const last = [...DATA.ttl].reverse().find(r => r[col] !== null);
+    svg.appendChild(el('circle', { cx: x(last[0]), cy: y(Math.max(last[col], 1)), r: 3.5, fill: SERIES[i], stroke: '#0d0d11', 'stroke-width': 2 }));
+    terminal.push(last);
+  });
+  // the three lines converge at top right — label them as a stacked block in the
+  // empty lower-right region instead of at the (colliding) endpoints
+  [['casual ' + (terminal[0][0] < LMAX ? 'stalls at L' + terminal[0][0] : 'reaches L' + LMAX) + ' — ' + fmtD(terminal[0][1]), 0],
+   ['committed ' + (terminal[1][0] < LMAX ? 'L' + terminal[1][0] : 'reaches L' + LMAX) + ' — ' + fmtD(terminal[1][2]), 1],
+   ['grinder ' + (terminal[2][0] < LMAX ? 'L' + terminal[2][0] : 'reaches L' + LMAX) + ' — ' + fmtD(terminal[2][3]), 2]].forEach(([txt, i]) => {
+    const t = el('text', { x: W - m.r - 8, y: H - m.b - 52 + i * 16, 'text-anchor': 'end', fill: SERIES[i], class: 'dlabel' });
+    t.textContent = txt; svg.appendChild(t);
+  });
+
+  DATA.targets.forEach(([l, d]) => {
+    const cx = x(l), cy = y(d);
+    svg.appendChild(el('path', { d: `M${cx} ${cy - 6}L${cx + 6} ${cy}L${cx} ${cy + 6}L${cx - 6} ${cy}Z`, fill: '#e8c98a', stroke: '#0d0d11', 'stroke-width': 1.5 }));
+  });
+
+  // hover: nearest level
+  const well = document.getElementById('ttl-well'), tip = document.getElementById('ttl-tip');
+  const cross = el('line', { y1: m.t, y2: H - m.b, class: 'tick', stroke: '#33333d' }); cross.style.display = 'none'; svg.appendChild(cross);
+  well.addEventListener('mousemove', ev => {
+    const r = svg.getBoundingClientRect();
+    const px = (ev.clientX - r.left) * (W / r.width);
+    const lvl = Math.max(1, Math.min(LMAX, Math.round((px - m.l) / (W - m.l - m.r) * (LMAX - 1) + 1)));
+    const row = DATA.ttl[lvl - 1]; if (!row) return;
+    cross.setAttribute('x1', x(lvl)); cross.setAttribute('x2', x(lvl)); cross.style.display = '';
+    tip.hidden = false;
+    tip.innerHTML = '<b>Level ' + lvl + '</b><br>casual ' + (row[1] === null ? 'unreached' : fmtD(row[1]))
+      + ' · committed ' + (row[2] === null ? 'unreached' : fmtD(row[2]))
+      + ' · grinder ' + (row[3] === null ? 'unreached' : fmtD(row[3]));
+    tip.style.left = Math.min(ev.clientX - r.left + 14, r.width - 240) + 'px';
+    tip.style.top = (ev.clientY - r.top - 40) + 'px';
+  });
+  well.addEventListener('mouseleave', () => { tip.hidden = true; cross.style.display = 'none'; });
+})();
+
+// ── Chart 2: $/h by band, grouped bars ─────────────────────────
+(function () {
+  const svg = document.getElementById('rates');
+  const W = 900, H = 300, m = { t: 18, r: 16, b: 34, l: 52 };
+  const peak = Math.max(...DATA.bands.map(b => Math.max(b.job, b.fight)));
+  const max = Math.ceil(peak / 500) * 500 || 500;
+  const y = v => H - m.b - (H - m.b - m.t) * v / max;
+  const n = DATA.bands.length, slot = (W - m.l - m.r) / n, bw = 26, gap = 2;
+
+  for (let v = 0; v <= max; v += max / 4) {
+    svg.appendChild(el('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: 'tick' }));
+    const t = el('text', { x: m.l - 8, y: y(v) + 3, 'text-anchor': 'end' }); t.textContent = '$' + (v >= 1000 ? v / 1000 + 'k' : v); svg.appendChild(t);
+  }
+
+  DATA.bands.forEach((b, i) => {
+    const cx = m.l + slot * (i + 0.5);
+    [['job', 0], ['fight', 1]].forEach(([k, s]) => {
+      const v = b[k], bx = cx - bw - gap / 2 + s * (bw + gap);
+      svg.appendChild(el('path', {
+        d: `M${bx} ${y(0)}V${y(v) + 4}Q${bx} ${y(v)} ${bx + 4} ${y(v)}H${bx + bw - 4}Q${bx + bw} ${y(v)} ${bx + bw} ${y(v) + 4}V${y(0)}Z`,
+        fill: SERIES[s], 'data-band': b.l, 'data-kind': k, 'data-v': v
+      }));
+    });
+    const t = el('text', { x: cx, y: H - m.b + 16, 'text-anchor': 'middle' });
+    t.textContent = 'L' + b.l; svg.appendChild(t);
+  });
+
+  // flat-zone annotation: from the first band where rates stop changing
+  const flatFrom = DATA.flatFromIndex;
+  if (flatFrom !== null) {
+    const fx = m.l + slot * flatFrom, xEnd = W - m.r - 4;
+    const fy = y(Math.max(DATA.bands[flatFrom].job, DATA.bands[flatFrom].fight));
+    svg.appendChild(el('line', { x1: fx + 4, x2: xEnd, y1: fy - 12, y2: fy - 12, stroke: '#55555f', 'stroke-dasharray': '3 3' }));
+    const ft = el('text', { x: (fx + xEnd) / 2, y: fy - 18, 'text-anchor': 'middle', fill: '#8e8e9a' });
+    ft.textContent = 'flat from L' + DATA.bands[flatFrom].l + ' to L' + DATA.maxLevel + ' — the catalogs end (F4)'; svg.appendChild(ft);
+  }
+
+  const well = document.getElementById('rates-well'), tip = document.getElementById('rates-tip');
+  svg.addEventListener('mousemove', ev => {
+    const t = ev.target;
+    if (t.dataset && t.dataset.v) {
+      const r = well.getBoundingClientRect();
+      tip.hidden = false;
+      tip.innerHTML = '<b>L' + t.dataset.band + '</b> · ' + (t.dataset.kind === 'job' ? 'best job' : 'fights (empty wallet)') + ' · $' + (+t.dataset.v).toLocaleString() + '/h';
+      tip.style.left = Math.min(ev.clientX - r.left + 14, r.width - 220) + 'px';
+      tip.style.top = (ev.clientY - r.top - 36) + 'px';
+    } else tip.hidden = true;
+  });
+  svg.addEventListener('mouseleave', () => { tip.hidden = true; });
+})();
+</script>
