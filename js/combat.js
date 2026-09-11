@@ -22,10 +22,10 @@ var ENEMY_THREAT = {
 
 var combatEnemy = null;
 
-// ── Simulation canvas ─────────────────────────
+// ── Simulation ────────────────────────────────
 var Sim = (function() {
   var _pts = null, _t0 = 0, _raf = 0, _timer = null;
-  var _result = null, _phase = null, _canvas = null;
+  var _result = null, _phase = null, _well = null;
 
   function start(threat) {
     if (_phase === 'run') return;
@@ -46,7 +46,7 @@ var Sim = (function() {
     cancelAnimationFrame(_raf);
     function loop() {
       var t = (performance.now() - _t0) / 5000;
-      if (_canvas) draw(_canvas, Math.min(1, t));
+      if (_well) draw(_well, Math.min(1, t));
       if (t >= 1) {
         _phase = 'done'; _setPhaseUI();
         _timer = setTimeout(function() { end_(true); }, 1500);
@@ -57,56 +57,91 @@ var Sim = (function() {
     _raf = requestAnimationFrame(loop);
   }
 
-  function draw(cv, t) {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var w = cv.clientWidth, h = cv.clientHeight;
+  // Renders the exchange into the .combat-log well as SVG. Deliberately not a
+  // canvas: the two lines are stroked by .combat-spark .you / .opp in the
+  // stylesheet, so the palette lives in the token set instead of being
+  // hardcoded here. The old canvas version carried #bfce1c / #e23b2e plus a
+  // shadowBlur glow, none of which CSS could reach or the contract allows.
+  function draw(well, t) {
+    if (!well) return;
+    var svg = document.getElementById('combat-spark');
+    if (!svg || !_pts) return;
+    var w = well.clientWidth, h = well.clientHeight;
     if (!w || !h) return;
-    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-    var ctx = cv.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-    if (!_pts) return;
+
+    // 1 user unit = 1 px, so strokes never distort.
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+
+    var padX = 4, padY = 6;
     var n = Math.max(2, Math.floor(_pts.length * t));
-    function px(i) { return 10 + (w - 20) * (i / (_pts.length - 1)); }
-    function py(v) { return h - 12 - (h - 24) * (v / 100); }
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
-    ctx.beginPath(); ctx.moveTo(10, py(50)); ctx.lineTo(w - 10, py(50)); ctx.stroke();
-    ctx.setLineDash([]);
-    function line(color, mapFn, glow) {
-      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.shadowColor = glow; ctx.shadowBlur = 8;
-      ctx.beginPath();
-      for (var i = 0; i < n; i++) { var y = py(mapFn(_pts[i])); if (i) ctx.lineTo(px(i), y); else ctx.moveTo(px(i), y); }
-      ctx.stroke(); ctx.shadowBlur = 0;
-      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px(n - 1), py(mapFn(_pts[n - 1])), 3, 0, 7); ctx.fill();
+    function px(i) { return padX + (w - padX * 2) * (i / (_pts.length - 1)); }
+    function py(v) { return h - padY - (h - padY * 2) * (v / 100); }
+
+    var mid = document.getElementById('spark-mid');
+    if (mid) {
+      mid.setAttribute('x1', padX); mid.setAttribute('x2', w - padX);
+      mid.setAttribute('y1', py(50)); mid.setAttribute('y2', py(50));
     }
-    line('#e23b2e', function(v) { return 100 - v; }, 'rgba(226,59,46,0.8)');
-    line('#bfce1c', function(v) { return v; },       'rgba(191,206,28,0.8)');
+
+    // The opp line is the player's line mirrored about the midpoint — one
+    // series, two readings, exactly as the canvas version plotted it.
+    function path(id, dotId, mapFn) {
+      var d = '', i, y;
+      for (i = 0; i < n; i++) {
+        y = py(mapFn(_pts[i]));
+        d += (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + y.toFixed(1);
+      }
+      var el = document.getElementById(id);
+      if (el) el.setAttribute('d', d);
+      var dot = document.getElementById(dotId);
+      if (dot) {
+        dot.setAttribute('cx', px(n - 1).toFixed(1));
+        dot.setAttribute('cy', py(mapFn(_pts[n - 1])).toFixed(1));
+      }
+    }
+    path('spark-opp', 'spark-dot-opp', function(v) { return 100 - v; });
+    path('spark-you', 'spark-dot-you', function(v) { return v; });
+  }
+
+  function _clearSpark() {
+    ['spark-you', 'spark-opp'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.removeAttribute('d');
+    });
+    ['spark-dot-you', 'spark-dot-opp'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.removeAttribute('cx'); el.removeAttribute('cy'); }
+    });
   }
 
   function end_(closeAfter) {
     cancelAnimationFrame(_raf); clearTimeout(_timer); _phase = null;
-    if (_canvas) { var c = _canvas.getContext('2d'); if (c) c.clearRect(0, 0, _canvas.width, _canvas.height); }
+    // Only wipe the chart when tearing the fight down. On a result we leave it
+    // on screen — the player just watched it, and clearing mid-result stranded
+    // the two head dots on an empty well.
+    if (!closeAfter) _clearSpark();
     if (closeAfter) _applyResult();
   }
 
+  // Contract: never dim content to signal state. The info block is hidden
+  // outright while the exchange runs and restored after, rather than dropped
+  // to 0.3 opacity as it was before.
   function _setPhaseUI() {
-    var simWrap  = $('sim-canvas-wrap');
+    var well     = $('combat-log');
     var infoWrap = $('combat-info-wrap');
     var resultEl = $('sim-result');
     if (_phase === 'run') {
-      if (simWrap)  simWrap.style.display  = 'block';
-      if (infoWrap) infoWrap.style.opacity = '0.3';
-      if (resultEl) resultEl.style.opacity = '0';
+      if (well)     well.hidden = false;
+      if (infoWrap) infoWrap.hidden = true;
+      if (resultEl) { resultEl.textContent = ''; resultEl.className = 'combat-spark-result'; }
     } else if (_phase === 'done') {
       if (resultEl) {
         resultEl.textContent = _result === 'W' ? 'W' : 'L';
-        resultEl.style.color = _result === 'W' ? '#bfce1c' : '#e23b2e';
-        resultEl.style.opacity = '1';
+        resultEl.className = 'combat-spark-result show ' + (_result === 'W' ? 'win' : 'loss');
       }
     } else {
-      if (simWrap)  simWrap.style.display  = 'none';
-      if (infoWrap) infoWrap.style.opacity = '1';
-      if (resultEl) resultEl.style.opacity = '0';
+      if (well)     well.hidden = true;
+      if (infoWrap) infoWrap.hidden = false;
+      if (resultEl) { resultEl.textContent = ''; resultEl.className = 'combat-spark-result'; }
     }
   }
 
@@ -136,8 +171,8 @@ var Sim = (function() {
     GameState.save();
   }
 
-  function setCanvas(el) { _canvas = el; }
-  return { start: start, draw: draw, end: end_, setCanvas: setCanvas };
+  function setWell(el) { _well = el; }
+  return { start: start, draw: draw, end: end_, setWell: setWell, clear: _clearSpark };
 })();
 
 // ── Render enemies list ───────────────────────
@@ -149,8 +184,10 @@ function renderEnemies() {
     var locked = G.level < e.lvlReq;
     var portrait = ENEMY_PORTRAITS[e.id];
     var threat = ENEMY_THREAT[e.id] || 5;
-    var bars = '';
-    for (var i = 0; i < 8; i++) bars += (i < threat ? '█' : '░');
+    // Contract: --red on --ghost. Split the run so the empty blocks are not
+    // also red — a rating should read as "4 of 8", not "8, some dimmer".
+    var bars = '<span class="threat-on">' + '█'.repeat(threat) + '</span>' +
+               '<span class="threat-off">' + '░'.repeat(8 - threat) + '</span>';
     var div = document.createElement('div');
     div.className = 'enemy-card';
     div.innerHTML =
@@ -190,7 +227,6 @@ function startCombat(enemyId) {
   $('c-enemy-name').textContent = e.name;
   $('c-player-hp').style.width = '100%';
   $('c-enemy-hp').style.width = '100%';
-  $('combat-log').innerHTML = '';
   $('combat-result').textContent = '';
   $('close-combat').style.display = 'none';
 
@@ -200,17 +236,16 @@ function startCombat(enemyId) {
   var oddsEl = $('c-odds');
   if (oddsEl) {
     oddsEl.textContent = lo + '–' + hi + '% WIN';
-    oddsEl.style.color = lo >= 60 ? '#bfce1c' : lo >= 45 ? '#f5902a' : '#e23b2e';
+    // Red here is combat semantics, which is where the contract allows it.
+    oddsEl.style.color = lo >= 60 ? 'var(--green)' : lo >= 45 ? 'var(--chrome)' : 'var(--red)';
   }
 
-  var canvas = $('sim-canvas');
-  if (canvas) Sim.setCanvas(canvas);
-  var simWrap = $('sim-canvas-wrap');
-  if (simWrap) simWrap.style.display = 'none';
+  var well = $('combat-log');
+  if (well) { Sim.setWell(well); well.hidden = true; Sim.clear(); }
   var infoWrap = $('combat-info-wrap');
-  if (infoWrap) infoWrap.style.opacity = '1';
+  if (infoWrap) infoWrap.hidden = false;
   var resultEl = $('sim-result');
-  if (resultEl) resultEl.style.opacity = '0';
+  if (resultEl) { resultEl.textContent = ''; resultEl.className = 'combat-spark-result'; }
 
   $('combat-overlay').classList.add('open');
 }

@@ -575,9 +575,11 @@ main::-webkit-scrollbar { width: 0; height: 0; }
 .hp-fill.enemy-hp { background: var(--red); }
 .vs-text { font-family: var(--display); font-size: 18px; color: var(--ghost); letter-spacing: 1px; }
 
-/* the monospace round log is replaced by a sparkline well:
-   chrome line = you, --red = opp. See DOM-42 for the renderer. */
+/* The sparkline well — the one place the round history is drawn. Replaces
+   both the monospace log and the separate #sim-canvas-wrap that grew up
+   beside it. chrome line = you, --red = opp. Renderer: js/combat.js. */
 .combat-log {
+  position: relative;
   background: var(--well);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
@@ -586,9 +588,28 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   overflow: hidden;
   margin-bottom: 16px;
 }
+/* no display declaration above, so the UA [hidden] rule still wins — but
+   state this explicitly so adding one later can't silently un-hide the well */
+.combat-log[hidden] { display: none; }
+
 .combat-spark { display: block; width: 100%; height: 100%; }
 .combat-spark .you { fill: none; stroke: var(--chrome); stroke-width: 1.5; }
 .combat-spark .opp { fill: none; stroke: var(--red); stroke-width: 1.5; }
+.combat-spark-mid { stroke: var(--border-ctrl); stroke-width: 1; stroke-dasharray: 3 4; }
+.combat-spark-dot { stroke: none; }
+.combat-spark-dot.you { fill: var(--chrome); }
+.combat-spark-dot.opp { fill: var(--red); }
+
+.combat-spark-result {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 34px; letter-spacing: 2px;
+  opacity: 0; transition: opacity .4s;
+  pointer-events: none;
+}
+.combat-spark-result.show { opacity: 1; }
+.combat-spark-result.win  { color: var(--green); }
+.combat-spark-result.loss { color: var(--red); }
 
 .combat-result {
   font-family: var(--display);
@@ -613,7 +634,9 @@ main::-webkit-scrollbar { width: 0; height: 0; }
 
 /* ── THREAT ──
    A rating out of 8, never animated. --red on --ghost. */
-.threat-bar { font-family: var(--ui); font-size: 11px; color: var(--red); letter-spacing: 0; }
+.threat-bar { font-family: var(--ui); font-size: 11px; letter-spacing: 0; }
+.threat-on  { color: var(--red); }
+.threat-off { color: var(--ghost); }
 .threat-label {
   color: var(--faint); font-size: 10px; letter-spacing: 2px;
   text-transform: uppercase; margin-left: 5px;
@@ -1690,14 +1713,3 @@ img.plug-portrait {
 #c-odds { font-size: 13px; font-weight: 500; color: var(--text); }
 .attack-btn.wide { width: 100%; margin-left: 0; }
 
-#sim-canvas-wrap { position: relative; height: 80px; margin: 8px 0; }
-#sim-canvas {
-  width: 100%; height: 100%; display: block;
-  border-radius: var(--r-card); background: var(--well);
-}
-#sim-result {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--display); font-size: 34px; letter-spacing: 2px;
-  color: var(--text); opacity: 0; transition: opacity .4s;
-}
