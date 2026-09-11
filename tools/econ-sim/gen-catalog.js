@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// DOM-71 / DOM-81 — faucet catalog generator.
+// DOM-71 / DOM-81 / DOM-73 — faucet + sink catalog generator.
 //
-// Writes data/jobs.json and data/enemies.json from the ratified design
-// (2026-09-11, Jake):
+// Writes data/jobs.json, data/enemies.json and data/store.json from the
+// ratified design (2026-09-11, Jake):
 //   · static tier ladder, gates every 10 levels from L10 to L110 (DOM-71)
 //   · Clout income mix 60:35:5 moves:fights:recruiting, grind-led; recruiting
 //     is flavour, so moves+fights carry the whole target at 60:35 (DOM-81)
@@ -10,7 +10,12 @@
 //   · every win reward priced from the DOM-79 break-even anchor:
 //     R = BE·(1−p)·L/p with BE = hoursOfJobIncome × job$/h at the band
 //   · mastery (`times`) is cosmetic; drop tables live on tier-top jobs and
-//     end where the gear catalog ends (DOM-73 extends them)
+//     run the full ladder now that the gear catalog does (DOM-73)
+//   · gear (DOM-73, 2026-09-11): per-Plug inventory as data, own-once
+//     additive stats, prices = hours of best-job income at the gating level
+//     (weapon 8h / armor 8h / vehicle 12h / utility 4h; sub-L5 starters keep
+//     authored prices). Names and plug assignments are pure content in
+//     GEAR_CONTENT — swap them freely, the solve never reads them.
 //
 // The simulator is the oracle: this script writes candidate catalogs, runs
 // tools/econ-sim/sim.js, reads out/results.json, and solves three knobs —
@@ -85,18 +90,20 @@ const EARLY_JOBS = [
   { id: 'takeover', name: 'Block Takeover',  moves: 6, levelReq: 7, times: 2,  cash: [600, 1000], shape: 14.0, drops: [{ item: 'glock', rate: 0.03 }] },
 ];
 
+// Each gate's tier-top job drops that gate's weapon at a low rate (the free
+// lottery beside the purchase path — own-once, so the EV vanishes on hit).
 const NEW_JOBS = [
-  { id: 'traphouse',  name: 'Run a Trap House',        gate: 10,  moves: 6, times: 3, drops: [{ item: 'bando', rate: 0.03 }] },
+  { id: 'traphouse',  name: 'Run a Trap House',        gate: 10,  moves: 6, times: 3, drops: [{ item: 'bando', rate: 0.03 }, { item: 'mac11', rate: 0.025 }] },
   { id: 'fixfight',   name: 'Fix a Fight',             gate: 20,  moves: 6, times: 3, drops: [{ item: 'ak', rate: 0.025 }] },
-  { id: 'hijack',     name: 'Hijack a Shipment',       gate: 30,  moves: 7, times: 3, drops: [] },
-  { id: 'precinct',   name: 'Flip a Precinct',         gate: 40,  moves: 7, times: 2, drops: [] },
-  { id: 'docks',      name: 'Run the Docks',           gate: 50,  moves: 7, times: 2, drops: [] },
-  { id: 'club',       name: 'Own the Night Club',      gate: 60,  moves: 8, times: 2, drops: [] },
-  { id: 'contract',   name: 'Rig the City Contract',   gate: 70,  moves: 8, times: 2, drops: [] },
-  { id: 'interstate', name: 'Run Guns Interstate',     gate: 80,  moves: 8, times: 2, drops: [] },
-  { id: 'judge',      name: 'Buy a Judge',             gate: 90,  moves: 8, times: 2, drops: [] },
-  { id: 'commission', name: 'Take the Commission Seat', gate: 100, moves: 8, times: 2, drops: [] },
-  { id: 'runcity',    name: 'Run the City',            gate: 110, moves: 8, times: 2, drops: [] },
+  { id: 'hijack',     name: 'Hijack a Shipment',       gate: 30,  moves: 7, times: 3, drops: [{ item: 'pump', rate: 0.025 }] },
+  { id: 'precinct',   name: 'Flip a Precinct',         gate: 40,  moves: 7, times: 2, drops: [{ item: 'switchie', rate: 0.025 }] },
+  { id: 'docks',      name: 'Run the Docks',           gate: 50,  moves: 7, times: 2, drops: [{ item: 'drummy', rate: 0.025 }] },
+  { id: 'club',       name: 'Own the Night Club',      gate: 60,  moves: 8, times: 2, drops: [{ item: 'carbine', rate: 0.025 }] },
+  { id: 'contract',   name: 'Rig the City Contract',   gate: 70,  moves: 8, times: 2, drops: [{ item: 'sniper', rate: 0.025 }] },
+  { id: 'interstate', name: 'Run Guns Interstate',     gate: 80,  moves: 8, times: 2, drops: [{ item: 'beltfed', rate: 0.025 }] },
+  { id: 'judge',      name: 'Buy a Judge',             gate: 90,  moves: 8, times: 2, drops: [{ item: 'fiftycal', rate: 0.025 }] },
+  { id: 'commission', name: 'Take the Commission Seat', gate: 100, moves: 8, times: 2, drops: [{ item: 'minigun', rate: 0.025 }] },
+  { id: 'runcity',    name: 'Run the City',            gate: 110, moves: 8, times: 2, drops: [{ item: 'arsenal', rate: 0.025 }] },
 ];
 
 // Cash per move continues the existing top job's rate geometrically, so the
@@ -133,6 +140,84 @@ const NEW_ENEMIES = [
 // (DOM-72), not the economy model.
 const STAT_ANCHOR = { hp: 200, atk: 30, def: 15, gate: 5 };
 const STAT_RATIO_PER_10 = { hp: 1.45, atk: 1.40, def: 1.40 };
+
+// ── Gear (DOM-73) ─────────────────────────────────────────────────────────────
+// GEAR_CONTENT is the identity layer: ids, display names, types and vendors.
+// Everything numeric (stats, prices) is derived below, so renaming an item —
+// the planned real-gun content pass included — is a pure content edit here.
+// `price` marks an authored starter price (sub-L5 onboarding buys); everything
+// else is priced by the rule. `stats` marks authored legacy stats kept for
+// save continuity; generated stats ride the enemy power trend (matchmaking
+// inputs — DOM-72 owns the combat math that consumes them).
+//
+// Vendors (per-Plug inventory, ratified 2026-09-11): weapons move through
+// Tommy the Fence, armor through Theresa the Connect, vehicles through Big
+// Homie Marco the Mechanic, utility through Kylie the Lookout — and the
+// L110 endgame kit is Dex's "big one". Ids must exist in js/plugs.js.
+const GEAR_CONTENT = [
+  // legacy six — ids are load-bearing (saves, drop tables)
+  { id: 'knife',    name: 'Switchblade',      type: 'weapon',  gate: 1,   price: 200, stats: { atk: 5 } },
+  { id: 'burner',   name: 'Burner Phone',     type: 'utility', gate: 2,   price: 600, stats: { atk: 5, def: 5 } },
+  { id: 'vest',     name: 'Bulletproof Vest', type: 'armor',   gate: 3,   price: 500, stats: { def: 10 } },
+  { id: 'glock',    name: 'Glock 19',         type: 'weapon',  gate: 5,   stats: { atk: 15 } },
+  { id: 'bando',    name: 'Safe House',       type: 'utility', gate: 7,   stats: { def: 20, hp: 10 } },
+  { id: 'ak',       name: 'Draco',            type: 'weapon',  gate: 20 },
+  // the ladder
+  { id: 'mac11',    name: 'MAC-11',           type: 'weapon',  gate: 10 },
+  { id: 'stabvest', name: 'Stab Vest',        type: 'armor',   gate: 10 },
+  { id: 'dirtbike', name: 'Dirt Bike',        type: 'vehicle', gate: 10 },
+  { id: 'kevlar',   name: 'Kevlar Hoodie',    type: 'armor',   gate: 20 },
+  { id: 'boxchevy', name: 'Box Chevy',        type: 'vehicle', gate: 20 },
+  { id: 'pump',     name: 'Pump Shotty',      type: 'weapon',  gate: 30 },
+  { id: 'plates',   name: 'Steel Plates',     type: 'armor',   gate: 30 },
+  { id: 'coupe',    name: 'Foreign Coupe',    type: 'vehicle', gate: 30 },
+  { id: 'switchie', name: 'Switchie',         type: 'weapon',  gate: 40 },
+  { id: 'ballistic', name: 'Ballistic Shield', type: 'armor',  gate: 40 },
+  { id: 'blacksuv', name: 'Blacked-Out SUV',  type: 'vehicle', gate: 40 },
+  { id: 'drummy',   name: 'Drummy',           type: 'weapon',  gate: 50 },
+  { id: 'dragonskin', name: 'Dragon Skin',    type: 'armor',   gate: 50 },
+  { id: 'armsedan', name: 'Armored Sedan',    type: 'vehicle', gate: 50 },
+  { id: 'carbine',  name: 'Chopped Carbine',  type: 'weapon',  gate: 60 },
+  { id: 'fullkev',  name: 'Full Kevlar Suit', type: 'armor',   gate: 60 },
+  { id: 'sprinter', name: 'Stash Sprinter',   type: 'vehicle', gate: 60 },
+  { id: 'sniper',   name: 'Rooftop Rifle',    type: 'weapon',  gate: 70 },
+  { id: 'fedvest',  name: 'Fed-Grade Vest',   type: 'armor',   gate: 70 },
+  { id: 'lowkey',   name: 'Low-Key Limo',     type: 'vehicle', gate: 70 },
+  { id: 'beltfed',  name: 'Belt-Fed',         type: 'weapon',  gate: 80 },
+  { id: 'bunker',   name: 'Bunker Gear',      type: 'armor',   gate: 80 },
+  { id: 'gunboat',  name: 'Harbor Gunboat',   type: 'vehicle', gate: 80 },
+  { id: 'fiftycal', name: 'Fifty Cal',        type: 'weapon',  gate: 90 },
+  { id: 'titanium', name: 'Titanium Weave',   type: 'armor',   gate: 90 },
+  { id: 'helo',     name: 'Private Helo',     type: 'vehicle', gate: 90 },
+  { id: 'minigun',  name: 'Minigun',          type: 'weapon',  gate: 100 },
+  { id: 'exorig',   name: 'Exo Rig',          type: 'armor',   gate: 100 },
+  { id: 'jet',      name: 'Private Jet',      type: 'vehicle', gate: 100 },
+  { id: 'arsenal',  name: 'The Arsenal',      type: 'weapon',  gate: 110, plug: 'plug-dex' },
+  { id: 'fortress', name: 'Mobile Fortress',  type: 'armor',   gate: 110, plug: 'plug-dex' },
+  { id: 'yacht',    name: 'Armored Yacht',    type: 'vehicle', gate: 110, plug: 'plug-dex' },
+];
+
+const PLUG_BY_TYPE = {
+  weapon: 'plug-tommy', armor: 'plug-theresa',
+  vehicle: 'plug-marco', utility: 'plug-kylie',
+};
+
+// Price rule: hours of best-job income at the gating level. A gate's full
+// kit lands around 1.3 committed days (~3 casual) — a real save-up target
+// beside the DOM-79 8h break-even, at every band.
+const GEAR_HOURS_BY_TYPE = { weapon: 8, armor: 8, vehicle: 12, utility: 4 };
+
+// Stat curves ride the enemy trend (×1.40 per 10 levels), anchored to the
+// legacy items so there is no seam: weapons to the Draco (30 ATK at L20),
+// armor to the Vest (10 DEF at L3). Vehicles are hybrid at 40% of each.
+const gearAtk = g => 30 * STAT_RATIO_PER_10.atk ** ((g - 20) / 10);
+const gearDef = g => 10 * STAT_RATIO_PER_10.def ** ((g - 3) / 10);
+const GEAR_STATS_BY_TYPE = {
+  weapon:  g => ({ atk: gearAtk(g), def: 0, hp: 0 }),
+  armor:   g => ({ atk: 0, def: gearDef(g), hp: 0 }),
+  vehicle: g => ({ atk: 0.4 * gearAtk(g), def: 0.4 * gearDef(g), hp: 0 }),
+  utility: g => ({ atk: 0, def: 0, hp: 0 }), // only legacy-authored utilities exist
+};
 
 const nice = v => {
   if (v < 100) return Math.max(1, Math.round(v));
@@ -212,13 +297,33 @@ function buildCatalogs(E, M, K) {
     };
   });
 
-  return { jobsOut, enemies };
+  // Gear (DOM-73). Prices track job income only, so they are independent of
+  // the Clout knobs — rebuilt every candidate write purely for convenience.
+  const gear = GEAR_CONTENT.map(item => {
+    const s = item.stats ?? GEAR_STATS_BY_TYPE[item.type](item.gate);
+    const atk = Math.round(s.atk || 0), def = Math.round(s.def || 0), hp = Math.round(s.hp || 0);
+    const price = item.price ?? nice(GEAR_HOURS_BY_TYPE[item.type] * jobCashPerHour(item.gate));
+    const desc = [atk && `+${atk} ATK`, def && `+${def} DEF`, hp && `+${hp} HP`]
+      .filter(Boolean).join(' ');
+    return {
+      id: item.id, name: item.name, desc,
+      type: item.type,
+      tier: gates.indexOf(item.gate) + 1,
+      levelReq: item.gate,
+      plug: item.plug ?? PLUG_BY_TYPE[item.type],
+      price, atk, def, hp,
+      upgradeable: true,
+    };
+  }).sort((a, b) => a.levelReq - b.levelReq || a.id.localeCompare(b.id));
+
+  return { jobsOut, enemies, gear };
 }
 
 function writeCatalogs(E, M, K) {
-  const { jobsOut, enemies } = buildCatalogs(E, M, K);
+  const { jobsOut, enemies, gear } = buildCatalogs(E, M, K);
   fs.writeFileSync(path.join(ROOT, 'data/jobs.json'), JSON.stringify(jobsOut, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/enemies.json'), JSON.stringify(enemies, null, 2) + '\n');
+  fs.writeFileSync(path.join(ROOT, 'data/store.json'), JSON.stringify(gear, null, 2) + '\n');
 }
 
 function runSim() {
@@ -266,7 +371,7 @@ function main() {
   const r = runSim();
 
   // Committed Clout mix at the checkpoint levels, from the written catalogs.
-  const { jobsOut, enemies } = buildCatalogs(E, M, K);
+  const { jobsOut, enemies, gear } = buildCatalogs(E, M, K);
   const mixAt = L => {
     const best = m => Math.max(...jobsOut.filter(j => j.levelReq <= L).map(m));
     const cpm = best(j => j.clout / j.moves);
@@ -292,7 +397,17 @@ function main() {
     const m = mixAt(L);
     console.log(`  L${L}: moves ${(m.moves * 100).toFixed(0)}% / fights ${(m.fights * 100).toFixed(0)}%`);
   }
-  console.log('Wrote data/jobs.json (' + jobsOut.length + ' jobs) and data/enemies.json (' + enemies.length + ' enemies).');
+  // Gear pricing readback: hours of best-job income at each item's own gate.
+  const bestCpmAt = L => Math.max(...jobsOut.filter(j => j.levelReq <= L)
+    .map(j => (j.cash[0] + j.cash[1]) / 2 / j.moves));
+  console.log('Gear price rule (hours of best-job income at the gate; starters authored):');
+  for (const g of [...new Set(gear.map(i => i.levelReq))]) {
+    const rows = gear.filter(i => i.levelReq === g).map(i =>
+      `${i.id} $${i.price.toLocaleString()} (${(i.price / (bestCpmAt(g) * MOVES_PER_HOUR)).toFixed(1)}h)`);
+    console.log(`  L${g}: ${rows.join(' · ')}`);
+  }
+  console.log('Wrote data/jobs.json (' + jobsOut.length + ' jobs), data/enemies.json ('
+    + enemies.length + ' enemies) and data/store.json (' + gear.length + ' gear items).');
 }
 
 main();

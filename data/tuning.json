@@ -89,7 +89,7 @@
     "restMovesCost": 1,
     "restHealAmount": 25,
     "launderMovesCost": 2,
-    "launderRate": 0.10
+    "launderRate": 0
   },
 
   "monetization": {

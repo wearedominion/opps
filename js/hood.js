@@ -22,10 +22,11 @@ function doActivity(type) {
     updateHUD();
   }
   else if (type === 'launder') {
-    // ECONOMY FLAG: this mints a percentage of the player's own balance for a
-    // flat Moves cost — an unbounded, compounding Cash faucet with no drain
-    // attached. Slated for redistribution/removal per oppsDefinitions.md ("launder
-    // -> TBD"); tunable here in the meantime so it can be zeroed without a release.
+    // Minted a percentage of the player's own balance for a flat Moves cost —
+    // an unbounded, compounding Cash faucet. Zeroed via launderRate (DOM-73,
+    // 2026-09-11); the action stays wired so a nonzero rate can bring back a
+    // redesigned version without a client change.
+    if (tune('hoodActions.launderRate') <= 0) { toast('Laundering is shut down. Word is the feds are watching.', true); return; }
     const launderCost = tune('hoodActions.launderMovesCost');
     if (G.moves.current < launderCost) { toast('Need ' + launderCost + ' Moves to launder!', true); return; }
     const bonus = Math.floor(G.cash * tune('hoodActions.launderRate'));

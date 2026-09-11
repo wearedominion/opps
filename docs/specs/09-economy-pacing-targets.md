@@ -1,11 +1,11 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.2 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.3 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
-the targets (DOM-71/DOM-81, §6)**
+the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
-`data/enemies.json`, `data/properties.json` or `data/progression.json`.
-**Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-74.
+`data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
+**Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
 
 The simulator is `tools/econ-sim/sim.js` — run `node tools/econ-sim/sim.js` from the repo
 root. It reads every game constant from `data/*.json` through the game's own `js/tuning.js`
@@ -97,11 +97,11 @@ shield **at current numbers** — recheck if `defeatLossRate` or starting balanc
 
 | # | Finding | Owner |
 |---|---|---|
-| F1 | **Launder compounds ×2.3·10⁵ per day** (+10% of balance per 2 Moves, ~130/day committed). Every other number is noise until `hoodActions.launderRate` is zeroed. | tuning, one field — already flagged in `08` §2 |
+| F1 | **Launder compounds ×2.3·10⁵ per day** (+10% of balance per 2 Moves, ~130/day committed). Every other number is noise until `hoodActions.launderRate` is zeroed. **RESOLVED 2026-09-11** — rate zeroed in the DOM-73 pass (§7); the action stays wired for a redesigned, bounded version. | ~~tuning, one field~~ closed |
 | F2 | **Spots as built are a $127k/h tap-farm** (full income per tap, 60s min). No accrual rate exists in tuning — the intended collect-on-login model cannot be tuned until DOM-74 defines one. | DOM-74 |
 | F3 | **Health, not Stamina, paces fighting**: at p=0.5 health regen sustains ~5.6 fights/h vs stamina's 20/h. The Hospital/heal loop is the real combat governor — price heals accordingly. | DOM-72 |
 | F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. **RESOLVED 2026-09-11** — the DOM-71/DOM-81 catalog pass (§6) extends both catalogs to L110 and lands the cap at exactly 365 committed days. | ~~DOM-71, DOM-81~~ closed |
-| F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. | DOM-73 |
+| F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. **RESOLVED 2026-09-11** — the DOM-73 pass (§7) gates every item and prices by rule at the gate (8h/8h/12h/4h by type). | ~~DOM-73~~ closed |
 
 ## 5. DOM-79 decision record — ratified 2026-09-11 (Jake)
 
@@ -158,8 +158,32 @@ what holds the 63/37 mix.
 - Cash income now scales ×1.1/level to L110 while every one-time price is static — the gear and
   Spot catalogs (DOM-73, DOM-74) and the upgrade track (DOM-88) must gain level-scaled pricing,
   and the launder rate (F1) compounds proportionally bigger balances: zero it first.
+  *(Delivered for gear + launder by the DOM-73 pass, §7 — Spots and upgrades still open.)*
 - The $0.99 Stamina-refresh mint (Q1) grows with the reward rescale (~34h of top-job income at a
   60-stamina pool) — the refresh grant/cap decision (DOM-69/DOM-76) is now more urgent, not less.
 - Enemy `hp/atk/def` above L5 are trend extrapolations; matchmaking (DOM-72) owns real stats.
 - Server-side payout and drop rolls (DOM-71 execution requirement) remain open — the prototype
   resolves everything client-side; drops ride in `doJob()` until resolution moves as a whole.
+
+## 7. DOM-73 decision record — ratified 2026-09-11 (Jake)
+
+| # | Decision | Ratified |
+|---|---|---|
+| 1 | Ticket scope | **Economy core only this pass.** The merged Plug/store surface moves to the Chrome Money UI epic (its spec keeps Plugs and Gear as separate Empire chips — merging is a UI-epic decision); Plug quests spin out as their own sub-task. |
+| 2 | Vendor model | **Per-Plug inventory.** Every item carries a `plug` id; vendor discovery becomes content. The grouping ships as data now and the UI reads it when the surface merges. |
+| 3 | Ownership | **Own-once additive** (matches the live client and the sim). Loadout/capacity is DOM-75. |
+| 4 | Content naming | Names live in `GEAR_CONTENT` (identity layer) fully separated from derived numbers — the planned real-gun naming pass is a rename-in-place; ids are the stable keys. |
+
+**Price rule.** `price = hours × best-job $/h at the gating level` (committed rate): weapon/armor
+8h, vehicle 12h, utility 4h; the three sub-L5 starters keep authored onboarding prices. A gate's
+full kit ≈ 1.3 committed days (~3 casual) of income — a standing save-up target beside the 8h
+break-even sink at every band. Because prices are derived from the job catalog, re-solving the
+faucets re-prices the sink automatically.
+
+**Resolved findings.** F1 (launder): `hoodActions.launderRate` zeroed — the action stays wired so
+a redesigned, bounded version is a tuning change. F5 (gear trivially affordable / ungated):
+every item is level-gated and priced by rule; §2's "no gates" reading is historical.
+
+**Still open, owners elsewhere:** one-time Spot prices (DOM-74) and the upgrade track pricing
+(DOM-88, now against a real catalog); server-side purchase/drop validation (gameplay server);
+enemy and gear stats above L5 are trend extrapolations until DOM-72 does matchmaking.
