@@ -1,12 +1,24 @@
 // ─────────────────────────────────────────────
 //  NOTIFICATIONS
+//
+//  Guests cannot receive notifications, so we MUST NOT schedule any for them
+//  (Jest platform rule). Every scheduler is gated on _canNotify(): the SDK is
+//  present AND the player is a registered (non-guest) account. When a guest
+//  later registers, Auth._onRegistered() calls back in to (re)schedule.
 // ─────────────────────────────────────────────
 
 const Notify = {
+  // SDK present AND player is registered. Guests + plain-browser → false.
+  _canNotify() {
+    return typeof JestSDK !== 'undefined'
+      && typeof Auth !== 'undefined'
+      && Auth.isRegistered();
+  },
+
   // Called after any energy-spending action.
   // Schedules an exact-time alert for when energy will be full.
   async energyFull() {
-    if (typeof JestSDK === 'undefined' || G.energy >= G.maxEnergy) return;
+    if (!this._canNotify() || G.energy >= G.maxEnergy) return;
     const secondsUntilFull = (G.maxEnergy - G.energy) * ENERGY_REGEN_SECONDS;
     const scheduledAt = new Date(Date.now() + secondsUntilFull * 1000).toISOString();
     try {
@@ -27,7 +39,7 @@ const Notify = {
   // Called after buying a property or on boot (if player has spots).
   // Reminds player to collect income after 24 hours.
   async incomeReady() {
-    if (typeof JestSDK === 'undefined') return;
+    if (!this._canNotify()) return;
     const income = collectIncome();
     if (income === 0) return;
     try {
@@ -48,7 +60,7 @@ const Notify = {
   // Called on every boot. Schedules a 2-day re-engagement nudge,
   // cancelling the previous session's so the timer resets each visit.
   async reEngage() {
-    if (typeof JestSDK === 'undefined') return;
+    if (!this._canNotify()) return;
     const rank = RANK_NAMES[Math.min(G.level - 1, RANK_NAMES.length - 1)] || 'Soldier';
     try {
       await JestSDK.notifications.unscheduleNotification({ identifier: 're_engage' });

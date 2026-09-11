@@ -7,6 +7,7 @@ let ENEMIES = [];
 let STORE_ITEMS = [];
 let PROPERTIES = [];
 let RANK_NAMES = [];
+let PLATFORM = {}; // platform-login config (data/platform.json); Auth falls back to defaults
 
 // ─────────────────────────────────────────────
 //  MAIN — INIT
@@ -15,6 +16,7 @@ let RANK_NAMES = [];
 const SKILL_POINTS_PER_LEVEL = 5;
 
 function addXP(amt) {
+  let leveledUp = false;
   G.xp += amt;
   while (G.xp >= G.xpNext) {
     G.xp -= G.xpNext;
@@ -38,8 +40,16 @@ function addXP(amt) {
     renderJobs();
     renderEnemies();
     if (typeof renderProfile === 'function') renderProfile();
+    leveledUp = true;
   }
   updateHUD();
+
+  // Rank milestones are a natural "you're invested — claim your account" moment.
+  // Throttled + guarded inside Auth; a no-op for registered players and in
+  // plain-browser dev.
+  if (leveledUp && typeof Auth !== 'undefined' && G.level >= Auth.rankThreshold()) {
+    Auth.promptRegister('rank_' + G.level);
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -81,17 +91,19 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 5) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 6) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, store, properties, ranks] = await Promise.all([
+    const [jobs, enemies, store, properties, ranks, platform] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/store.json').then(r => r.json())),
       track(fetch('data/properties.json').then(r => r.json())),
       track(fetch('data/ranks.json').then(r => r.json())),
+      // Optional config — a miss must not block core data or the loader (T5).
+      track(fetch('data/platform.json').then(r => r.json()).catch(() => ({}))),
     ]);
 
     JOBS        = jobs;
@@ -99,6 +111,7 @@ async function loadGameData() {
     STORE_ITEMS = store;
     PROPERTIES  = properties;
     RANK_NAMES  = ranks;
+    PLATFORM    = platform || {};
 
   } catch (err) {
     console.error('Failed to load game data:', err);
@@ -115,6 +128,9 @@ async function init() {
     JestSDK.setLoadingProgress(0);
     G.playerId = JestSDK.getPlayer().playerId;
   }
+
+  // Read guest vs registered before anything schedules notifications.
+  await Auth.init();
 
   await loadGameData(); // progress: 0 → 80%
 

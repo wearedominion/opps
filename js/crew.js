@@ -61,8 +61,18 @@ const Crew = {
 function renderCrew() {
   const count = Crew.getCount();
   const bonus = Crew.getBonus();
+  const pc = (typeof PLATFORM !== 'undefined' && PLATFORM.copy) ? PLATFORM.copy : {};
+  const isGuest = typeof Auth !== 'undefined' && Auth.canPrompt();
 
   $('tab-crew').innerHTML = `
+    ${isGuest ? `
+    <div class="card">
+      <div class="card-title">${pc.crewTitle || 'PLAYING AS A GUEST'}</div>
+      <p class="card-note">${pc.crewBody || "Claim your account to lock in your crew and progress — and get pinged when your spots pay out and your energy's back."}</p>
+      <button class="crew-invite-btn" onclick="Auth.promptRegister('crew', { force: true })">${pc.crewCta || 'CLAIM YOUR ACCOUNT'}</button>
+    </div>
+    ` : ''}
+
     <div class="card">
       <div class="card-title">YOUR CREW</div>
       <div class="crew-stats">

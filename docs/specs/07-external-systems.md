@@ -60,15 +60,20 @@ it uses** — feature-detected, guarded, and matching the documented API.
 | **Player: data / save** | [/sdk/player](https://docs.jest.com/sdk/player) | `JestSDK.data.set('g', G)`, `JestSDK.data.getAll()` (also available: `.get(key)`, `.delete(key)`, `.flush()`) | `state.js` **only** | **Returning-player state** behind `GameState` (tenet T6). 1 MB/app cap; JSON-serializable; snapshot reads. |
 | **Entry payload** | [/sdk/entry-payload](https://docs.jest.com/sdk) | `JestSDK.getEntryPayload()` | `crew.js` | Read incoming data on entry (e.g. `invitedBy` for crew). |
 | **Referrals / crew** | [/sdk/referrals](https://docs.jest.com/sdk) | `JestSDK.referrals.shareReferralLink({...})`, `JestSDK.referrals.listReferrals({ reference })` | `crew.js` | Invite links + crew (referral) counts. |
-| **Notifications** | [/sdk/notifications](https://docs.jest.com/sdk) | `JestSDK.notifications.scheduleNotification({...})`, `unscheduleNotification({ identifier })` | `notifications.js` | Scheduled re-engagement / energy / income pushes. |
+| **Notifications** | [/sdk/notifications](https://docs.jest.com/sdk) | `JestSDK.notifications.scheduleNotification({...})`, `unscheduleNotification({ identifier })` | `notifications.js` | Scheduled re-engagement / energy / income pushes. **Registered players only — MUST NOT schedule for guests** (gated on `Auth.isRegistered()`). |
 | **Payments** | [/sdk/payments](https://docs.jest.com/sdk) | `JestSDK.payments.getProducts()`, `beginPurchase({ productSku })`, `getIncompletePurchases()`, `completePurchase({ purchaseToken })` | `payments.js` | IAP for Gems, incl. recovery + completion. |
 | **Loading screen** | [/sdk/loading-screen](https://docs.jest.com/sdk) | `JestSDK.setLoadingProgress(0..100)` | `main.js` | Drive/dismiss the platform loading overlay (100 dismisses). |
 | **Init / lifecycle** | [/sdk](https://docs.jest.com/sdk) | `JestSDK.init()` | `main.js` | Boot handshake. |
+| **Platform login** | [/sdk/platform-login](https://docs.jest.com/sdk/platform-login) | `JestSDK.getPlayer().registered`, `JestSDK.login({ entryPayload })` | `auth.js` (module); prompts in `main.js`, `properties.js`, `crew.js` | Guest vs registered detection; prompt guests to register/sign in at milestones. Progress transfers automatically (stable `playerId`). Config in `data/platform.json`. See [TDD](../tdds/2026-09-11-platform-login-guest-mode.md). |
 
 **Rules:**
 - **`JestSDK.data.*` is confined to `state.js`.** All other code persists via `GameState`.
-- Keep each subsystem's SDK usage inside its module (`Crew`, `Notify`, `Payments`) with a clean
-  no-op fallback, exactly as they do today.
+- Keep each subsystem's SDK usage inside its module (`Auth`, `Crew`, `Notify`, `Payments`) with a
+  clean no-op fallback, exactly as they do today.
+- **Guests (unregistered players) MUST NOT be scheduled notifications.** `Auth` is the single
+  source of truth for registered-vs-guest; `Notify` gates every scheduler on it, and re-schedules
+  on the guest→registered transition. Registration status is read fresh from the platform each
+  boot and is never persisted in `G`.
 - The SDK URL uses `latest` because **Jest** controls that surface; do not pin it yourself, and do
   not add other `latest` CDN dependencies (see [`02-tech-architecture.md`](./02-tech-architecture.md) §3.2).
 - Adding a **new SDK surface** requires a TDD documenting the fallback behavior.
@@ -83,7 +88,6 @@ with a fallback:
 |---|---|---|
 | **App lifecycle** (visibility/exit) | [/sdk](https://docs.jest.com/sdk) | Save `G` on background/exit so returning-player state is never lost (see [`03-game-architecture.md`](./03-game-architecture.md) §3.2). Higher-fidelity `lastSeen` for offline energy regen. |
 | **Player data `flush()`** | [/sdk/player](https://docs.jest.com/sdk/player) | Await platform acknowledgment after critical saves (purchases, checkpoints). |
-| **Platform login** (guest register/customize) | [/sdk](https://docs.jest.com/sdk) | Let players claim/customize an identity for social features. |
 | **Social** (profiles, avatars, bot) | [/sdk](https://docs.jest.com/sdk) | Richer crew/social layer — avatars on the crew screen, profile display. |
 | **Subscriptions** (recurring, trials, offers) | [/sdk](https://docs.jest.com/sdk) | A recurring monetization option alongside one-off Gem packs. Server-verify like payments (§3). |
 | **App redirects** (multi-app navigation) | [/sdk](https://docs.jest.com/sdk) | Cross-promotion / multi-app flows if Dominion ships more Jest titles. |

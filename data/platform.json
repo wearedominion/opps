@@ -1,0 +1,12 @@
+{
+  "rankThreshold": 3,
+  "cooldownHours": 24,
+  "copy": {
+    "welcome": "Account claimed. Your empire is locked in — and the streets can reach you now.",
+    "toastRegistered": "You're in. Progress saved to your account.",
+    "needPlatform": "Signing in needs the Jest platform.",
+    "crewTitle": "PLAYING AS A GUEST",
+    "crewBody": "Claim your account to lock in your crew and progress — and get pinged when your spots pay out and your energy's back.",
+    "crewCta": "CLAIM YOUR ACCOUNT"
+  }
+}

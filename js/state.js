@@ -25,6 +25,7 @@ const G = {
   crewMemberCount: 0,
   recruitedBy: null,
   gems: 0,
+  lastRegisterPromptAt: 0, // throttles guest register/sign-in nudges (Auth); additive, no SCHEMA_VERSION bump
 
   // ── Player Profile (docs/tdds/2026-09-09-player-profile.md) ──
   // Additive with safe defaults — NOT a breaking change, so no SCHEMA_VERSION bump.
