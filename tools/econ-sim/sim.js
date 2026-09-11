@@ -164,13 +164,17 @@ function simulateProgression(profile, horizonDays) {
 }
 
 // ── C. Gear affordability ────────────────────────────────────────────────────
+// Hours are measured at each item's own gate — the level where the price was
+// set (DOM-73: hours × best-job $/h at the gate) — so the column reads as a
+// check on the pricing rule, not on late-game trivialization.
 function gearAffordability(L) {
-  const r = ratesAtLevel(L, 0);
-  const cashPerHour = r.jobCashPerHour; // jobs only: the guaranteed income
-  return STORE.map(i => ({
-    id: i.id, price: i.price,
-    hoursOfJobs: i.price / cashPerHour,
-  }));
+  return STORE.filter(i => (i.levelReq || 1) <= L).map(i => {
+    const gate = i.levelReq || 1;
+    return {
+      id: i.id, price: i.price, levelReq: gate,
+      hoursOfJobs: i.price / ratesAtLevel(gate, 0).jobCashPerHour,
+    };
+  });
 }
 
 // ── D. The four questions ────────────────────────────────────────────────────
@@ -347,9 +351,11 @@ function run() {
 
   say('\n  Full 120-level curve written to tools/econ-sim/out/time-to-level.csv');
 
-  say('\n■ C. Gear affordability (hours of best-job income to afford, no gates exist yet)');
-  [1, 3, 5, 7].forEach(l => {
-    const rows = gearAffordability(l).map(g => g.id + ' ' + fmt(g.hoursOfJobs) + 'h');
+  say('\n■ C. Gear affordability (hours of best-job income at each item\'s own gate)');
+  const gearGates = [...new Set(STORE.map(i => i.levelReq || 1))].sort((a, b) => a - b);
+  gearGates.forEach(l => {
+    const rows = gearAffordability(l).filter(g => g.levelReq === l)
+      .map(g => g.id + ' ' + fmt(g.hoursOfJobs) + 'h');
     say('    L' + l + ': ' + rows.join(' · '));
   });
 
@@ -397,9 +403,15 @@ function run() {
 
   say('\n■ F. Findings the model surfaces beyond the four questions');
   const lf = launder();
-  say('  F1 LAUNDER: +' + (lf.rate * 100) + '% of balance per ' + lf.movesCost + ' Moves compounds to a ×'
-    + lf.dailyMultiplier.toExponential(2) + ' DAILY multiplier ('
-    + fmt(lf.laundersPerDayCommitted) + ' launders/day committed). Zero it before any other tuning matters.');
+  if (lf.rate <= 0) {
+    say('  F1 LAUNDER: resolved — launderRate is 0 (DOM-73). A nonzero rate compounds without'
+      + ' bound (' + fmt(lf.laundersPerDayCommitted) + ' launders/day committed), so leave it zeroed'
+      + ' until the action is redesigned with a cap.');
+  } else {
+    say('  F1 LAUNDER: +' + (lf.rate * 100) + '% of balance per ' + lf.movesCost + ' Moves compounds to a ×'
+      + lf.dailyMultiplier.toExponential(2) + ' DAILY multiplier ('
+      + fmt(lf.laundersPerDayCommitted) + ' launders/day committed). Zero it before any other tuning matters.');
+  }
   const sx = spotsExploit();
   say('  F2 SPOTS AS BUILT: full income per tap, min 60s → $' + fmt(sx.perHourCeiling)
     + '/h ceiling owning one of each (vs top job $' + fmt(ratesAtLevel(7, 0).jobCashPerHour) + '/h).');

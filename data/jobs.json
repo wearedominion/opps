@@ -147,6 +147,10 @@
       {
         "item": "bando",
         "rate": 0.03
+      },
+      {
+        "item": "mac11",
+        "rate": 0.025
       }
     ]
   },
@@ -181,7 +185,12 @@
     "clout": 71,
     "levelReq": 30,
     "times": 3,
-    "drops": []
+    "drops": [
+      {
+        "item": "pump",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "precinct",
@@ -195,7 +204,12 @@
     "clout": 73,
     "levelReq": 40,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "switchie",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "docks",
@@ -209,7 +223,12 @@
     "clout": 74,
     "levelReq": 50,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "drummy",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "club",
@@ -223,7 +242,12 @@
     "clout": 196,
     "levelReq": 60,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "carbine",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "contract",
@@ -237,7 +261,12 @@
     "clout": 507,
     "levelReq": 70,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "sniper",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "interstate",
@@ -251,7 +280,12 @@
     "clout": 1315,
     "levelReq": 80,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "beltfed",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "judge",
@@ -265,7 +299,12 @@
     "clout": 3411,
     "levelReq": 90,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "fiftycal",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "commission",
@@ -279,7 +318,12 @@
     "clout": 8848,
     "levelReq": 100,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "minigun",
+        "rate": 0.025
+      }
+    ]
   },
   {
     "id": "runcity",
@@ -293,6 +337,11 @@
     "clout": 22950,
     "levelReq": 110,
     "times": 2,
-    "drops": []
+    "drops": [
+      {
+        "item": "arsenal",
+        "rate": 0.025
+      }
+    ]
   }
 ]
