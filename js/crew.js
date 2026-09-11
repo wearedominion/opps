@@ -64,18 +64,18 @@ function renderCrew() {
 
   $('tab-crew').innerHTML = `
     <div class="card">
-      <div class="card-title">👥 YOUR CREW</div>
+      <div class="card-title">YOUR CREW</div>
       <div class="crew-stats">
         <div class="crew-stat">
           <div class="crew-stat-val">${count}</div>
           <div class="crew-stat-label">SOLDIERS</div>
         </div>
         <div class="crew-stat">
-          <div class="crew-stat-val" style="color:var(--chrome)">+${bonus.attack}</div>
+          <div class="crew-stat-val">+${bonus.attack}</div>
           <div class="crew-stat-label">CREW ATK</div>
         </div>
         <div class="crew-stat">
-          <div class="crew-stat-val" style="color:#00b8ff">+${bonus.defense}</div>
+          <div class="crew-stat-val">+${bonus.defense}</div>
           <div class="crew-stat-label">CREW DEF</div>
         </div>
       </div>
@@ -83,19 +83,19 @@ function renderCrew() {
         ? `<p class="crew-empty">No soldiers yet. Send the link, build the team.</p>`
         : `<p class="crew-active">Your ${count} soldier${count > 1 ? 's' : ''} boost your stats in every fight.</p>`
       }
-      <button class="attack-btn crew-invite-btn" onclick="Crew.invite()">📲 SEND THE LINK</button>
+      <button class="crew-invite-btn" onclick="Crew.invite()">SEND THE LINK</button>
       <button class="crew-refresh-btn" onclick="crewRefresh()">REFRESH CREW</button>
     </div>
 
     ${G.recruitedBy ? `
     <div class="card">
-      <div class="card-title">🤝 RECRUITED</div>
-      <p style="color:var(--muted);font-size:13px;">A soldier put you on. Ride for the crew.</p>
+      <div class="card-title">RECRUITED</div>
+      <p class="card-note">A soldier put you on. Ride for the crew.</p>
     </div>
     ` : ''}
 
     <div class="card">
-      <div class="card-title">💡 HOW IT WORKS</div>
+      <div class="card-title">HOW IT WORKS</div>
       <div class="crew-rules">
         <div>+2 ATK per crew member</div>
         <div>+1 DEF per crew member</div>

@@ -125,9 +125,11 @@ function _renderPlugDialog(idx) {
 
   const btn = $('plug-modal-cta');
   btn.textContent = isLast ? 'GO' : 'NEXT';
-  btn.style.background = isLast ? '#bfce1c' : 'transparent';
-  btn.style.color = isLast ? '#15120e' : '#e9e4db';
-  btn.style.borderColor = isLast ? '#bfce1c' : 'rgba(255,255,255,0.35)';
+  // The final line is the one action worth promoting, so it takes the chrome
+  // primary; every other line advances the dialogue and stays secondary.
+  // These were three inline hex assignments (#bfce1c / #15120e / #e9e4db plus a
+  // translucent-white border) that no stylesheet could reach.
+  btn.classList.toggle('is-final', isLast);
 }
 
 function advancePlug() {

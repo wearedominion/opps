@@ -15,7 +15,7 @@ function renderStore() {
       <div class="item-name">${item.name}</div>
       <div class="item-desc">${item.desc}</div>
       <div class="item-price">$${item.price.toLocaleString()}</div>
-      <button class="buy-btn" onclick="buyItem('${item.id}')" ${owned ? 'disabled' : ''}>
+      <button class="buy-btn" onclick="buyItem('${item.id}')" ${owned || !canAfford ? 'disabled' : ''}>
         ${owned ? '✓ EQUIPPED' : canAfford ? 'BUY' : 'BROKE'}
       </button>
     `;
@@ -33,7 +33,7 @@ function buyItem(itemId) {
   G.attack += item.atk || 0;
   G.defense += item.def || 0;
   if (item.hpBonus) { G.maxHealth += item.hpBonus; G.health = Math.min(G.health + item.hpBonus, G.maxHealth); }
-  log(`🛒 Bought ${item.name} — ATK +${item.atk} DEF +${item.def}`, 'info');
+  log(`Bought ${item.name} — ATK +${item.atk} DEF +${item.def}`, 'info');
   toast(`${item.name} equipped!`);
   updateHUD();
   renderStore();
