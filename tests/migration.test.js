@@ -733,6 +733,38 @@ test('the G literal carries hospitalizedUntil: null (08 §3 single-field shape)'
   assert.strictEqual(G.hospitalizedUntil, null);
 });
 
+test('level-up releases from the Hospital in the refill transaction (DOM-82)', () => {
+  // applyLevelGrants lives in main.js, which runs init() on load — extract
+  // just the function and run it against a hospitalized G in a sandbox.
+  const mainSrc = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
+  const fn = mainSrc.match(/function applyLevelGrants\(\) \{[\s\S]*?\n\}/);
+  assert.ok(fn, 'applyLevelGrants not found in main.js');
+  const sandbox = {
+    console, Math, Object,
+    G: {
+      level: 5, skillPts: 0, hospitalizedUntil: 9999999999999,
+      moves:   { current: 0, max: 10,  lastTick: 0 },
+      stamina: { current: 0, max: 3,   lastTick: 0 },
+      health:  { current: 0, max: 100, lastTick: 0 },
+      attack: 10, defense: 5,
+    },
+    tune: p => tune(p, TUNE),
+    credit: (res, amt) => {
+      const G = sandbox.G;
+      if (res === 'skillPts') { G.skillPts += amt; return amt; }
+      const applied = Math.min(amt, G[res].max - G[res].current);
+      G[res].current += applied;
+      return applied;
+    },
+    REASON: { LEVEL_UP_GRANT: 'level_up_grant' },
+  };
+  vm.runInNewContext(fn[0] + '; applyLevelGrants();', sandbox);
+  assert.strictEqual(sandbox.G.hospitalizedUntil, null, 'still hospitalized');
+  assert.strictEqual(sandbox.G.health.current, 100, 'health not refilled');
+  assert.strictEqual(sandbox.G.moves.current, 10);
+  assert.strictEqual(sandbox.G.stamina.current, 3);
+});
+
 console.log('\nrank bands');
 
 test('a rank covers exactly levelsPerRank levels', () => {
