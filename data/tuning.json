@@ -95,6 +95,7 @@
     "hardCurrencyEnabled": false,
     "sellsStaminaRefresh": true,
     "sellsMovesRefresh": true,
-    "sellsHospitalHeal": true
+    "sellsHospitalHeal": true,
+    "offerCooldownSeconds": 300
   }
 }

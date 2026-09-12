@@ -54,8 +54,9 @@ const Payments = {
     // round-trip; _grantAndComplete reports that case honestly.
     const product = IAP_PRODUCTS.find(p => p.sku === sku);
     const fx = product && product.effect;
-    if (fx && fx.type === 'refillPool' && G[fx.pool] && G[fx.pool].current >= G[fx.pool].max) {
-      toast('Already full — nothing to refill.', true);
+    if (fx && (fx.type === 'refillPool' || fx.type === 'grantPool')
+        && G[fx.pool] && G[fx.pool].current >= G[fx.pool].max) {
+      toast('Already full — nothing to grant.', true);
       return;
     }
     let result;
@@ -115,11 +116,31 @@ const Payments = {
   },
 
   // Returns the amount actually granted (0 when the effect clamped to nothing).
+  //
+  // Effect shapes (data/monetization.json):
+  //   refillPool {pool}          — top the pool to max. Health only in v1: the
+  //                                Hospital heal is the one SKU whose value is
+  //                                the wait it skips, not the actions it buys.
+  //   grantPool  {pool, amount}  — fixed points, clamped at max. Ratified
+  //                                2026-09-12 (Jake) for Stamina after the sim
+  //                                showed a full refill scales with the pool
+  //                                (60-cap refresh ≈ 33.6h of top-job income
+  //                                in fight EV); extended to Moves for the
+  //                                same reason (cap 200). 09 §12.
   _applyEffect(product) {
     const fx = product.effect || {};
-    if (fx.type === 'refillPool' && G[fx.pool]) {
-      return credit(fx.pool, G[fx.pool].max - G[fx.pool].current, REASON.IAP_GRANT,
-             { ref: { sku: product.sku } });
+    const pool = G[fx.pool];
+    if ((fx.type === 'refillPool' || fx.type === 'grantPool') && pool) {
+      // A paid health grant is also the Hospital's premium exit: leaving the
+      // player "healed" but locked out would make the SKU a lie. Same
+      // discharge the Cash early-out performs (hospital.js).
+      if (fx.pool === 'health' && typeof isHospitalized === 'function' && isHospitalized()) {
+        G.hospitalizedUntil = null;
+        log('Walked out of the Hospital — premium heal', 'gold');
+        if (typeof renderHospital === 'function') renderHospital();
+      }
+      const amount = fx.type === 'grantPool' ? fx.amount : pool.max - pool.current;
+      return credit(fx.pool, amount, REASON.IAP_GRANT, { ref: { sku: product.sku } });
     }
     console.warn('Unknown purchase effect:', fx);
     return 0;
@@ -132,6 +153,47 @@ const Payments = {
     return IAP_PRODUCTS.find(p => p.sku === sku)?.mockPrice ?? '—';
   },
 };
+
+// ─────────────────────────────────────────────
+//  OFFER SURFACING (DOM-76)
+//
+//  Conversion happens at the pain moment, not in a store tab. The three
+//  moments: out of Stamina mid-session, out of Moves, sitting in the
+//  Hospital. The first two raise a one-tap offer sheet the instant a gate
+//  refuses; the Hospital's offer is a persistent button on the Hospital
+//  card (hospital.js) — a popup on top of a 30-minute wait would just get
+//  dismissed.
+//
+//  Throttled per pool (monetization.offerCooldownSeconds) so a player
+//  hammering an empty button gets the plain toast, not a nag loop.
+// ─────────────────────────────────────────────
+
+const OFFER_SKU_BY_POOL = { stamina: 'boost_stamina', moves: 'boost_moves' };
+const OFFER_TITLE_BY_POOL = { stamina: 'OUT OF STAMINA', moves: 'OUT OF MOVES' };
+const _offerLastShown = {};
+
+// Called from a refusal gate: always shows the refusal toast, and — cooldown
+// permitting — raises the matching offer sheet over it.
+function surfaceOffer(pool, refusalMsg) {
+  toast(refusalMsg, true);
+  const sku = OFFER_SKU_BY_POOL[pool];
+  const product = sku && IAP_PRODUCTS.find(p => p.sku === sku);
+  if (!product) return;
+  const now = Date.now();
+  const cooldownMs = tune('monetization.offerCooldownSeconds') * 1000;
+  if (_offerLastShown[pool] && now - _offerLastShown[pool] < cooldownMs) return;
+  _offerLastShown[pool] = now;
+  $('offer-title').textContent = OFFER_TITLE_BY_POOL[pool];
+  $('offer-desc').textContent = product.desc;
+  const buyBtn = $('offer-buy-btn');
+  buyBtn.textContent = product.name.toUpperCase() + ' · ' + Payments.getPrice(product.sku);
+  buyBtn.onclick = () => { closeOffer(); Payments.buy(product.sku); };
+  $('offer-overlay').classList.add('open');
+}
+
+function closeOffer() {
+  $('offer-overlay').classList.remove('open');
+}
 
 function renderIapSection() {
   const el = $('iap-section');

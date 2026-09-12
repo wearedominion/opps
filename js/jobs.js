@@ -32,7 +32,8 @@ function renderJobs() {
 function doJob(jobId) {
   const job = JOBS.find(j => j.id === jobId);
   if (!job) return;
-  if (G.moves.current < job.moves) { toast('Not enough Moves!', true); return; }
+  // Pain moment #2 (DOM-76): the refusal is also the Moves Boost offer.
+  if (G.moves.current < job.moves) { surfaceOffer('moves', 'Not enough Moves!'); return; }
   if (!isUnlocked(job)) { toast(lockLabel(job), true); return; }
   // Mastery is cosmetic (DOM-71): the meter fills once, the job stays runnable.
   const prog = G.jobProgress[job.id] || 0;

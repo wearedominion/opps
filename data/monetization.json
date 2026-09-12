@@ -1,26 +1,26 @@
 [
   {
-    "id": "refill_moves",
-    "sku": "refill_moves",
-    "name": "Refill Moves",
-    "desc": "Top your Moves pool straight back to full.",
+    "id": "boost_moves",
+    "sku": "boost_moves",
+    "name": "Moves Boost",
+    "desc": "+10 Moves on the spot — back on the grind without waiting on regen.",
     "mockPrice": "$0.99",
-    "effect": { "type": "refillPool", "pool": "moves" }
+    "effect": { "type": "grantPool", "pool": "moves", "amount": 10 }
   },
   {
-    "id": "refill_stamina",
-    "sku": "refill_stamina",
-    "name": "Refill Stamina",
-    "desc": "Back in the fight without waiting on regen.",
+    "id": "boost_stamina",
+    "sku": "boost_stamina",
+    "name": "Stamina Boost",
+    "desc": "+3 Stamina on the spot — three more fights, no waiting on regen.",
     "mockPrice": "$0.99",
     "badge": "POPULAR",
-    "effect": { "type": "refillPool", "pool": "stamina" }
+    "effect": { "type": "grantPool", "pool": "stamina", "amount": 3 }
   },
   {
     "id": "full_heal",
     "sku": "full_heal",
     "name": "Full Heal",
-    "desc": "Restore Health to full immediately.",
+    "desc": "Health straight back to full — and if you're in the Hospital, you walk out now.",
     "mockPrice": "$1.99",
     "effect": { "type": "refillPool", "pool": "health" }
   }

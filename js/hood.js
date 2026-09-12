@@ -16,7 +16,7 @@ function doActivity(type) {
     // instant discharge and the lockout would mean nothing (DOM-72).
     if (isHospitalized()) { toast("You're in the Hospital. Heal up or wait it out.", true); return; }
     const restCost = tune('hoodActions.restMovesCost');
-    if (G.moves.current < restCost) { toast('Not enough Moves to rest!', true); return; }
+    if (G.moves.current < restCost) { surfaceOffer('moves', 'Not enough Moves to rest!'); return; }
     if (G.health.current >= G.health.max) { toast('Already at full health', true); return; }
     debit('moves', restCost, REASON.MOVE_COST, { ref: { action: 'rest' } });
     const heal = credit('health', tune('hoodActions.restHealAmount'), REASON.REST_HEAL);

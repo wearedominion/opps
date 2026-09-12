@@ -672,6 +672,69 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   cursor: not-allowed;
 }
 
+/* The Hospital's premium exit (DOM-76) — secondary pill with the gold edge;
+   the Cash heal keeps the card's action slot, this sits beside it. */
+.hospital-iap-btn {
+  background: var(--control);
+  border: 1px solid var(--border-gold);
+  color: var(--chrome);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.hospital-iap-btn:hover { border-color: var(--chrome); }
+
+/* Offer sheet (DOM-76) — raised at the out-of-Stamina / out-of-Moves gates. */
+.offer-box {
+  background: var(--panel-fill);
+  border: 1px solid var(--border-gold);
+  border-radius: 24px;
+  box-shadow: var(--modal-shadow);
+  padding: 24px;
+  width: 320px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.offer-title {
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--text);
+}
+.offer-desc {
+  font-family: var(--ui);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--body);
+}
+.offer-buy-btn {
+  background: var(--chrome-fill);
+  border: none;
+  color: var(--chrome-ink);
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.offer-dismiss-btn {
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
 .close-combat {
   background: var(--chrome-fill);
   border: none;

@@ -96,7 +96,8 @@ function startCombat(enemyId) {
     return;
   }
   var staminaCost = tune('combat.staminaPerFight');
-  if (G.stamina.current < staminaCost) { toast('Not enough Stamina!', true); return; }
+  // Pain moment #1 (DOM-76): the refusal is also the Stamina Boost offer.
+  if (G.stamina.current < staminaCost) { surfaceOffer('stamina', 'Not enough Stamina!'); return; }
   if (G.health.current <= 1) { toast('Too hurt to fight! Rest up first.', true); return; }
   var e = ENEMIES.find(function(x) { return x.id === enemyId; });
   if (!e || !isUnlocked(e)) return;

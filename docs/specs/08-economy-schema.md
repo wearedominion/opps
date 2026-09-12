@@ -720,3 +720,28 @@ paid path at 20/h). The knob solve reproduces E/M/K exactly; the win-clout ratio
 4.20 (rarer fights pay more Clout each) and the 63/37 mix and 365-day cap hold by construction.
 F3 is resolved as designed: the Hospital loop paces combat and its early-out is the recurring
 combat drain.
+
+### 9.9 Stamina & monetization v1 — DOM-69 (+ DOM-76) decision record (ratified 2026-09-12, Jake)
+
+DOM-69's mechanics had already shipped piecemeal (pool + regen in the ledger/regen work, the
+entry debit in DOM-72, skill costs from the start) — the ticket closed as an audit with the
+locked rules pinned as data-contract tests, plus its two open decisions:
+
+| # | Decision | Ratified |
+|---|---|---|
+| 1 | Refresh shape | **Fixed-point grants, not refills** (`effect: grantPool`): the stamina SKU grants **+3** (the starting pool) and — extended for the same reason, cap 200 — the moves SKU grants **+10**. A refill-to-max scales with the skill-built pool: 60 stamina × top-band fight EV ≈ 33.6h of top-job income per $0.99, and the shrinking-pile rule does NOT cap it (enemies pay fixed catalog rewards; nothing shrinks). Pinning the grant bounds the mint per purchase (~1.7h of income at the very top band) regardless of pool investment. Sim §Q1 owns the numbers and throws if the SKU shape regresses. |
+| 2 | Regen in the Hospital | **Continues** for stamina and moves; only health pauses. The 30-minute lockout is the punishment — the player walks out with stamina banked and re-engages immediately. |
+| 3 | Premium gear | **Split out** to its own ticket (supply model, pay-to-win power ceiling, art — same pipeline as DOM-89). DOM-76 closes on the three refresh SKUs. |
+
+**The three v1 SKUs** (`data/monetization.json`, ids renamed pre-launch from `refill_*` to match
+the new semantics): `boost_moves` (+10, $0.99) · `boost_stamina` (+3, $0.99) · `full_heal`
+(refill, $1.99 — the one refill kept, because its value is the wait it skips, not the actions it
+buys). A paid health grant while hospitalized **discharges the Hospital** in the same effect —
+`Payments._applyEffect` clears `hospitalizedUntil` exactly as the Cash early-out does.
+
+**Offer surfacing** (the conversion mechanism, not a store tab): the out-of-Stamina and
+out-of-Moves refusal gates raise a one-tap offer sheet (`surfaceOffer()` in `js/payments.js`,
+throttled per pool by `monetization.offerCooldownSeconds` so a hammered empty button gets the
+plain toast); the Hospital's offer is a persistent SKIP THE WAIT button on the Hospital card for
+the whole stay. Grants land through the ledger as `iap_grant` after server receipt verification;
+the server-side SKU → grant mirror (never trust the client's effect table) remains **DOM-80**.

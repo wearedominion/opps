@@ -33,6 +33,7 @@ const ENEMIES     = readJSON('data/enemies.json');
 const STORE       = readJSON('data/store.json');
 const PROPERTIES  = readJSON('data/properties.json');
 const UNLOCKS     = readJSON('data/unlocks.json');
+const IAP         = readJSON('data/monetization.json');
 const TARGETS     = readJSON('tools/econ-sim/targets.json');
 
 const T = p => tune(p, TUNING);
@@ -269,19 +270,32 @@ function moneyCircuit() {
 // ── D. The four questions ────────────────────────────────────────────────────
 
 // Q1 — Can paid Stamina out-earn its price?
+//
+// DOM-76 (ratified 2026-09-12): the stamina SKU is a FIXED-POINT boost read
+// live from data/monetization.json, not a refill-to-max. A full refill scales
+// with the pool (skill-built cap = pools.stamina.maxCap) and the shrinking-pile
+// rule does NOT cap it — enemies pay fixed catalog rewards, nothing shrinks —
+// so the mint is bounded by pinning the grant, not the pool. The rejected
+// refill numbers are kept below as the counterfactual.
 function q1() {
   const e = bestEnemy(MAX_LEVEL);
   const perFightFreshWallet = fightCashEV(e, 0.70, 0); // band ceiling, empty wallet
-  const basePool = T('start.stamina');
   const cap = T('pools.stamina.maxCap');
+  const sku = IAP.find(p => p.effect && p.effect.pool === 'stamina');
+  if (!sku || sku.effect.type !== 'grantPool') {
+    throw new Error('Q1 expects a fixed grantPool stamina SKU in data/monetization.json (DOM-76)');
+  }
+  const grant = sku.effect.amount;
+  const jobRate = ratesAtLevel(MAX_LEVEL, 0).jobCashPerHour;
   return {
     bestEnemy: e.id, meanReward: mean(e.reward.cash),
     perFightMax: perFightFreshWallet,
-    cashPerRefreshBasePool: perFightFreshWallet * basePool,
-    cashPerRefreshCapPool: perFightFreshWallet * cap,
-    jobsHoursEquivalentCapPool: (perFightFreshWallet * cap) / ratesAtLevel(MAX_LEVEL, 0).jobCashPerHour,
-    note: 'A refresh grants max-pool fights. Cash/refresh scales with stamina max ('
-        + basePool + ' base, ' + cap + ' cap via skills).',
+    boostPoints: grant,
+    cashPerBoost: perFightFreshWallet * grant,
+    jobsHoursEquivalentBoost: (perFightFreshWallet * grant) / jobRate,
+    cashPerRefillCapPoolRejected: perFightFreshWallet * cap,
+    note: 'Boost grants ' + grant + ' fixed points (' + sku.sku + '); mint per purchase is '
+        + 'bounded and does not scale with the skill-built pool (cap ' + cap + ').',
   };
 }
 
@@ -493,12 +507,13 @@ function run() {
   say('    Money supply = Σ credits − Σ debits by contract: every movement is a ledger row'
     + ' with a reason; snapshot combat mints and destroys, never transfers (08 §4/§8).');
 
-  say('\n■ Q1. Can paid Stamina out-earn its price?  YES — and it scales with the pool.');
+  say('\n■ Q1. Can paid Stamina out-earn its price?  BOUNDED — fixed-point boost (DOM-76).');
   const a1 = q1();
   say('    Best fight EV (p=0.70 band ceiling, empty wallet): $' + fmt(a1.perFightMax) + '/fight vs ' + a1.bestEnemy);
-  say('    Cash per $0.99 refresh: $' + fmt(a1.cashPerRefreshBasePool) + ' (base pool of ' + T('start.stamina') + ')'
-    + '  →  $' + fmt(a1.cashPerRefreshCapPool) + ' (skill-built pool of ' + T('pools.stamina.maxCap') + ')');
-  say('    The cap-pool refresh equals ' + fmt(a1.jobsHoursEquivalentCapPool) + ' hours of top-job grinding.');
+  say('    Cash per boost (+' + a1.boostPoints + ' fixed): $' + fmt(a1.cashPerBoost)
+    + ' ≈ ' + a1.jobsHoursEquivalentBoost.toFixed(1) + ' hours of top-job income — pool size no longer multiplies it.');
+  say('    (A refill-to-max would scale to $' + fmt(a1.cashPerRefillCapPoolRejected)
+    + ' on a skill-built pool of ' + T('pools.stamina.maxCap') + ' — rejected 2026-09-12.)');
 
   say('\n■ Q2. Cash inflation with no recurring sink (maxed committed player):');
   const a2 = q2();
@@ -672,11 +687,11 @@ function buildHtml(json, outDir) {
     SPOT_COLLECTS: String(t.assumptions.spotCollectsPerDay),
     JOB_CEILING: String(jobCeiling),
 
-    Q1_CAP: money(json.q1.cashPerRefreshCapPool),
+    Q1_BOOST: money(json.q1.cashPerBoost),
+    Q1_BOOST_PTS: String(json.q1.boostPoints),
+    Q1_HOURS: json.q1.jobsHoursEquivalentBoost.toFixed(1),
+    Q1_CAP_REJECTED: money(json.q1.cashPerRefillCapPoolRejected),
     Q1_CAP_POOL: String(T('pools.stamina.maxCap')),
-    Q1_BASE_POOL: String(T('start.stamina')),
-    Q1_BASE: money(json.q1.cashPerRefreshBasePool),
-    Q1_HOURS: String(Math.round(json.q1.jobsHoursEquivalentCapPool)),
     Q2_PER_WEEK: '$' + shortK(json.q2.cashPerWeek),
     Q2_OUTGROW_DAYS: (Math.round(json.q2.weeksToOutgrowAllSinks * 70) / 10).toString(),
     Q2_SINK_TOTAL: money(json.q2.oneTimeSinkTotal),
