@@ -52,9 +52,14 @@ const Payments = {
     // Refuse before charging when the effect can't grant anything — the removed
     // gem flow pre-checked too. A pool can still fill during the verify
     // round-trip; _grantAndComplete reports that case honestly.
+    // A health SKU bought while hospitalized is never "nothing to grant":
+    // the discharge is the value even at full health (DOM-93 — the catalogue
+    // copy promises "you walk out now", so full health must not refuse it).
     const product = IAP_PRODUCTS.find(p => p.sku === sku);
     const fx = product && product.effect;
-    if (fx && (fx.type === 'refillPool' || fx.type === 'grantPool')
+    const hospitalExit = fx && fx.pool === 'health'
+        && typeof isHospitalized === 'function' && isHospitalized();
+    if (fx && !hospitalExit && (fx.type === 'refillPool' || fx.type === 'grantPool')
         && G[fx.pool] && G[fx.pool].current >= G[fx.pool].max) {
       toast('Already full — nothing to grant.', true);
       return;
@@ -93,11 +98,16 @@ const Payments = {
 
     const product = IAP_PRODUCTS.find(p => p.sku === sku);
     if (product) {
+      const wasHospitalized = typeof isHospitalized === 'function' && isHospitalized();
       const applied = this._applyEffect(product);
       log(`Purchased ${product.name}`, 'gold');
       // Don't claim a grant that clamped to nothing (pool filled during the
       // verify round-trip, or a recovered purchase re-applied after the fact).
-      if (applied > 0) toast(product.name + ' applied!');
+      // A Hospital discharge counts as a real grant even when the health
+      // credit clamped to zero (DOM-93 — walking out is what was bought).
+      const discharged = wasHospitalized
+        && !(typeof isHospitalized === 'function' && isHospitalized());
+      if (applied > 0 || discharged) toast(product.name + ' applied!');
       else toast(product.name + ': already full, nothing granted.', true);
       updateHUD();
       GameState.save();
