@@ -104,8 +104,8 @@ degrades to a styled placeholder circle — never a broken image.
 
 This file exists so art is data, not code. Portrait paths were previously
 hardcoded in `js/combat.js` and `js/plugs.js`, which meant adding an enemy
-required redeploying JavaScript instead of shipping JSON. The renderers are
-being migrated to read from here.
+required redeploying JavaScript instead of shipping JSON. Both renderers now
+read from here via the `PORTRAITS` global (DOM-60).
 
 ## No emoji in game data
 
@@ -154,5 +154,5 @@ after the server verifies the receipt. `sku` must match the Jest Developer Conso
 **server does not yet own the SKU -> grant mapping**, which it must; see
 `docs/specs/04-game-data-spec.md` §6.
 
-**Not loaded:** `portraits.json` is in this directory but is not in `loadGameData()` and is read by
-nothing — renderers still use `ENEMY_PORTRAITS` in `js/combat.js`. Tracked on DOM-60.
+`portraits.json` is loaded in `loadGameData()` alongside the rest and read by `js/combat.js` and
+`js/plugs.js` (DOM-60). A fetch miss degrades to placeholder circles, not a dead app.

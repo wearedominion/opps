@@ -43,6 +43,7 @@ contract for that data: formats, schemas, loading, validation, versioning, and d
 | `data/progression.json` | `PROGRESSION` | `js/progression.js`, `js/main.js` |
 | `data/monetization.json` | `IAP_PRODUCTS` | `js/payments.js` |
 | `data/unlocks.json` | `UNLOCKS` | `js/unlocks.js` |
+| `data/portraits.json` | `PORTRAITS` | `js/combat.js`, `js/plugs.js` |
 
 **Rules:**
 - Data files are **arrays of objects**, with three exceptions: `ranks.json` (an array of
@@ -52,13 +53,12 @@ contract for that data: formats, schemas, loading, validation, versioning, and d
   **permanent key**: it appears in save data (`G.inventory`, `G.properties`, `G.jobProgress`).
   **Never reuse or repurpose an `id`.** Renaming an `id` orphans existing saves.
 - A new data file MUST be added to the `Promise.all` in `loadGameData()` and assigned to a global,
-  and the loading-progress denominator updated (currently `/ 9`).
+  and the loading-progress denominator updated (currently `/ 11`).
 - Loading is resilient: a fetch failure is caught and logged. Systems must render sanely against an
   empty array. Don't assume data loaded successfully.
-
-> **Known gap:** `portraits.json` is in `data/` but is **not** in `loadGameData()` and is read by
-> nothing — renderers still use `ENEMY_PORTRAITS` in `js/combat.js`. Tracked on DOM-60.
-> (`progression.json` had the same problem and is now wired up.)
+- `portraits.json` (DOM-60) is a keyed object, not an array: `version`, plus `enemies` and `plugs`
+  maps of `id → asset path` (paths per [`05-asset-spec.md`](./05-asset-spec.md) §5.1). A missing
+  entry — or a failed fetch — renders the styled placeholder circle, never a broken image or emoji.
 
 ---
 
@@ -105,11 +105,11 @@ entries. All money ranges are `[min, max]` integer tuples.
 > `CLAUDE.md` bans emoji, and it was only ever a fallback for enemies with no portrait. Every
 > enemy has one, so it never rendered. See `data/README.md`.
 >
-> **Note (known divergence, partly resolved):** each enemy also has a **portrait** and a
-> **threat rating** that live in `js/combat.js` (`ENEMY_PORTRAITS`, `ENEMY_THREAT`) keyed by
-> `id`, not in the JSON. Portraits now have a home in **`portraits.json`**; wiring the renderer
-> to read from it is tracked as DOM-60. `ENEMY_THREAT` is still data-in-code and unaddressed.
-> If you add an enemy today you must still extend `ENEMY_THREAT` in `combat.js`.
+> **Note (divergence resolved):** enemy portraits live in **`portraits.json`** keyed by `id` and
+> are read through the `PORTRAITS` global (DOM-60); `ENEMY_PORTRAITS` in `js/combat.js` is gone.
+> The old `ENEMY_THREAT` map is also gone — threat is computed from the fight model itself
+> (`enemyThreat()` in `js/combat.js`, DOM-72). Adding an enemy today means a row in
+> `enemies.json` plus a portrait entry in `portraits.json`; no JS edit.
 
 ### 3.3 `store.json` — Gear (The Plug)
 ```jsonc

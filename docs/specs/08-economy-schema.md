@@ -438,7 +438,7 @@ grow 10 → 30 Clout/Move by level 8 while the curve grew at only 1.05. At 1.10 
 close to unchanged (level 10 costs 1,752 Clout vs 1,322 before) but the late game inverts: level
 119 → 120 alone costs 8.4M Clout, ~47,000 actions at the best-paying job. **The curve is decided;
 the grant side is not.** Clout yields have to be rescaled against this curve in one pass — DOM-67.
-`portraits.json` is still unloaded (DOM-60).
+`portraits.json` is loaded and wired (DOM-60).
 
 **Automatic per-level stat gains compete with the skill-point sinks.** `addXP()` grants +3 ATK /
 +2 DEF / +15 HP per level automatically, while spending a skill point grants +1. The automatic
