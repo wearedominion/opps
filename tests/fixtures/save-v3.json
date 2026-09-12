@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 3,
+  "level": 24,
+  "clout": 310000,
+  "levelGranted": 24,
+  "cash": 61250,
+  "moves":   { "current": 12, "max": 30, "lastTick": 1757300000000 },
+  "stamina": { "current": 4,  "max": 8,  "lastTick": 1757300000000 },
+  "health":  { "current": 180, "max": 240, "lastTick": 1757300000000 },
+  "attack": 88, "defense": 61,
+  "inventory": ["knife", "vest", "glock", "bando", "mac11"],
+  "properties": { "corner": 3, "trap": 1 },
+  "jobProgress": { "lookout": 10, "traphouse": 3 },
+  "playerId": "p_test_0003",
+  "lastSeen": 1757300000000,
+  "crewMemberCount": 9,
+  "lieutenantsRewarded": 9,
+  "recruitedBy": null,
+  "skillPts": 15,
+  "equipped": { "weapon": "glock" }
+}

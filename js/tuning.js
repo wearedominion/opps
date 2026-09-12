@@ -34,6 +34,11 @@ const TUNING_REQUIRED = [
   'crew.attackPerLieutenant', 'crew.defensePerLieutenant',
   'hoodActions.restMovesCost', 'hoodActions.restHealAmount',
   'hoodActions.launderMovesCost', 'hoodActions.launderRate',
+  'gear.upgradeEnabled', 'gear.maxUpgradeLevel', 'gear.statCapLevel',
+  'gear.statGainPerLevel.attack', 'gear.statGainPerLevel.defense',
+  'gear.statGainPerLevel.hpBonus',
+  'gear.upgradeCost.type', 'gear.upgradeCost.base', 'gear.upgradeCost.ratio',
+  'gear.duplicatesRequired',
 ];
 
 // Read a dotted path out of the loaded tuning file. Throws rather than guessing.

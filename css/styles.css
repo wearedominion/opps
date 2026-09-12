@@ -674,6 +674,7 @@ main::-webkit-scrollbar { width: 0; height: 0; }
 .gear-chip {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   background: var(--control);
   border: 1px solid var(--border-ctrl);
   border-radius: var(--r-pill);
@@ -681,6 +682,35 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   font-family: var(--ui);
   font-size: 13px;
   color: var(--text);
+}
+
+/* upgrade level on an owned item (DOM-88); prestige levels read the same,
+   the label text carries the distinction */
+.gear-level {
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 1px;
+}
+
+/* peer action in a list of peer items — secondary per the contract */
+.gear-upgrade-btn {
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: filter .16s;
+}
+.gear-upgrade-btn:hover { border-color: var(--border-gold); }
+.gear-upgrade-btn:disabled {
+  background: var(--chip-locked-bg);
+  border: 1px solid var(--chip-locked-border);
+  color: var(--disabled);
+  cursor: not-allowed;
 }
 
 /* ── LEVEL UP BANNER ── */

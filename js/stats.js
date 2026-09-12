@@ -20,12 +20,27 @@ function renderStats() {
   `).join('');
 
   const inv = $('inventory-list');
-  if (G.inventory.length === 0) {
+  const ownedIds = Object.keys(G.inventory);
+  if (ownedIds.length === 0) {
     inv.innerHTML = '<span class="card-note">No gear yet. Visit the Plug.</span>';
   } else {
-    inv.innerHTML = G.inventory.map(id => {
+    const cap = tune('gear.statCapLevel');
+    inv.innerHTML = ownedIds.map(id => {
       const item = STORE_ITEMS.find(i => i.id === id);
-      return item ? `<div class="gear-chip">${item.name}</div>` : '';
+      if (!item) return '';
+      const inst = gearInstance(id);
+      // Levels past the stat cap are pure prestige (DOM-88) — label them so the
+      // player knows the stats stopped and the number is the point.
+      const lv = inst.level > 0
+        ? ` <span class="gear-level">LV ${inst.level}${inst.level > cap ? ' · PRESTIGE' : ''}</span>`
+        : '';
+      const upgrade = item.upgradeable && tune('gear.upgradeEnabled')
+        ? `<button class="gear-upgrade-btn" onclick="upgradeGear('${id}')"
+             ${G.cash < gearUpgradeCost(item) ? 'disabled' : ''}>
+             UPGRADE $${gearUpgradeCost(item).toLocaleString()}
+           </button>`
+        : '';
+      return `<div class="gear-chip">${item.name}${lv}${upgrade}</div>`;
     }).join('');
   }
 }
