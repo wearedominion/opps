@@ -277,7 +277,7 @@ A genuinely new kind of content (e.g. "heists") means: a new `data/<type>.json`,
 - Every object has a **unique** `id` within its file.
 - All **required fields present** with the correct types (§3).
 - Money tuples are `[min, max]` with `min ≤ max`, integers.
-- `levelReq` / `lvlReq` ≥ 1; costs and rewards ≥ 0; energy costs > 0.
+- `levelReq` / `lvlReq` ≥ 1; costs and rewards ≥ 0; Moves costs > 0.
 - Referenced assets (portraits/icons) exist per [`05-asset-spec.md`](./05-asset-spec.md).
 - Files are **valid JSON** (no comments, no trailing commas — the `jsonc` blocks above are
   documentation only).

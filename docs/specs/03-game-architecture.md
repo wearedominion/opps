@@ -55,7 +55,7 @@ their responsibilities.
 | `js/state.js` | `G`, `GameState` | The save-game object **and** the single persistence seam (save/load/apply). |
 | `js/ui.js` | `$`, `showTab`, `log`, `toast`, `rand`, `showLevelUp`, nav drawer | Shared UI helpers used by everyone. |
 | `js/hud.js` | `updateHUD`, `collectIncome` | Renders the persistent stat header; computes property income. |
-| `js/main.js` | `init`, `addXP`, energy-regen, `loadGameData` | Boot orchestration, XP/leveling, energy regen, JSON loading. |
+| `js/main.js` | `init`, `addXP`, Moves-regen wiring, `loadGameData` | Boot orchestration, XP/leveling, Moves regen (engine in `js/regen.js`), JSON loading. |
 | `js/jobs.js` | `renderJobs`, `doJob` | Moves tab. |
 | `js/combat.js` | `renderEnemies`, `startCombat`, `hitEm`, `closeCombat`, `Sim` | Opps list + probabilistic combat simulation (canvas). |
 | `js/store.js` | `renderStore`, `buyItem` | The Plug (gear) tab. |
@@ -79,7 +79,7 @@ their responsibilities.
 
 ### 3.1 `G` — the save game
 `G` (in `js/state.js`) is a single plain object holding **all persistent player state**: level,
-xp, money, rep, energy, health, attack, defense, inventory, properties, jobProgress, playerId,
+xp, money, rep, moves (was energy), health, attack, defense, inventory, properties, jobProgress, playerId,
 timestamps, crew count, gems, etc.
 
 **Rules:**
@@ -216,9 +216,9 @@ payments → map3d → main
 
 ### 4.2 `init()` (in `js/main.js`)
 Boot does, in order: SDK `init()` (if present) + capture `playerId` → `loadGameData()` (JSON,
-drives loading progress 0→80%) → `GameState.load()` + apply + offline energy regen → `Crew.init()`
+drives loading progress 0→80%) → `GameState.load()` + apply + offline Moves regen → `Crew.init()`
 → `Payments.init()` → schedule notifications → initial renders (`renderJobs`, `renderEnemies`,
-`renderStore`, `renderProps`, `updateHUD`) → SDK loading progress 100% → start energy-regen
+`renderStore`, `renderProps`, `updateHUD`) → SDK loading progress 100% → start pool-regen
 intervals.
 
 **If your system needs boot-time setup**, add a single call in `init()` at the right point, and
@@ -262,21 +262,29 @@ The canonical action sequence (follow it exactly):
 ```js
 function doJob(jobId) {
   const job = JOBS.find(j => j.id === jobId);
-  if (!job) return;                                    // 1. resolve + guard
-  if (G.energy < job.energy) { toast('Not enough energy!', true); return; } // 2. validate cost
-  // ...more validation (rank, mastery)...
-  G.energy -= job.energy;                              // 3. spend
-  const earned = rand(job.money[0], job.money[1]);
-  G.money += earned; G.rep += job.rep;                 // 4. grant rewards
-  addXP(job.xp);                                       // 5. XP via the shared helper
-  log(`💼 ${job.name} → earned $${earned}`, 'win');     // 6. feed line
-  toast(`+$${earned} | +${job.xp} XP`);                // 7. transient toast
-  updateHUD();                                          // 8. refresh HUD
-  renderJobs();                                         // 9. refresh this tab
-  GameState.save();                                     // 10. persist
-  Notify.energyFull();                                  // 11. (optional) schedule notification
+  if (!job) return;                                          // 1. resolve + guard
+  if (G.moves.current < job.moves) { toast('Not enough Moves!', true); return; } // 2. validate cost
+  if (!isUnlocked(job)) { toast(lockLabel(job), true); return; }
+  debit('moves', job.moves, REASON.MOVE_COST, { ref: { jobId: job.id } });  // 3. spend (ledger)
+  const earned = rand(job.cash[0], job.cash[1]);
+  credit('cash', earned, REASON.MOVE_PAYOUT, { ref: { jobId: job.id } });   // 4. grant (ledger)
+  addClout(job.clout, REASON.MOVE_PAYOUT, { jobId: job.id }); // 5. Clout via the shared helper
+  log(`${job.name} — earned $${earned} + ${job.clout} Clout`, 'win'); // 6. feed line (no emoji)
+  toast(`+$${earned} | +${job.clout} CLOUT`);                // 7. transient toast
+  updateHUD();                                                // 8. refresh HUD
+  renderJobs();                                               // 9. refresh this tab
+  GameState.save();                                           // 10. persist
+  Notify.movesFull();                                         // 11. (optional) schedule notification
 }
 ```
+
+> **Naming decision (DOM-70, 2026-09-12):** the `jobs` identifiers (`jobs.js`, `jobs.json`,
+> `JOBS`, `renderJobs`, `doJob`) deliberately do NOT rename to `moves`. "Moves" names the pacing
+> **pool** (`G.moves`, `pools.moves`, `REASON.MOVE_COST`); "jobs" names the **content ladder** the
+> pool is spent on — the same two-things collision `oppsDefinitions.md` flags, resolved by giving
+> each thing its own name rather than one name to both. Only the nav label says MOVES, because the
+> player sees the activity, not the pool. One more deliberate survivor: the `--energy-fill` CSS
+> token, which the Chrome Money contract specifies by name — it renames when that contract does.
 
 **Every state-mutating action MUST:** validate before mutating, give the player feedback
 (`toast` and/or `log`), call `updateHUD()` if HUD-visible stats changed, re-render its tab, and
@@ -343,7 +351,7 @@ Follow every step. Anything marked **MUST** is a merge gate.
 
 ## 7. Cross-cutting rules
 
-- **Progression math lives in `addXP()`** (`main.js`). Level-up side effects (stat/energy/health
+- **Progression math lives in `addXP()`** (`main.js`). Level-up side effects (stat/Moves/health
   bumps, re-renders) belong there. Don't duplicate leveling logic elsewhere.
 - **Economy is `G.money` / `G.rep` / `G.gems`.** Grant and spend through the action pattern; keep
   the HUD in sync via `updateHUD()`.
@@ -354,7 +362,7 @@ Follow every step. Anything marked **MUST** is a merge gate.
 - **No blocking dialogs / `alert` / `confirm` / `prompt`.** Use `toast`, `log`, the feed, and the
   overlay pattern (see combat/plug overlays).
 - **Time is timestamp-based, not tick-based** for anything that must survive backgrounding (see
-  energy regen using `G.lastSeen` / `G.lastEnergyTick`). Don't rely on `setInterval` for
+  pool regen using per-pool `lastTick` timestamps (`js/regen.js`)). Don't rely on `setInterval` for
   correctness across sessions.
 
 ---
