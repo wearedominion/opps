@@ -8,7 +8,6 @@ const PLUGS_DATA = [
     name: 'TOMMY',
     moniker: 'THE FENCE',
     line: "Got a buyer lined up for anything you can move tonight. No questions asked.",
-    portrait: 'assets/portraits/plug-tommy.webp',
     dialog: [
       "Ay, look who finally pulled up. You been sittin’ on merchandise — I can smell it from here.",
       "I got a buyer waitin’ out the back of the pawn shop on 5th. No names, no paper trail, cash on the spot.",
@@ -21,7 +20,6 @@ const PLUGS_DATA = [
     name: 'THERESA',
     moniker: 'THE CONNECT',
     line: "Can re-up your stash at half price — but she needs a favor handled first.",
-    portrait: 'assets/portraits/plug-theresa.webp',
     dialog: [
       "Mijo, you came at the right time. My re-up just landed and it’s heavy.",
       "I’ll front you product at half price. Half. Nobody in this city gets that deal.",
@@ -34,7 +32,6 @@ const PLUGS_DATA = [
     name: 'KYLIE',
     moniker: 'THE LOOKOUT',
     line: "Knows where the Rival Crew lays their heads. That intel won’t stay fresh long.",
-    portrait: 'assets/portraits/plug-kylie.webp',
     dialog: [
       "Psst. Keep walkin’, act normal. I’ve had eyes on the Rival Crew all week.",
       "They lay their heads at a spot off 7th & Lenox. Lights out by 2AM, one man on the door.",
@@ -47,7 +44,6 @@ const PLUGS_DATA = [
     name: 'BIG HOMIE MARCO',
     moniker: 'THE MECHANIC',
     line: "Needs parts boosted off the Auto Theft Ring. Help him out and he owes you one.",
-    portrait: 'assets/portraits/plug-marco.webp',
     dialog: [
       "Big dog! Just the hustler I been waitin’ on. Shop’s dry and I got orders stackin’ up.",
       "That Auto Theft Ring out by the airport is sittin’ on a warehouse full of parts. Engines, rims, catalytics — all of it boosted anyway.",
@@ -60,7 +56,6 @@ const PLUGS_DATA = [
     name: 'DEX',
     moniker: 'THE TWEAKER',
     line: "Wants to put you onto a bigger play downtown. Pull up when you’re ready.",
-    portrait: 'assets/portraits/plug-dex.webp',
     dialog: [
       "Yo yo yo — okay okay, listen. LISTEN. I seen somethin’ downtown you need to know about.",
       "Armored truck. Same route every Thursday. Parks behind the bank for exactly six minutes. SIX.",
@@ -78,12 +73,14 @@ function renderPlugs() {
   if (!container) return;
   container.innerHTML = '';
   PLUGS_DATA.forEach(function(plug, idx) {
+    var portrait = PORTRAITS.plugs[plug.id];
     var card = document.createElement('div');
     card.className = 'plug-card';
     card.onclick = function() { openPlug(idx); };
     card.innerHTML =
+      // No entry → the empty wrap is the placeholder: a chrome-ringed circle on --well.
       '<div class="plug-portrait-img">' +
-        '<img src="' + plug.portrait + '" alt="' + plug.name + '" loading="lazy">' +
+        (portrait ? '<img src="' + portrait + '" alt="' + plug.name + '" loading="lazy">' : '') +
       '</div>' +
       '<div class="plug-info">' +
         '<div>' +
@@ -116,8 +113,12 @@ function _renderPlugDialog(idx) {
   const li = Math.min(state.line, plug.dialog.length - 1);
   const isLast = li >= plug.dialog.length - 1;
 
-  $('plug-modal-portrait').src = plug.portrait;
-  $('plug-modal-portrait').alt = plug.name;
+  var portrait = PORTRAITS.plugs[plug.id];
+  var portraitEl = $('plug-modal-portrait');
+  // No entry → hide the img and let the wrap's --well fill stand in.
+  portraitEl.hidden = !portrait;
+  if (portrait) { portraitEl.src = portrait; portraitEl.alt = plug.name; }
+  else { portraitEl.removeAttribute('src'); portraitEl.alt = ''; }
   $('plug-modal-name').textContent = plug.name;
   $('plug-modal-moniker').textContent = plug.moniker;
   $('plug-modal-text').textContent = plug.dialog[li];

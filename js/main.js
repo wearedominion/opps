@@ -19,6 +19,9 @@ let IAP_PRODUCTS = [];
 let UNLOCKS = null;
 // Platform-login config (data/platform.json); Auth falls back to defaults.
 let PLATFORM = {};
+// Portrait art by entity id (data/portraits.json). A missing entry (or a failed
+// fetch) renders the styled placeholder circle, never a broken image.
+let PORTRAITS = { enemies: {}, plugs: {} };
 
 // ─────────────────────────────────────────────
 //  MAIN — INIT
@@ -125,12 +128,12 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 10) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 11) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks, platform] = await Promise.all([
+    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks, platform, portraits] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/store.json').then(r => r.json())),
@@ -142,6 +145,8 @@ async function loadGameData() {
       track(fetch('data/unlocks.json').then(r => r.json())),
       // Optional config — a miss must not block core data or the loader (T5).
       track(fetch('data/platform.json').then(r => r.json()).catch(() => ({}))),
+      // Optional art map — a miss degrades to placeholder circles, not a dead app.
+      track(fetch('data/portraits.json').then(r => r.json()).catch(() => null)),
     ]);
 
     JOBS        = jobs;
@@ -154,6 +159,10 @@ async function loadGameData() {
     IAP_PRODUCTS = monetization;
     UNLOCKS      = unlocks;
     PLATFORM    = platform || {};
+    PORTRAITS   = {
+      enemies: (portraits && portraits.enemies) || {},
+      plugs:   (portraits && portraits.plugs)   || {},
+    };
 
   } catch (err) {
     console.error('Failed to load game data:', err);

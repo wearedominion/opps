@@ -16,15 +16,6 @@
 //  STARTS — running away does not refund it.
 // ─────────────────────────────────────────────
 
-var ENEMY_PORTRAITS = {
-  snitch:  'assets/portraits/enemy-snitch.png',
-  stick:   'assets/portraits/enemy-stick.png',
-  oppcrew: 'assets/portraits/enemy-oppcrew.png',
-  jackers: 'assets/portraits/enemy-jackers.png',
-  rival:   'assets/portraits/enemy-rival.png',
-  fed:     'assets/portraits/enemy-fed.png',
-};
-
 var combatEnemy = null;     // static catalog row of the current opponent
 var _fight = null;          // { eHp, round, over } — live fight state, never saved
 
@@ -60,7 +51,7 @@ function renderEnemies() {
   container.innerHTML = '';
   ENEMIES.forEach(function(e) {
     var locked = !isUnlocked(e);
-    var portrait = ENEMY_PORTRAITS[e.id];
+    var portrait = PORTRAITS.enemies[e.id];
     var threat = locked ? 8 : enemyThreat(e);
     // Contract: --red on --ghost. Split the run so the empty blocks are not
     // also red — a rating should read as "4 of 8", not "8, some dimmer".
@@ -110,7 +101,7 @@ function startCombat(enemyId) {
 
   var portraitEl = $('c-enemy-portrait');
   if (portraitEl) {
-    var src = ENEMY_PORTRAITS[e.id];
+    var src = PORTRAITS.enemies[e.id];
     portraitEl.src = src || '';
     portraitEl.style.display = src ? 'block' : 'none';
   }

@@ -210,7 +210,7 @@ const GameMap = (() => {
       // District names sit back from the pins, but by colour rather than by
       // opacity — the contract bans dimming content, and --ghost lands on
       // almost exactly the same rendered value as --muted at 0.55 did.
-      out += el('text', { x: l.x, y: l.y, fill: C.district, style: `font:400 ${l.size}px Anton,sans-serif;letter-spacing:2px;text-transform:uppercase` }, l.t);
+      out += el('text', { x: l.x, y: l.y, class: 'district-label', fill: C.district, style: `font:400 ${l.size}px Anton,sans-serif;letter-spacing:2px;text-transform:uppercase` }, l.t);
     });
 
     out += '</svg>';
@@ -244,6 +244,33 @@ const GameMap = (() => {
     v.ty = mH <= cH ? (cH - mH) / 2 : Math.min(0, Math.max(cH - mH, v.ty));
     _xf.style.transform = `translate(${v.tx}px,${v.ty}px) scale(${v.s})`;
     if (_chip) _chip.textContent = v.s.toFixed(1) + '×';
+    _labelSafe(v);
+  }
+
+  // The control stack (+ / zoom chip / − / ⊡ / ⌖ / 3D) is a fixed HTML overlay
+  // in the top-right corner; district labels are painted into the SVG at world
+  // coordinates. Nothing else arbitrates between the two, so any label whose
+  // chip would slide under that corner is skipped for as long as it intersects
+  // the stack's footprint (DOM-63). Runs on every pan/zoom via apply().
+  function _labelSafe(v) {
+    if (!_xf || !_el) return;
+    const texts = _xf.querySelectorAll('text.district-label');
+    if (!texts.length) return;
+    const cr = _el.getBoundingClientRect();
+    if (!cr.width) return; // map tab not displayed; nothing to arbitrate
+    const ctrls = _el.parentElement && _el.parentElement.querySelector('.map-controls');
+    const pad = 8;
+    // Everything right of the stack's left edge, down to its bottom edge.
+    const zx = ctrls ? ctrls.getBoundingClientRect().left - cr.left - pad : cr.width - 60;
+    const zh = ctrls ? ctrls.getBoundingClientRect().bottom - cr.top + pad : 280;
+    texts.forEach(t => {
+      let b = t._bb;
+      if (!b || !b.width) b = t._bb = t.getBBox(); // world-space, constant per build
+      if (!b.width) return;
+      const sx = b.x * v.s + v.tx, sy = b.y * v.s + v.ty;
+      const hit = sx + b.width * v.s > zx && sy < zh && sy + b.height * v.s > 0;
+      t.style.visibility = hit ? 'hidden' : 'visible';
+    });
   }
 
   function zoomBy(f, cx, cy) {
