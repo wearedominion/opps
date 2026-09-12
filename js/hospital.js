@@ -84,4 +84,17 @@ function renderHospital() {
   const cost = hospitalHealCost(now);
   btn.textContent = 'HEAL NOW $' + cost.toLocaleString();
   btn.disabled = G.cash < cost;
+  // Pain moment #3 (DOM-76): the premium exit lives ON the card for the whole
+  // stay — a popup over a 30-minute wait would just get dismissed. Cash heal
+  // keeps the primary slot; the paid path is the secondary pill.
+  const iapBtn = $('hospital-iap-btn');
+  if (iapBtn) {
+    const product = (typeof IAP_PRODUCTS !== 'undefined')
+      && IAP_PRODUCTS.find(p => p.sku === 'full_heal');
+    iapBtn.hidden = !product;
+    if (product) {
+      iapBtn.textContent = 'SKIP THE WAIT · ' + Payments.getPrice('full_heal');
+      iapBtn.onclick = () => Payments.buy('full_heal');
+    }
+  }
 }

@@ -43,6 +43,7 @@ const TUNING_REQUIRED = [
   'gear.statGainPerLevel.hpBonus',
   'gear.upgradeCost.type', 'gear.upgradeCost.base', 'gear.upgradeCost.ratio',
   'gear.duplicatesRequired',
+  'monetization.offerCooldownSeconds',
 ];
 
 // Read a dotted path out of the loaded tuning file. Throws rather than guessing.

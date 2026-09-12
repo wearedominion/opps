@@ -76,6 +76,7 @@
           <div class="hospital-status">You got beat down. Discharged in
             <span class="hospital-timer" id="hospital-timer">0:00</span></div>
           <button class="hospital-heal-btn" id="hospital-heal-btn" onclick="hospitalHealNow()">HEAL NOW</button>
+          <button class="hospital-iap-btn" id="hospital-iap-btn" hidden>SKIP THE WAIT</button>
         </div>
       </div>
       <div class="card">
@@ -246,6 +247,17 @@
   <!-- ══ OVERLAYS ══
        All overlays render INSIDE the app frame, never as browser dialogs
        (design handoff: "all rendered inside the phone frame"). -->
+  <!-- OFFER SHEET (DOM-76) — raised at the out-of-Stamina / out-of-Moves pain
+       moments by surfaceOffer() in payments.js. One offer, one dismiss. -->
+  <div class="overlay" id="offer-overlay">
+    <div class="offer-box">
+      <div class="offer-title" id="offer-title">OUT OF STAMINA</div>
+      <div class="offer-desc" id="offer-desc"></div>
+      <button class="offer-buy-btn" id="offer-buy-btn">BUY</button>
+      <button class="offer-dismiss-btn" onclick="closeOffer()">WAIT IT OUT</button>
+    </div>
+  </div>
+
   <!-- COMBAT OVERLAY -->
   <div class="overlay" id="combat-overlay">
     <div class="combat-box">

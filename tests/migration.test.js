@@ -767,6 +767,147 @@ test('level-up releases from the Hospital in the refill transaction (DOM-82)', (
   assert.strictEqual(sandbox.G.stamina.current, sandbox.G.stamina.max);
 });
 
+console.log('\nStamina pool — DOM-69 locked rules pinned as data contracts');
+
+test('starting pool is 3 and regen is 1 per 3 minutes', () => {
+  assert.strictEqual(tune('start.stamina', TUNE), 3);
+  assert.strictEqual(tune('pools.stamina.regenSeconds', TUNE), 180);
+  assert.strictEqual(tune('pools.stamina.regenAmount', TUNE), 1);
+});
+
+test('two skill points buy +1 max Stamina — deliberately the expensive stat', () => {
+  assert.strictEqual(tune('skills.cost.stamina', TUNE), 2);
+  assert.strictEqual(tune('skills.grant.stamina', TUNE), 1);
+  assert.strictEqual(tune('skills.cost.moves', TUNE), 1, 'against 1 for Moves');
+  assert.strictEqual(tune('skills.cost.health', TUNE), 1, 'and 1 for Health');
+});
+
+test('a fight costs 1, charged once at entry — never in the round loop or refunded', () => {
+  assert.strictEqual(tune('combat.staminaPerFight', TUNE), 1);
+  // "One charge for the whole battle" is a code shape, not a knob: the single
+  // stamina debit sits in startCombat's entry gate; hitEm/runAway/_endFight
+  // never touch the pool, and nothing credits it back (no refund on run or
+  // defeat). Pin the shape so a refactor that moves the debit fails loudly.
+  const src = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+  const debits = src.match(/debit\('stamina'/g) || [];
+  assert.strictEqual(debits.length, 1, 'exactly one stamina debit in combat.js');
+  assert.ok(src.indexOf("debit('stamina'") < src.indexOf('function hitEm'),
+    'the debit comes before the round loop');
+  assert.ok(!/credit\('stamina'/.test(src), 'combat.js refunds stamina');
+});
+
+test('stamina regen continues while hospitalized; only health pauses (open decision 2)', () => {
+  // Ratified 2026-09-12 (Jake): the 30-minute lockout is the punishment — the
+  // player walks out with stamina banked and re-engages immediately.
+  const G = pools({ hospitalizedUntil: T0 + 30 * MIN });
+  assert.strictEqual(regenPool('stamina', T0 + 3 * MIN), 1, 'stamina paused');
+  assert.strictEqual(regenPool('moves', T0 + 5 * MIN), 1, 'moves paused');
+  assert.strictEqual(regenPool('health', T0 + 3 * MIN), 0, 'health regenned in the Hospital');
+});
+
+console.log('\nMonetization — DOM-76 v1 SKUs');
+
+const IAP_DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/monetization.json'), 'utf8'));
+
+test('the catalog sells exactly the three v1 SKUs, fully specified', () => {
+  assert.deepStrictEqual(IAP_DATA.map(p => p.sku).sort(),
+    ['boost_moves', 'boost_stamina', 'full_heal']);
+  IAP_DATA.forEach(p => {
+    ['id', 'sku', 'name', 'desc', 'mockPrice', 'effect'].forEach(k =>
+      assert.ok(k in p, p.id + ' missing ' + k));
+    assert.ok(['grantPool', 'refillPool'].includes(p.effect.type), p.id + ' effect type');
+  });
+});
+
+test('refreshes are fixed-point grants sized to the starting pool, not refills', () => {
+  // Ratified 2026-09-12 (Jake): a refill-to-max scales with the skill-built
+  // pool (stamina cap 60 ≈ 33.6h of top-job income in fight EV per $0.99) —
+  // the grant is pinned instead. Extended to Moves for the same reason
+  // (cap 200). Sim §Q1 owns the numbers.
+  const st = IAP_DATA.find(p => p.sku === 'boost_stamina');
+  assert.deepStrictEqual(st.effect,
+    { type: 'grantPool', pool: 'stamina', amount: tune('start.stamina', TUNE) });
+  const mv = IAP_DATA.find(p => p.sku === 'boost_moves');
+  assert.deepStrictEqual(mv.effect,
+    { type: 'grantPool', pool: 'moves', amount: tune('start.moves', TUNE) });
+  const heal = IAP_DATA.find(p => p.sku === 'full_heal');
+  assert.deepStrictEqual(heal.effect, { type: 'refillPool', pool: 'health' },
+    'the heal is the one refill — its value is the wait it skips, not actions');
+});
+
+test('the offer cooldown is a knob, not a literal', () => {
+  assert.ok(tune('monetization.offerCooldownSeconds', TUNE) > 0);
+});
+
+test('no gems identifier survives in the client (DOM-76 acceptance)', () => {
+  const files = fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js'))
+    .map(f => 'js/' + f).concat(['index.html']);
+  const banned = ['GEM_PACKS', 'GEM_SPENDS', 'renderGemSection', 'h-gems', 'gem-section', 'G.gems'];
+  files.forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    banned.forEach(tok => assert.ok(!src.includes(tok), f + ' still carries ' + tok));
+  });
+});
+
+// payments.js is a plain script — run it in a sandbox with the seams stubbed
+// and drive _applyEffect directly (buy() needs the Jest SDK and a server).
+function loadPayments(g) {
+  const ctx = {
+    console, Date, JSON, Object, Math,
+    G: g,
+    IAP_PRODUCTS: IAP_DATA,
+    REASON: { IAP_GRANT: 'iap_grant' },
+    tune: p => tune(p, TUNE),
+    toast: () => {}, log: () => {}, updateHUD: () => {}, renderStore: () => {},
+    renderHospital: () => {}, $: () => null,
+    isHospitalized: () => typeof g.hospitalizedUntil === 'number' && g.hospitalizedUntil > 0,
+    credit: (pool, amt, reason, meta) => {
+      ctx._rows.push({ pool, amt, reason, sku: meta && meta.ref && meta.ref.sku });
+      const applied = Math.min(amt, g[pool].max - g[pool].current);
+      g[pool].current += applied;
+      return applied;
+    },
+    _rows: [],
+    GameState: { save: () => {} },
+  };
+  ctx.globalThis = ctx;
+  const src = fs.readFileSync(path.join(ROOT, 'js/payments.js'), 'utf8')
+    + '\n;globalThis.__p = Payments;';
+  vm.runInNewContext(src, ctx);
+  return { Payments: ctx.__p, rows: ctx._rows, G: g };
+}
+
+test('grantPool credits the fixed amount through the ledger as iap_grant', () => {
+  const h = loadPayments({
+    hospitalizedUntil: null,
+    stamina: { current: 1, max: 10 },
+  });
+  const applied = h.Payments._applyEffect(IAP_DATA.find(p => p.sku === 'boost_stamina'));
+  assert.strictEqual(applied, 3);
+  assert.strictEqual(h.G.stamina.current, 4, 'grant is additive, not a refill');
+  assert.deepStrictEqual(h.rows, [{ pool: 'stamina', amt: 3, reason: 'iap_grant', sku: 'boost_stamina' }]);
+});
+
+test('grantPool clamps at max and reports what actually landed', () => {
+  const h = loadPayments({
+    hospitalizedUntil: null,
+    stamina: { current: 9, max: 10 },
+  });
+  const applied = h.Payments._applyEffect(IAP_DATA.find(p => p.sku === 'boost_stamina'));
+  assert.strictEqual(applied, 1, 'only the headroom landed');
+  assert.strictEqual(h.G.stamina.current, 10);
+});
+
+test('the premium heal discharges the Hospital, not just the health bar', () => {
+  const h = loadPayments({
+    hospitalizedUntil: Date.now() + 30 * 60 * 1000,
+    health: { current: 0, max: 100 },
+  });
+  const applied = h.Payments._applyEffect(IAP_DATA.find(p => p.sku === 'full_heal'));
+  assert.strictEqual(applied, 100);
+  assert.strictEqual(h.G.hospitalizedUntil, null, 'still locked in the Hospital');
+});
+
 console.log('\nrank bands');
 
 test('a rank covers exactly levelsPerRank levels', () => {

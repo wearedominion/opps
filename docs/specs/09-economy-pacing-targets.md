@@ -1,10 +1,11 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.7 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.8 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
 **Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
-(DOM-74, §9)** · **Cash circuit closed out (DOM-68, §10)**
+(DOM-74, §9)** · **Cash circuit closed out (DOM-68, §10)** · **Stamina mint bounded, SKUs
+fixed-point (DOM-69/76, §12)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
@@ -64,14 +65,16 @@ Simulator output, 2026-09-11, `tuning.json` v2 (values, not judgements — rerun
 
 ## 3. The four questions, answered numerically
 
-**Q1 — Can paid Stamina out-earn its price? YES, and it scales with the pool.**
-At the matchmaking band ceiling (p = 0.70) vs the best-paying enemy, fight EV at an empty
-wallet is ~$455. A $0.99 Stamina refresh grants max-pool fights: **$1,365 with the base pool
-of 3 — $27,300 with a skill-built pool of 60** (≈17 hours of top-job income per refresh).
-Caveats that soften but don't fix it: defeats interrupt the burst (health floor blocks
-fighting under 20 HP), and the EV shrinks as the wallet grows. Mitigations, in order of
-force: win reward must scale with opponent power (already a MUST in `08` §4.2), and the
-refresh grant or stamina `maxCap` (60) needs a look in DOM-69/DOM-76.
+**Q1 — Can paid Stamina out-earn its price? BOUNDED BY DESIGN as of DOM-69/76 (§12).**
+The exposure was real: at the band ceiling (p = 0.70, empty wallet) fight EV vs the best
+enemy is large, and a refill-to-max scales with the pool — a skill-built 60 pool made one
+$0.99 refresh worth ≈33.6 hours of top-job income, and the shrinking-pile rule does NOT cap
+it (enemies pay fixed catalog rewards; nothing shrinks). Resolution: the SKU is a **fixed
++3 grant** (the starting pool), so the mint per purchase is pinned at ≈1.7 hours of top-job
+income at the very top band and pool investment no longer multiplies it. The sim reads the
+grant live from `data/monetization.json` and throws if the SKU regresses to a refill.
+Remaining softeners unchanged: defeats hospitalize mid-burst, and EV decays to 0 at the
+break-even wallet. Numbers regenerate with every sim run.
 
 **Q2 — How fast does Cash inflate with no recurring sink?**
 A maxed committed player earns **~$286k/week** (jobs ~$34.6k/day + Spots ~$6.4k/day at 3
@@ -279,3 +282,31 @@ mechanics record: 08 §9.8. The pacing-relevant facts:
 Still open, owners elsewhere: the matchmaking SEARCH surface (served shortlist + reroll wiring —
 `matchmaking.*` tuning exists, nothing reads it; needs its own ticket), premium heal SKU
 (DOM-69/76), server-side fight resolution (gameplay server).
+
+## 12. DOM-69 / DOM-76 decision record — ratified 2026-09-12 (Jake)
+
+Stamina audit + monetization v1. Mechanics record: 08 §9.9. The pacing-relevant facts:
+
+- **Q1 closed — the stamina mint is bounded by SKU shape, not by pool caps.** All three
+  refresh SKUs are direct purchases (no hard currency); the two pool SKUs are **fixed-point
+  grants sized to the starting pools** (`boost_stamina` +3, `boost_moves` +10, both $0.99
+  mock). The rejected refill-to-max scaled to ≈33.6h of top-job income per purchase on a
+  skill-built 60 pool (moves cap 200 scales the same way). A fixed +3 boost ≈ 1.7h of
+  top-job income at the very top band — bounded, visible in the ledger (`iap_grant`), and
+  repeat purchases stay linear rather than pool-multiplied.
+- **The heal SKU stays a refill** ($1.99 mock): its value is the wait it skips, and it must
+  undercut the perceived cost of the Cash early-out (~1h of income, prorated) or it won't
+  sell. A paid heal while hospitalized discharges the Hospital in the same effect.
+- **Hospital regen**: stamina and moves keep regenerating during a stay; only health pauses.
+  The lockout is the punishment — a discharged player re-engages immediately. Pinned by test.
+- **DOM-69 was an audit**: every locked rule was already live (pool 3, 180s/1 regen via the
+  shared engine, 1 debit at fight entry from DOM-72, no refunds, level-up refill, 2 skill
+  points per +1 — the deliberately expensive stat). Now pinned as data-contract tests,
+  including the code-shape pin that the single stamina debit sits before the round loop.
+- **Offer surfacing is the product**: refusal gates raise the offer sheet (per-pool cooldown
+  `monetization.offerCooldownSeconds` = 300s), the Hospital card carries SKIP THE WAIT for
+  the whole stay. Searching costs no Stamina — trivially true today (the search surface is
+  the open matchmaking ticket) and recorded so the ticket's rule survives that build.
+- **Still open**: server-side SKU → grant mirror + receipt flow hardening (DOM-80), premium /
+  limited-supply gear (split to its own ticket: supply model, power ceiling, art), purchase
+  frequency caps if live telemetry ever argues for them.
