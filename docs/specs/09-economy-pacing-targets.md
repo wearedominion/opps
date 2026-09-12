@@ -1,9 +1,10 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.4 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.5 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
-**Upgrade sink live, ratio confirmed (DOM-88, §8)**
+**Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
+(DOM-74, §9)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
@@ -99,7 +100,7 @@ shield **at current numbers** — recheck if `defeatLossRate` or starting balanc
 | # | Finding | Owner |
 |---|---|---|
 | F1 | **Launder compounds ×2.3·10⁵ per day** (+10% of balance per 2 Moves, ~130/day committed). Every other number is noise until `hoodActions.launderRate` is zeroed. **RESOLVED 2026-09-11** — rate zeroed in the DOM-73 pass (§7); the action stays wired for a redesigned, bounded version. | ~~tuning, one field~~ closed |
-| F2 | **Spots as built are a $127k/h tap-farm** (full income per tap, 60s min). No accrual rate exists in tuning — the intended collect-on-login model cannot be tuned until DOM-74 defines one. | DOM-74 |
+| F2 | **Spots as built are a $127k/h tap-farm** (full income per tap, 60s min). No accrual rate exists in tuning — the intended collect-on-login model cannot be tuned until DOM-74 defines one. **RESOLVED 2026-09-11** — the DOM-74 pass (§9) replaces per-tap income with cap-clamped accrual; the tap-farm is structurally gone. | ~~DOM-74~~ closed |
 | F3 | **Health, not Stamina, paces fighting**: at p=0.5 health regen sustains ~5.6 fights/h vs stamina's 20/h. The Hospital/heal loop is the real combat governor — price heals accordingly. | DOM-72 |
 | F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. **RESOLVED 2026-09-11** — the DOM-71/DOM-81 catalog pass (§6) extends both catalogs to L110 and lands the cap at exactly 365 committed days. | ~~DOM-71, DOM-81~~ closed |
 | F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. **RESOLVED 2026-09-11** — the DOM-73 pass (§7) gates every item and prices by rule at the gate (8h/8h/12h/4h by type). | ~~DOM-73~~ closed |
@@ -210,3 +211,25 @@ cost ratio was already ratified (DOM-79: `statCapLevel` 10 hard, layer 2 before 
 Still open, owners elsewhere: duplicates as an upgrade input (needs drop-fed duplicates — drops
 currently skip owned items per 08 §9.3); server-side upgrade validation (gameplay server);
 matchmaking consuming the inflated stats (DOM-72).
+
+## 9. DOM-74 decision record — ratified 2026-09-11 (Jake)
+
+| # | Decision | Ratified |
+|---|---|---|
+| 1 | Lootability | **Uncollected Spot cash is NOT lootable in v1.** It sits outside the wallet until collected; the combat loot base reads `G.cash` only. The level-gated cap bounds the shelter to a fraction of one break-even wallet, and a full bank earns nothing, so never-collecting self-defeats. Revisit with server-owned settlement. |
+| 2 | Ownership | **Own-once ladder to L110.** Flat-price BUY MORE stacking is gone (income linear in spend at constant payback = unbounded faucet). Legacy multi-copy saves keep counts honored. |
+| 3 | Income size | **Supplement: ~10% of the gate's best-job $/h per spot, ~7-day payback** at once-daily full-bank collects at the gate. Payback lands at exactly 7.0d at all 16 gates. |
+| 4 | Offline cap | **Keep the shipped curve**: `spotOfflineCapSeconds` linear, 1h at L1 + 10min/level (≈2.5h L10, ≈9h L50, ≈19h L110). The cap is the leash; the rate only prices a session. |
+
+**F2 (the $127k/h tap-farm) is resolved**: per-tap income is replaced by per-spot accrual
+(`rate × min(elapsed, cap)`), the client shows a FULL bank earning nothing, and collect is one
+`spot_collect` ledger row. `spots.collectMinimumSeconds` is deleted from tuning — accrual is the
+pacing, not a tap cooldown.
+
+**Accepted hump:** the summed ladder rate peaks at ~33% of job rate around L10–L20 and settles to
+~16% from L50; per-spot share is 10% at the gate as ratified. Jobs stay the primary faucet at
+every level. Committed daily spot income at cap ≈ $115M/day vs $635M/day from jobs.
+
+Still open, owners elsewhere: spot upgrade tiers (`spots.upgradeEnabled` stays false — a future
+ticket if wanted), server-side accrual timestamps (client clock is trust-bounded by the cap, same
+argument as the regen engine), notification timing tied to time-to-cap (nice-to-have).

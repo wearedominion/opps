@@ -2,12 +2,11 @@
 //  HUD
 // ─────────────────────────────────────────────
 
+// What a collect is worth RIGHT NOW — accrued since the last collect, clamped
+// by the level-gated offline cap (DOM-74). Every display of "income ready"
+// (HUD, stats, notifications) reads this one number.
 function collectIncome() {
-  let total = 0;
-  PROPERTIES.forEach(p => {
-    if (G.properties[p.id]) total += p.income * G.properties[p.id];
-  });
-  return total;
+  return Math.floor(spotsAccruedTotal(Date.now()));
 }
 
 function updateHUD() {

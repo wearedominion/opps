@@ -29,6 +29,10 @@ const G = {
   // copies for when tuning.gear.duplicatesRequired turns on.
   inventory: {},
   properties: {},
+  // { spotId: { lastCollect } } — per-Spot accrual anchors (DOM-74). Additive
+  // field with a default, so no SCHEMA_VERSION bump; a save without an anchor
+  // for an owned spot anchors at first read (no retro-accrual).
+  spots: {},
   jobProgress: {},
   playerId: null,
   lastSeen: 0,

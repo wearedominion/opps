@@ -4,11 +4,11 @@
 
 function doActivity(type) {
   if (type === 'collect') {
-    const income = collectIncome();
-    if (income === 0) { toast('You got no spots yet. Buy some!', true); return; }
-    credit('cash', income, REASON.SPOT_COLLECT);
-    log(`Collected $${income} from your spots`, 'gold');
-    toast('+$' + income + ' collected!');
+    if (Object.keys(G.properties).length === 0) { toast('You got no spots yet. Buy some!', true); return; }
+    const income = collectSpots();   // one ledger row, anchors reset (DOM-74)
+    if (income === 0) { toast('Nothing banked yet — give your spots a minute.', true); return; }
+    log(`Collected $${income.toLocaleString()} from your spots`, 'gold');
+    toast('+$' + income.toLocaleString() + ' collected!');
     updateHUD();
   }
   else if (type === 'rest') {

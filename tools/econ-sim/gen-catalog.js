@@ -35,7 +35,7 @@ const { execFileSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..', '..');
 const readJSON = p => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
-const { tune } = require(path.join(ROOT, 'js', 'tuning.js'));
+const { tune, evalCurve } = require(path.join(ROOT, 'js', 'tuning.js'));
 
 const TUNING = readJSON('data/tuning.json');
 const TARGETS = readJSON('tools/econ-sim/targets.json');
@@ -197,6 +197,37 @@ const GEAR_CONTENT = [
   { id: 'yacht',    name: 'Armored Yacht',    type: 'vehicle', gate: 110, plug: 'plug-dex' },
 ];
 
+// ── Spots (DOM-74) ────────────────────────────────────────────────────────────
+// Same identity/derivation split as gear: SPOT_CONTENT is names and flavour
+// only; rates and prices are derived. Ratified 2026-09-11 (Jake): own-once
+// ladder on the same 16 gates; a spot accrues ~10% of its gate's best-job
+// $/h; the purchase pays back in ~7 days of once-daily collects at the gate
+// (daily value = rate × the level-gated offline cap from data/unlocks.json,
+// evaluated at the gate). Uncollected accrual is NOT lootable in v1.
+const SPOT_CONTENT = [
+  { id: 'corner',    name: 'Corner Store',        gate: 1 },
+  { id: 'barber',    name: 'Barber Shop',         gate: 2 },
+  { id: 'laundry',   name: 'Laundromat',          gate: 3 },
+  { id: 'carwash',   name: 'Car Wash',            gate: 5 },
+  { id: 'club',      name: 'Nightclub',           gate: 7 },
+  { id: 'pawnshop',  name: 'Pawn Shop',           gate: 10 },
+  { id: 'dispo',     name: 'Dispensary',          gate: 20 },
+  { id: 'chopshop',  name: 'Chop Shop',           gate: 30 },
+  { id: 'diner',     name: '24hr Diner',          gate: 40 },
+  { id: 'stripmall', name: 'Strip Mall',          gate: 50 },
+  { id: 'casino',    name: 'Underground Casino',  gate: 60 },
+  { id: 'towers',    name: 'Apartment Towers',    gate: 70 },
+  { id: 'freight',   name: 'Freight Company',     gate: 80 },
+  { id: 'privbank',  name: 'Private Bank',        gate: 90 },
+  { id: 'highrise',  name: 'Downtown High-Rise',  gate: 100 },
+  { id: 'ports',     name: 'The Ports',           gate: 110 },
+];
+const SPOT_RATE_SHARE = 0.10;   // of best-job $/h at the gate
+const SPOT_PAYBACK_DAYS = 7;    // once-daily collects at the gate
+const UNLOCKS = readJSON('data/unlocks.json');
+const spotCapHoursAt = level =>
+  evalCurve(UNLOCKS.capabilities.spotOfflineCapSeconds, level) / 3600;
+
 const PLUG_BY_TYPE = {
   weapon: 'plug-tommy', armor: 'plug-theresa',
   vehicle: 'plug-marco', utility: 'plug-kylie',
@@ -316,14 +347,31 @@ function buildCatalogs(E, M, K) {
     };
   }).sort((a, b) => a.levelReq - b.levelReq || a.id.localeCompare(b.id));
 
-  return { jobsOut, enemies, gear };
+  // Spots (DOM-74). rate = share of the gate's job $/h; price = payback days
+  // of once-daily collects at the gate, where a day's collect is one full
+  // offline bank (rate × the gate's cap hours).
+  const spots = SPOT_CONTENT.map(s => {
+    const rate = Math.max(1, Math.round(SPOT_RATE_SHARE * jobCashPerHour(s.gate)));
+    const price = nice(SPOT_PAYBACK_DAYS * rate * spotCapHoursAt(s.gate));
+    return {
+      id: s.id, name: s.name,
+      desc: `$${rate.toLocaleString('en-US')}/hr while you're away`,
+      tier: gates.indexOf(s.gate) + 1,
+      levelReq: s.gate,
+      price,
+      ratePerHour: rate,
+    };
+  });
+
+  return { jobsOut, enemies, gear, spots };
 }
 
 function writeCatalogs(E, M, K) {
-  const { jobsOut, enemies, gear } = buildCatalogs(E, M, K);
+  const { jobsOut, enemies, gear, spots } = buildCatalogs(E, M, K);
   fs.writeFileSync(path.join(ROOT, 'data/jobs.json'), JSON.stringify(jobsOut, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/enemies.json'), JSON.stringify(enemies, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/store.json'), JSON.stringify(gear, null, 2) + '\n');
+  fs.writeFileSync(path.join(ROOT, 'data/properties.json'), JSON.stringify(spots, null, 2) + '\n');
 }
 
 function runSim() {
@@ -371,7 +419,7 @@ function main() {
   const r = runSim();
 
   // Committed Clout mix at the checkpoint levels, from the written catalogs.
-  const { jobsOut, enemies, gear } = buildCatalogs(E, M, K);
+  const { jobsOut, enemies, gear, spots } = buildCatalogs(E, M, K);
   const mixAt = L => {
     const best = m => Math.max(...jobsOut.filter(j => j.levelReq <= L).map(m));
     const cpm = best(j => j.clout / j.moves);
@@ -406,8 +454,17 @@ function main() {
       `${i.id} $${i.price.toLocaleString()} (${(i.price / (bestCpmAt(g) * MOVES_PER_HOUR)).toFixed(1)}h)`);
     console.log(`  L${g}: ${rows.join(' · ')}`);
   }
+  console.log('Spot rule (rate = ' + SPOT_RATE_SHARE * 100 + '% of gate job $/h; price = '
+    + SPOT_PAYBACK_DAYS + ' days of once-daily full-bank collects at the gate):');
+  for (const s of spots) {
+    const daily = s.ratePerHour * spotCapHoursAt(s.levelReq);
+    console.log(`  L${s.levelReq}: ${s.id} $${s.ratePerHour.toLocaleString()}/h · cap `
+      + `${spotCapHoursAt(s.levelReq).toFixed(1)}h · $${s.price.toLocaleString()} `
+      + `(payback ${(s.price / daily).toFixed(1)}d)`);
+  }
   console.log('Wrote data/jobs.json (' + jobsOut.length + ' jobs), data/enemies.json ('
-    + enemies.length + ' enemies) and data/store.json (' + gear.length + ' gear items).');
+    + enemies.length + ' enemies), data/store.json (' + gear.length + ' gear items) and '
+    + 'data/properties.json (' + spots.length + ' spots).');
 }
 
 main();

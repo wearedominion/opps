@@ -63,7 +63,6 @@
   },
 
   "spots": {
-    "collectMinimumSeconds": 60,
     "upgradeEnabled": false
   },
 
