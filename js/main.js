@@ -203,7 +203,7 @@ async function init() {
   // Init payments — fetches product list, recovers any incomplete purchases
   await Payments.init();
 
-  // Schedule everything that applies (re-engagement, income, energy) — or, for
+  // Schedule everything that applies (re-engagement, income, moves) — or, for
   // a guest, clear anything an older build scheduled for them.
   Notify.scheduleAll();
 

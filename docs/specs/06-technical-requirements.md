@@ -87,7 +87,7 @@ OPPS uses a CI/CD pipeline that runs **unit, regression, and (where required) e2
 (tenet T9). Match your test effort to risk.
 
 ### 4.1 Unit tests — REQUIRED for non-trivial logic
-- Cover pure/gameplay logic: reward math, XP/leveling (`addXP` curve), energy regen (including
+- Cover pure/gameplay logic: reward math, XP/leveling (`addXP` curve), Moves regen (including
   offline accrual), combat odds derivation, income calculation, purchase-grant logic, data
   validators.
 - Write logic to be **testable** — keep pure calculations separable from DOM writes where

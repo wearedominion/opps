@@ -639,6 +639,36 @@ test('an unknown pool is a no-op rather than a crash', () => {
   assert.strictEqual(regenPool('nope', T0 + MIN), 0);
 });
 
+console.log('\nMoves pool — DOM-70 locked rules pinned as data contracts');
+
+test('starting pool is 10 and regen is 1 per 5 minutes', () => {
+  assert.strictEqual(tune('start.moves', TUNE), 10);
+  assert.strictEqual(tune('pools.moves.regenSeconds', TUNE), 300);
+  assert.strictEqual(tune('pools.moves.regenAmount', TUNE), 1);
+});
+
+test('one skill point buys +1 max Moves', () => {
+  assert.strictEqual(tune('skills.cost.moves', TUNE), 1);
+  assert.strictEqual(tune('skills.grant.moves', TUNE), 1);
+});
+
+test('level-up refills the pools', () => {
+  assert.strictEqual(tune('progression.levelUpRefillsPools', TUNE), true);
+});
+
+test('every job costs Moves from data, and no energy field survives', () => {
+  JOBS_DATA.forEach(j => {
+    assert.ok(Number.isInteger(j.moves) && j.moves > 0, j.id + ' moves');
+    assert.ok(!('energy' in j), j.id + ' still has energy');
+  });
+});
+
+test('the save has a moves pool and no energy fields (v3 migration output)', () => {
+  const { save } = migrate(clone(FIXTURE_V2));
+  assert.deepStrictEqual(Object.keys(save.moves).sort(), ['current', 'lastTick', 'max']);
+  ['energy', 'maxEnergy', 'lastEnergyTick'].forEach(k => assert.ok(!(k in save), k));
+});
+
 console.log('\nrank bands');
 
 test('a rank covers exactly levelsPerRank levels', () => {
