@@ -165,8 +165,15 @@ var Sim = (function() {
       log('Smoked ' + enemy.name + ' -- won $' + cashWon + ' + ' + enemy.reward.clout + ' Clout', 'win');
       Sound.win();
     } else {
+      // The loss is a share of the CURRENT balance at resolution, never a
+      // reserved amount (DOM-68 locked rule). defeatLossCap is ratified null
+      // (uncapped, DOM-79) but wired so capping is a tuning change, no release.
       var cashLost = Math.floor(G.cash * tune('loot.defeatLossRate'));
-      cashLost = debit('cash', cashLost, REASON.FIGHT_DEFEAT_LOSS, { ref: { enemyId: enemy.id } });
+      var lossCap = tune('loot.defeatLossCap');
+      if (lossCap !== null) cashLost = Math.min(cashLost, lossCap);
+      // debit() returns the (negative) applied delta; flip it for display —
+      // this used to print "Lost $-16".
+      cashLost = -debit('cash', cashLost, REASON.FIGHT_DEFEAT_LOSS, { ref: { enemyId: enemy.id } });
       // Never negative: a player already below the floor takes no further damage.
       debit('health', Math.max(0, G.health.current - tune('combat.defeatHealthRemaining')),
             REASON.COMBAT_DAMAGE, { ref: { enemyId: enemy.id } });
