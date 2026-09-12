@@ -2,36 +2,145 @@
   {
     "id": "corner",
     "name": "Corner Store",
-    "price": 800,
-    "income": 50,
-    "desc": "$50 per collect"
+    "desc": "$42/hr while you're away",
+    "tier": 1,
+    "levelReq": 1,
+    "price": 295,
+    "ratePerHour": 42
   },
   {
     "id": "barber",
     "name": "Barber Shop",
-    "price": 1500,
-    "income": 120,
-    "desc": "$120 per collect"
+    "desc": "$63/hr while you're away",
+    "tier": 2,
+    "levelReq": 2,
+    "price": 515,
+    "ratePerHour": 63
   },
   {
     "id": "laundry",
     "name": "Laundromat",
-    "price": 3000,
-    "income": 250,
-    "desc": "$250 per collect"
+    "desc": "$90/hr while you're away",
+    "tier": 3,
+    "levelReq": 3,
+    "price": 840,
+    "ratePerHour": 90
   },
   {
     "id": "carwash",
     "name": "Car Wash",
-    "price": 5000,
-    "income": 500,
-    "desc": "$500 per collect"
+    "desc": "$132/hr while you're away",
+    "tier": 4,
+    "levelReq": 5,
+    "price": 1540,
+    "ratePerHour": 132
   },
   {
     "id": "club",
     "name": "Nightclub",
-    "price": 10000,
-    "income": 1200,
-    "desc": "$1200 per collect"
+    "desc": "$160/hr while you're away",
+    "tier": 5,
+    "levelReq": 7,
+    "price": 2240,
+    "ratePerHour": 160
+  },
+  {
+    "id": "pawnshop",
+    "name": "Pawn Shop",
+    "desc": "$213/hr while you're away",
+    "tier": 6,
+    "levelReq": 10,
+    "price": 3730,
+    "ratePerHour": 213
+  },
+  {
+    "id": "dispo",
+    "name": "Dispensary",
+    "desc": "$552/hr while you're away",
+    "tier": 7,
+    "levelReq": 20,
+    "price": 16100,
+    "ratePerHour": 552
+  },
+  {
+    "id": "chopshop",
+    "name": "Chop Shop",
+    "desc": "$1,431/hr while you're away",
+    "tier": 8,
+    "levelReq": 30,
+    "price": 58400,
+    "ratePerHour": 1431
+  },
+  {
+    "id": "diner",
+    "name": "24hr Diner",
+    "desc": "$3,711/hr while you're away",
+    "tier": 9,
+    "levelReq": 40,
+    "price": 195000,
+    "ratePerHour": 3711
+  },
+  {
+    "id": "stripmall",
+    "name": "Strip Mall",
+    "desc": "$9,643/hr while you're away",
+    "tier": 10,
+    "levelReq": 50,
+    "price": 619000,
+    "ratePerHour": 9643
+  },
+  {
+    "id": "casino",
+    "name": "Underground Casino",
+    "desc": "$24,975/hr while you're away",
+    "tier": 11,
+    "levelReq": 60,
+    "price": 1890000,
+    "ratePerHour": 24975
+  },
+  {
+    "id": "towers",
+    "name": "Apartment Towers",
+    "desc": "$64,875/hr while you're away",
+    "tier": 12,
+    "levelReq": 70,
+    "price": 5680000,
+    "ratePerHour": 64875
+  },
+  {
+    "id": "freight",
+    "name": "Freight Company",
+    "desc": "$168,525/hr while you're away",
+    "tier": 13,
+    "levelReq": 80,
+    "price": 16700000,
+    "ratePerHour": 168525
+  },
+  {
+    "id": "privbank",
+    "name": "Private Bank",
+    "desc": "$436,500/hr while you're away",
+    "tier": 14,
+    "levelReq": 90,
+    "price": 48400000,
+    "ratePerHour": 436500
+  },
+  {
+    "id": "highrise",
+    "name": "Downtown High-Rise",
+    "desc": "$1,131,000/hr while you're away",
+    "tier": 15,
+    "levelReq": 100,
+    "price": 139000000,
+    "ratePerHour": 1131000
+  },
+  {
+    "id": "ports",
+    "name": "The Ports",
+    "desc": "$2,940,000/hr while you're away",
+    "tier": 16,
+    "levelReq": 110,
+    "price": 394000000,
+    "ratePerHour": 2940000
   }
 ]

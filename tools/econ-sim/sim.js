@@ -106,11 +106,19 @@ function sustainableFightsPerHour(p, maxHealth) {
   return { byStamina, byHealth, effective: Math.min(byStamina, byHealth) };
 }
 
-// Spot income per collect, owning one of everything affordable is modelled
-// elsewhere; here: one of each catalog entry.
-const SPOT_INCOME_ALL = PROPERTIES.reduce((s, pr) => s + pr.income, 0);
 const SPOT_COST_ALL   = PROPERTIES.reduce((s, pr) => s + pr.price, 0);
 const GEAR_COST_ALL   = STORE.reduce((s, i) => s + i.price, 0);
+
+// Spots (DOM-74): per-hour accrual clamped by the level-gated offline cap.
+// A day's spot income is capped by how often the player empties the bank —
+// at most 24h of rate, at least one bank per collect.
+const spotCapHours = L =>
+  evalCurve(UNLOCKS.capabilities.spotOfflineCapSeconds, L) / 3600;
+const spotRatePerHour = L => PROPERTIES
+  .filter(p => (p.levelReq || 1) <= L)
+  .reduce((s, p) => s + p.ratePerHour, 0);
+const spotCashPerDay = L => spotRatePerHour(L)
+  * Math.min(24, spotCapHours(L) * TARGETS.assumptions.spotCollectsPerDay);
 
 // ── A. Cash/hour & Clout/hour per activity per level band ────────────────────
 const BANDS = [1, 2, 3, 5, 7, 10, 15, 20, 30, 50, 80, 120];
@@ -132,7 +140,7 @@ function ratesAtLevel(L, balance) {
     bestEnemyId: e.id,
     fightsPerHour: fights.effective,
     fightRateLimiter: fights.byHealth < fights.byStamina ? 'health' : 'stamina',
-    spotCashPerDayIntended: SPOT_INCOME_ALL * TARGETS.assumptions.spotCollectsPerDay,
+    spotCashPerDayIntended: spotCashPerDay(L),
     breakEven: breakEven(e, p0),
   };
 }
@@ -322,10 +330,22 @@ function launder() {
   };
 }
 
-// Spots exploit ceiling as built (prototype: full income per tap, min 60s).
-function spotsExploit() {
-  const perHour = 3600 / T('spots.collectMinimumSeconds') * SPOT_INCOME_ALL;
-  return { perCollect: SPOT_INCOME_ALL, perHourCeiling: perHour };
+// Spots model (DOM-74): accrual replaced the per-tap exploit. Per checkpoint:
+// the income share vs jobs, the payback at the gate, and the leash length.
+function spotModel() {
+  const checkpoints = [1, 10, 50, MAX_LEVEL].map(L => ({
+    level: L,
+    ratePerHour: spotRatePerHour(L),
+    capHours: spotCapHours(L),
+    perDay: spotCashPerDay(L),
+    shareOfJobs: spotRatePerHour(L) / ratesAtLevel(L, 0).jobCashPerHour,
+  }));
+  const paybacks = PROPERTIES.map(p => {
+    const gate = p.levelReq || 1;
+    return { id: p.id, gate, price: p.price,
+             paybackDays: p.price / (p.ratePerHour * spotCapHours(gate)) };
+  });
+  return { checkpoints, paybacks };
 }
 
 // ── Report ───────────────────────────────────────────────────────────────────
@@ -476,10 +496,16 @@ function run() {
       + lf.dailyMultiplier.toExponential(2) + ' DAILY multiplier ('
       + fmt(lf.laundersPerDayCommitted) + ' launders/day committed). Zero it before any other tuning matters.');
   }
-  const sx = spotsExploit();
-  say('  F2 SPOTS AS BUILT: full income per tap, min 60s → $' + fmt(sx.perHourCeiling)
-    + '/h ceiling owning one of each (vs top job $' + fmt(ratesAtLevel(7, 0).jobCashPerHour) + '/h).');
-  say('     No accrual rate exists in tuning.json — DOM-74 must add one before Spots can be tuned.');
+  const sx = spotModel();
+  say('  F2 SPOTS: resolved (DOM-74) — per-tap income replaced by accrual clamped at the'
+    + ' level-gated offline cap; uncollected accrual is NOT lootable in v1 (ratified).');
+  sx.checkpoints.forEach(c => {
+    say('     L' + c.level + ': $' + fmt(c.ratePerHour) + '/h banked ('
+      + Math.round(c.shareOfJobs * 100) + '% of job rate) · leash ' + fmt(c.capHours)
+      + 'h · $' + fmt(c.perDay) + '/day at ' + TARGETS.assumptions.spotCollectsPerDay + ' collects');
+  });
+  say('     Payback at the gate: ' + fmt(Math.min(...sx.paybacks.map(p => p.paybackDays)))
+    + '–' + fmt(Math.max(...sx.paybacks.map(p => p.paybackDays))) + ' days across the ladder.');
   const fr = sustainableFightsPerHour(p0, T('start.health'));
   say('  F3 FIGHT RATE: health regen caps fighting at ' + fmt(fr.byHealth) + '/h at p=' + p0
     + ' (stamina alone would allow ' + fmt(fr.byStamina) + '/h) — the Hospital/heal loop, not Stamina, paces combat.');
@@ -516,7 +542,7 @@ function run() {
     fightRate: sustainableFightsPerHour(p0, T('start.health')),
     q1: q1(), q2: q2(), q3: q3(), q4: q4(),
     breakEvenPlan: breakEvenPlan(),
-    launder: launder(), spotsExploit: spotsExploit(),
+    launder: launder(), spots: spotModel(),
     upgradeSink: upgradeSink(),
     targets: TARGETS,
   };
@@ -636,9 +662,10 @@ function buildHtml(json, outDir) {
     F1_RATE: Math.round(json.launder.rate * 100) + '%',
     F1_COST: String(json.launder.movesCost),
     F1_PER_DAY: String(Math.round(json.launder.laundersPerDayCommitted)),
-    F2_CEILING: money(json.spotsExploit.perHourCeiling),
-    F2_MIN: String(T('spots.collectMinimumSeconds')),
-    F2_TOPJOB: money(committedJobPerHour),
+    F2_SHARE: String(Math.round(json.spots.checkpoints[0].shareOfJobs * 100)),
+    F2_CAP_L1: fmt(json.spots.checkpoints[0].capHours),
+    F2_CAP_MAX: fmt(json.spots.checkpoints[json.spots.checkpoints.length - 1].capHours),
+    F2_PAYBACK: fmt(json.spots.paybacks.reduce((s, p) => s + p.paybackDays, 0) / json.spots.paybacks.length),
     F3_BY_HEALTH: String(Math.round(json.fightRate.byHealth * 10) / 10),
     F3_BY_STAMINA: String(Math.round(json.fightRate.byStamina)),
     F4_JOB_CEIL: String(jobCeiling),
