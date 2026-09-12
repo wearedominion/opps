@@ -30,7 +30,7 @@ const TUNING_REQUIRED = [
   'skills.grant.attack', 'skills.grant.defense',
   'combat.winHealthLoss', 'combat.defeatHealthRemaining', 'combat.defeatCloutShare',
   'crew.cloutPerRecruit',
-  'loot.defeatLossRate',
+  'loot.defeatLossRate', 'loot.defeatLossCap',
   'crew.attackPerLieutenant', 'crew.defensePerLieutenant',
   'hoodActions.restMovesCost', 'hoodActions.restHealAmount',
   'hoodActions.launderMovesCost', 'hoodActions.launderRate',

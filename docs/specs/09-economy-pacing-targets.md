@@ -1,10 +1,10 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.5 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.6 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
 **Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
-(DOM-74, §9)**
+(DOM-74, §9)** · **Cash circuit closed out (DOM-68, §10)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
@@ -233,3 +233,24 @@ every level. Committed daily spot income at cap ≈ $115M/day vs $635M/day from 
 Still open, owners elsewhere: spot upgrade tiers (`spots.upgradeEnabled` stays false — a future
 ticket if wanted), server-side accrual timestamps (client clock is trust-bounded by the cap, same
 argument as the regen engine), notification timing tied to time-to-cap (nice-to-have).
+
+## 10. DOM-68 close-out — 2026-09-11
+
+The Cash hub ticket, closed as a reconciliation pass (its faucet/sink scope shipped via DOM-79,
+DOM-71/81, DOM-73, DOM-88 and DOM-74). Settled here:
+
+| # | Decision | Outcome |
+|---|---|---|
+| 4 | Reroll fee | **Escalating, first free** (ratified) — the authored `loot.rerollFee` curve (base $50, ×1.05) stands as data; wiring lands with DOM-72's matchmaking. |
+| 5 | New-player floor | **No mechanism** (ratified) — a full starting losing streak costs ~$326, recovered in minutes of L1 job income; matchmaking's easy-end bias is the safety net. Revisit on DOM-78 churn telemetry only. |
+| 6 | `defeatLossCap` | Stays **null** (DOM-79) but is now **wired** in `combat.js` — capping is a tuning change, not a release. |
+
+**Circuit balance (the ticket's core question): YES.** Sim §C3 shows committed inflow vs band
+sinks converging to ~8.4 days-to-clear at every gate from L10 (L1 trivial by design), the
+break-even wallet scaling with the band, and the money supply reconciling as Σ credits − Σ debits
+with no transfer rows. Found and fixed in the audit: defeat losses displayed as "Lost $-N"
+(`debit()` returns the negative applied delta).
+
+Every settlement rule audited against the code: loss = rate × current balance at resolution ✓,
+single writer ✓, ledger row per movement ✓, attacker loses on the same rules ✓ (there is only one
+fight path), rewards scale with opponent band ✓ (DOM-71/81 pricing).

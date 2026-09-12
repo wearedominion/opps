@@ -85,8 +85,8 @@ do not treat the current values as balance.
 | `combat.winProbability.beta` / `.bias` | `P(win) = σ(β·ln ρ + bias)`. Shape is locked, values are not. |
 | `combat.damageScale`, `combat.maxRounds` | Placeholder until the combat sim runs. |
 | `loot.defeatLossRate` | **Decided (DOM-79, 2026-09-11): stays 0.10.** With an absolute win reward against a proportional loss, this sets the **break-even balance** (§4.2), now anchored at **8 hours of best-job income** at the player's level (`tools/econ-sim/targets.json` → `breakEven`). Win rewards are the knob that moves to hit the anchor (DOM-71/DOM-81), not this rate. |
-| `loot.defeatLossCap` | **Decided (DOM-79, 2026-09-11): `null` (uncapped) for v1.** An uncapped proportion is economically correct; the Hospital shield and the banded win rate are the harshness mitigations. Revisit with DOM-78 telemetry if large single losses correlate with churn. |
-| `matchmaking.rerollFee`, `hospital.healCost` | Indexed to level so they keep biting; the index ratio matches the Clout curve so the fee tracks wealth. Base values unowned. |
+| `loot.defeatLossCap` | **Decided (DOM-79, 2026-09-11): `null` (uncapped) for v1.** An uncapped proportion is economically correct; the Hospital shield and the banded win rate are the harshness mitigations. Revisit with DOM-78 telemetry if large single losses correlate with churn. **Wired (DOM-68):** `combat.js` clamps the loss when the value is non-null, so capping is a tuning change, not a release. |
+| `matchmaking.rerollFee`, `hospital.healCost` | Indexed to level so they keep biting; the index ratio matches the Clout curve so the fee tracks wealth. **Reroll ratified (DOM-68, 2026-09-11): escalating, first free** — the authored `loot.rerollFee` curve (base 50, ×1.05) stands; wiring lands with DOM-72's matchmaking, since a static target list has nothing to reroll. Heal base values still unowned (DOM-72). |
 | `gear.upgradeCost`, `gear.statCapLevel` | `statCapLevel` is **decided (DOM-79, 2026-09-11): 10, confirmed hard** — upgrades past it are pure prestige, which is what keeps the unbounded track a sink rather than a matchmaking hazard. `upgradeCost.ratio` (1.6) is still a guess; it lands with the layer-2 sub-task. |
 | `skills.grant.health` | `1` matches the code and [`../profileScreen.md`](../profileScreen.md) §4, which itself flags the per-point value as an open data decision — Health pools run larger than Stamina/Moves, so it is probably more than +1. |
 | `progression.autoStatGainPerLevel` | Set to the **current shipped behaviour** (+3 ATK / +2 DEF / +15 HP / +2 Moves), so wiring it up changed nothing. See §6.2 — zeroing it is the recommendation, and now a one-line edit. |
@@ -664,3 +664,26 @@ self-defeating. Revisit when the server owns fight settlement.
 **Known hump, accepted:** the *summed* ladder rate peaks at ~33% of the job rate around L10–L20
 (early spots stay relevant while job income is still flat) and settles to ~16% from L50 on;
 per-spot it is 10% at the gate as ratified. Jobs remain the primary faucet at every level.
+
+### 9.7 The Cash circuit — DOM-68 close-out (2026-09-11)
+
+The hub ticket's scope landed piecemeal (endgame sink DOM-79, faucet scaling DOM-71/81, gear
+sink DOM-73, recurring sink DOM-88, spots + lootability DOM-74); this pass closed what remained:
+
+- **Circuit balance is now a simulator section** (`sim.js` §C3): per band, committed inflow per
+  day against what the band sells. It converges to **~8.4 days of income to clear a band's
+  sinks** at every gate from L10 up (gear kit + spot + kit-to-LV5), with L1 deliberately trivial
+  for onboarding — a consequence of everything being priced in hours-at-gate. The fight share of
+  inflow shown there is the empty-wallet bound; it decays to zero at the break-even wallet.
+- **`loot.defeatLossCap` is wired** in `combat.js` (ratified null stays — capping is now a tuning
+  change). The defeat branch also had a display bug — `debit()` returns the negative applied
+  delta, so losses printed as "Lost $-N" — fixed.
+- **Reroll fee ratified: escalating, first free** (open decision 4). The authored curve stands as
+  data; DOM-72 wires it with matchmaking.
+- **No new-player floor mechanism** (open decision 5, ratified): a fresh player losing every
+  starting fight ends around $174 of $500, recovered in minutes of L1 job income; losses only
+  compound through the player's own defeats. Matchmaking's easy-end bias (DOM-72) is the safety
+  net; revisit only if DOM-78 telemetry shows early-loss churn.
+- **Money supply reconciles by construction**: Σ credits − Σ debits = wallet movement, no netting,
+  no transfer rows — asserted by the ledger tests and a full-circuit harness that drives buy /
+  upgrade / collect / win / loss through the real ledger in one scripted session.

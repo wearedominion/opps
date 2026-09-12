@@ -226,6 +226,50 @@ function upgradeSink(ratioOverride) {
 }
 const MAX_LEVEL_BAND = Math.max(...STORE.map(i => i.levelReq || 1));
 
+// ── C3. The Cash circuit (DOM-68) ────────────────────────────────────────────
+// Does the whole circuit balance? Per checkpoint band: what flows in per
+// committed day, what the band offers to spend it on, and where fighting
+// flips from faucet to drain (the DOM-79 break-even). Every faucet and drain
+// is a ledger reason; the money supply is Σ credits − Σ debits by contract
+// (no netting, no transfer rows — snapshot combat mints and destroys only).
+function moneyCircuit() {
+  const committed = TARGETS.playerProfiles.committed;
+  const curve = T('gear.upgradeCost');
+  const cumTo5 = Array.from({ length: 5 }, (_, i) => curve.base * Math.pow(curve.ratio, i))
+    .reduce((a, b) => a + b, 0);
+  const gates = [...new Set(STORE.map(i => i.levelReq || 1))].sort((a, b) => a - b);
+  return [1, 10, 50, MAX_LEVEL].map(L => {
+    const gate = gates.filter(g => g <= L).pop();
+    const r = ratesAtLevel(L, 0);
+    const fr = sustainableFightsPerHour(p0, T('start.health'));
+    const fightsPerDay = Math.min(
+      STAMINA_PER_HOUR * 24 * committed.staminaUse / T('combat.staminaPerFight'),
+      fr.byHealth * 24 * committed.staminaUse);
+    const e = bestEnemy(L);
+    const inflow = {
+      jobsPerDay: r.jobCashPerHour * 24 * committed.movesUse,
+      spotsPerDay: r.spotCashPerDayIntended,
+      fightWinsPerDay: p0 * mean(e.reward.cash) * fightsPerDay, // empty-wallet bound
+    };
+    const kit = STORE.filter(i => (i.levelReq || 1) === gate);
+    const kitPrice = kit.reduce((s, i) => s + i.price, 0);
+    const spot = PROPERTIES.find(p => (p.levelReq || 1) === gate);
+    const sinks = {
+      gearKit: kitPrice,
+      spot: spot ? spot.price : 0,
+      kitToLV5: kitPrice * cumTo5,
+    };
+    const inPerDay = inflow.jobsPerDay + inflow.spotsPerDay + inflow.fightWinsPerDay;
+    const sinkTotal = sinks.gearKit + sinks.spot + sinks.kitToLV5;
+    return {
+      level: L, gate, inflow, sinks,
+      inPerDay, sinkTotal,
+      daysToClearBand: sinkTotal / inPerDay,
+      breakEvenWallet: breakEven(e, p0),
+    };
+  });
+}
+
 // ── D. The four questions ────────────────────────────────────────────────────
 
 // Q1 — Can paid Stamina out-earn its price?
@@ -441,6 +485,20 @@ function run() {
       + (r === us.ratio ? '   ← shipped: LV 5 in-band, cap a season-long goal, prestige absorbs for months' : ''));
   });
 
+  say('\n■ C3. The Cash circuit (DOM-68) — in/day vs what the band sells, committed');
+  moneyCircuit().forEach(c => {
+    say('    L' + c.level + ' (gate ' + c.gate + '): in $' + fmt(c.inPerDay) + '/day'
+      + ' (jobs ' + Math.round(c.inflow.jobsPerDay / c.inPerDay * 100) + '%'
+      + ' · fights ' + Math.round(c.inflow.fightWinsPerDay / c.inPerDay * 100) + '%'
+      + ' · spots ' + Math.round(c.inflow.spotsPerDay / c.inPerDay * 100) + '%)'
+      + ' · band sinks $' + fmt(c.sinkTotal) + ' = ' + fmt(c.daysToClearBand) + 'd to clear'
+      + ' · fight break-even at $' + fmt(c.breakEvenWallet));
+  });
+  say('    Fight share is the EMPTY-WALLET bound — net fight income decays to 0 at the'
+    + ' break-even wallet and turns negative above it (the DOM-79 sink).');
+  say('    Money supply = Σ credits − Σ debits by contract: every movement is a ledger row'
+    + ' with a reason; snapshot combat mints and destroys, never transfers (08 §4/§8).');
+
   say('\n■ Q1. Can paid Stamina out-earn its price?  YES — and it scales with the pool.');
   const a1 = q1();
   say('    Best fight EV (p=0.70 band ceiling, empty wallet): $' + fmt(a1.perFightMax) + '/fight vs ' + a1.bestEnemy);
@@ -544,6 +602,7 @@ function run() {
     breakEvenPlan: breakEvenPlan(),
     launder: launder(), spots: spotModel(),
     upgradeSink: upgradeSink(),
+    moneyCircuit: moneyCircuit(),
     targets: TARGETS,
   };
   fs.writeFileSync(path.join(outDir, 'results.json'), JSON.stringify(json, null, 2) + '\n');
