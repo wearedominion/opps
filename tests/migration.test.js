@@ -760,9 +760,11 @@ test('level-up releases from the Hospital in the refill transaction (DOM-82)', (
   };
   vm.runInNewContext(fn[0] + '; applyLevelGrants();', sandbox);
   assert.strictEqual(sandbox.G.hospitalizedUntil, null, 'still hospitalized');
-  assert.strictEqual(sandbox.G.health.current, 100, 'health not refilled');
-  assert.strictEqual(sandbox.G.moves.current, 10);
-  assert.strictEqual(sandbox.G.stamina.current, 3);
+  // Pools refill to their (possibly grown) max — the release and the refill
+  // are one transaction, never one without the other.
+  assert.strictEqual(sandbox.G.health.current, sandbox.G.health.max, 'health not refilled');
+  assert.strictEqual(sandbox.G.moves.current, sandbox.G.moves.max);
+  assert.strictEqual(sandbox.G.stamina.current, sandbox.G.stamina.max);
 });
 
 console.log('\nrank bands');
