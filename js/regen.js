@@ -25,6 +25,15 @@ function regenPool(pool, now) {
   if (!p) return 0;
   now = now || Date.now();
 
+  // The Hospital runs its own timer (DOM-72, ratified): while hospitalized,
+  // health does not trickle back through regen — the timer (or the Cash
+  // early-out) is the only way back. Keep the anchor current so no regen
+  // time banks up behind the lockout.
+  if (pool === 'health' && typeof G.hospitalizedUntil === 'number' && G.hospitalizedUntil > now) {
+    p.lastTick = now;
+    return 0;
+  }
+
   // No tick yet, or the clock moved backwards. Re-anchor without crediting:
   // leaving lastTick in the future would stall regen until real time caught up.
   if (!p.lastTick || p.lastTick > now) { p.lastTick = now; return 0; }

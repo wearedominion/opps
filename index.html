@@ -69,6 +69,15 @@
 
     <!-- HOOD TAB -->
     <div class="tab active" id="tab-hood">
+      <!-- HOSPITAL (DOM-72) — hidden while healthy; the defeat flow lands here. -->
+      <div class="card hospital-card" id="hospital-card" hidden>
+        <div class="card-title">THE HOSPITAL</div>
+        <div class="hospital-body">
+          <div class="hospital-status">You got beat down. Discharged in
+            <span class="hospital-timer" id="hospital-timer">0:00</span></div>
+          <button class="hospital-heal-btn" id="hospital-heal-btn" onclick="hospitalHealNow()">HEAL NOW</button>
+        </div>
+      </div>
       <div class="card">
         <div class="card-title">HOOD ACTIVITIES</div>
         <div class="job-grid">
@@ -263,21 +272,11 @@
           <span class="combat-odds-k">WIN ODDS</span>
           <span id="c-odds"></span>
         </div>
-        <button class="attack-btn wide" onclick="hitEm()">HIT 'EM</button>
-      </div>
-      <!-- The sparkline well. One element, not two: this replaces the old
-           #sim-canvas-wrap canvas and the dead #combat-log div that sat
-           beside it. Lines are stroked from CSS tokens (.you / .opp) so the
-           palette can't drift out of the design system again. -->
-      <div class="combat-log" id="combat-log" hidden>
-        <svg class="combat-spark" id="combat-spark" aria-hidden="true">
-          <line class="combat-spark-mid" id="spark-mid"></line>
-          <path class="opp" id="spark-opp"></path>
-          <path class="you" id="spark-you"></path>
-          <circle class="combat-spark-dot opp" id="spark-dot-opp" r="3"></circle>
-          <circle class="combat-spark-dot you" id="spark-dot-you" r="3"></circle>
-        </svg>
-        <div class="combat-spark-result" id="sim-result"></div>
+        <!-- Turn-based rounds (DOM-72): both sides deal damage each round.
+             The auto-playing spark well is retired with the one-roll Sim;
+             the two HP bars above are the fight visual now. -->
+        <button class="attack-btn wide" id="hit-btn" onclick="hitEm()">HIT 'EM</button>
+        <button class="run-btn" id="run-btn" onclick="runAway()">RUN</button>
       </div>
       <div class="combat-result" id="combat-result"></div>
       <button class="close-combat" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
@@ -323,6 +322,8 @@
 <script src="js/map.js"></script>
 <script src="js/hud.js"></script>
 <script src="js/jobs.js"></script>
+<script src="js/fightmath.js"></script>
+<script src="js/hospital.js"></script>
 <script src="js/combat.js"></script>
 <script src="js/store.js"></script>
 <script src="js/properties.js"></script>

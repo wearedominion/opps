@@ -34,12 +34,12 @@
   "combat": {
     "staminaPerFight": 1,
     "winProbability": { "beta": 2.0, "bias": 0.0 },
-    "damageScale": 1.0,
-    "maxRounds": 20,
     "shortlistPower": { "attackWeight": 1.0, "healthWeight": 1.0, "defenseWeight": 1.0 },
     "defeatCloutShare": 0.25,
-    "winHealthLoss": [5, 20],
-    "defeatHealthRemaining": 5
+    "roundDamageShare": 0.25,
+    "damageSpread": 0.15,
+    "firstStrikeEdge": 0.1,
+    "runAwayChance": 0.6
   },
 
   "matchmaking": {
@@ -59,7 +59,7 @@
   "hospital": {
     "fullHealSeconds": 1800,
     "shieldedWhileHospitalized": true,
-    "healCost": { "type": "geometric", "base": 100, "ratio": 1.05 }
+    "healCost": { "type": "geometric", "base": 420, "ratio": 1.1 }
   },
 
   "spots": {

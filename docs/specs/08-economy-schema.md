@@ -106,9 +106,9 @@ server's number, not the source of truth.
 **Implemented (save `SCHEMA_VERSION` 3):** `clout`, `level`, `levelGranted`, `cash`, and all three
 pools in the `{current, max, lastTick}` shape below. `gems` is gone — no hard currency in v1.
 
-Still divergent from the target: `skillPts` (target name `skillPoints`), and `hospitalizedUntil`
-does not exist because the Hospital does not exist (DOM-72). Cash is still client-authoritative —
-see §8.
+Still divergent from the target: `skillPts` (target name `skillPoints`). `hospitalizedUntil`
+**exists as specified since DOM-72 (2026-09-12)** — one nullable timestamp on `G`, additive, no
+schema bump. Cash is still client-authoritative — see §8.
 
 ```jsonc
 {
@@ -262,6 +262,7 @@ on it**, so treat these as permanent keys in the same way as content `id`s.
 | `spot_buy` | debit | drain |
 | `reroll_fee` | debit | drain |
 | `heal_cost` | debit | drain |
+| `hospital_heal` | credit (health) | pool restore — the Hospital discharge, timer or paid (DOM-72) |
 | `respec_cost` | debit | drain |
 | `skill_alloc` | debit | drain (skillPoints) |
 | `move_cost` | debit | drain (moves) |
@@ -687,3 +688,35 @@ sink DOM-73, recurring sink DOM-88, spots + lootability DOM-74); this pass close
 - **Money supply reconciles by construction**: Σ credits − Σ debits = wallet movement, no netting,
   no transfer rows — asserted by the ledger tests and a full-circuit harness that drives buy /
   upgrade / collect / win / loss through the real ledger in one scripted session.
+
+### 9.8 Combat & the Hospital — DOM-72 (+ DOM-82) decision record (2026-09-12)
+
+Turn-based rounds replace the one-roll spark. The model lives in **`js/fightmath.js`**, one pure
+implementation shared verbatim by the client, the simulator and the generator.
+
+| # | Decision | Ratified |
+|---|---|---|
+| 1 | Hospital timer | **Own timer** (`hospital.fullHealSeconds`, 30 min): 0 HP sets `hospitalizedUntil` in the fight's resolving transaction; health regen pauses; timer completion (or the paid early-out) restores full health and clears the state. Rest is blocked while hospitalized — 4 Moves must not undercut the lockout. |
+| 2 | Heal pricing | **~1h of best-job income at level** (`hospital.healCost` geometric base 420 ×1.1, tracking the income curve), prorated by time remaining. Rational below break-even (a full pool's fight EV ≈ 1.8h of income) and the recurring combat drain F3 predicted. Premium speed-up stays behind DOM-69/76. |
+| 3 | Run-away | **60% escape** (`combat.runAwayChance`); a failed run eats the counterattack and the fight continues; a successful run costs only the stamina staked at fight start. |
+| 4 | DOM-82 free release | **Option 1, accepted**: level-up clears `hospitalizedUntil` in the same transaction as the pool refill. Banking a nearly-complete level as an escape hatch rewards planning; the ceiling is one level's worth. |
+
+**The round model** (`combat.roundDamageShare` 0.25, `damageSpread` 0.15, `firstStrikeEdge` 0.1):
+sequential per round — the player's hit lands first and a killed enemy never counterattacks.
+Damage to the enemy is a share of the *enemy's* pool (HP displays scale freely per band); damage
+to the player is referenced to BASE health (`start.health`), so skill-built max Health buys real
+extra rounds — the tank build works and is test-pinned. Fights debit `stamina` at start
+(`fight_cost` — previously declared and never used).
+
+**Enemy ATK/DEF are solved, not extrapolated**: the generator calibrates one multiplier (×~1.14 of
+the band's expected loadout) so the band matchup sits at the pricing nominal p0 = 0.5 — verified
+at L10/50/110 (46–53%). L1 runs ~97% by construction (attacker strikes first and early loadouts
+are lopsided) — deliberate onboarding softness, priced in pennies. Enemy HP keeps the legacy
+display trend.
+
+**Fight pacing changed and the catalogs were re-solved**: a defeat now hospitalizes, so the free
+cadence is a cycle of `1/(1−p0)` fights per 30-min lockout ≈ **4 fights/h** (stamina caps the
+paid path at 20/h). The knob solve reproduces E/M/K exactly; the win-clout ratio moved 3.01 →
+4.20 (rarer fights pay more Clout each) and the 63/37 mix and 365-day cap hold by construction.
+F3 is resolved as designed: the Hospital loop paces combat and its early-out is the recurring
+combat drain.

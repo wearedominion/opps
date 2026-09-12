@@ -24,6 +24,11 @@ const G = {
   health:  { current: 100, max: 100, lastTick: 0 },   // combat HP
 
   attack: 10, defense: 5,
+  // Epoch ms or null (08 §3: one field, never a flag plus a timestamp that can
+  // disagree). Non-null and in the future = hospitalized: cannot fight, cannot
+  // rest, health regen paused, shielded from any future search (DOM-72).
+  // Additive field with a default — no SCHEMA_VERSION bump.
+  hospitalizedUntil: null,
   // { itemId: { level, duplicates } } — per-instance gear state (DOM-88).
   // `level` is the upgrade level (0 = as bought); `duplicates` counts spare
   // copies for when tuning.gear.duplicatesRequired turns on.

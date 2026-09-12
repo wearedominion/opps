@@ -36,6 +36,7 @@ const { execFileSync } = require('child_process');
 const ROOT = path.join(__dirname, '..', '..');
 const readJSON = p => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
 const { tune, evalCurve } = require(path.join(ROOT, 'js', 'tuning.js'));
+const { fmStats, fmSeededRng } = require(path.join(ROOT, 'js', 'fightmath.js'));
 
 const TUNING = readJSON('data/tuning.json');
 const TARGETS = readJSON('tools/econ-sim/targets.json');
@@ -46,20 +47,20 @@ const T = p => tune(p, TUNING);
 const p0 = TARGETS.assumptions.winProbabilityNominal;
 const MOVES_PER_HOUR = 3600 / T('pools.moves.regenSeconds') * T('pools.moves.regenAmount');
 const STAMINA_PER_HOUR = 3600 / T('pools.stamina.regenSeconds') * T('pools.stamina.regenAmount');
-const HEALTH_PER_HOUR = 3600 / T('pools.health.regenSeconds') * T('pools.health.regenAmount');
 
-const fightHealthCost =
-  p0 * ((T('combat.winHealthLoss')[0] + T('combat.winHealthLoss')[1]) / 2)
-  + (1 - p0) * (T('start.health') - T('combat.defeatHealthRemaining'));
+// Fight pacing under turn-based combat (DOM-72): a defeat hospitalizes, so the
+// free fight cadence is a CYCLE — 1/(1−p0) fights, then the Hospital timer.
+// The Cash early-out buys back up to the stamina cap; the free cycle is the
+// pacing baseline, same as the sim.
+const FIGHTS_PER_CYCLE = 1 / (1 - p0);
+const CYCLE_HOURS = T('hospital.fullHealSeconds') / 3600;
 const FIGHTS_PER_HOUR = Math.min(
   STAMINA_PER_HOUR / T('combat.staminaPerFight'),
-  HEALTH_PER_HOUR / fightHealthCost);
+  FIGHTS_PER_CYCLE / CYCLE_HOURS);
 
 const committed = TARGETS.playerProfiles.committed;
 const MOVES_PER_DAY_C = MOVES_PER_HOUR * 24 * committed.movesUse;
-const FIGHTS_PER_DAY_C = Math.min(
-  STAMINA_PER_HOUR * 24 * committed.staminaUse / T('combat.staminaPerFight'),
-  FIGHTS_PER_HOUR * 24 * committed.staminaUse);
+const FIGHTS_PER_DAY_C = FIGHTS_PER_HOUR * 24 * committed.staminaUse;
 
 // Clout EV share of the win reward per fight (win + defeatCloutShare on loss).
 const EV_SHARE = p0 + (1 - p0) * T('combat.defeatCloutShare');
@@ -136,10 +137,51 @@ const NEW_ENEMIES = [
   { id: 'thedon',     name: 'The Don',              role: 'The Last Boss',     gate: 110 },
 ];
 
-// Enemy stats continue the existing power trend; they feed matchmaking
-// (DOM-72), not the economy model.
-const STAT_ANCHOR = { hp: 200, atk: 30, def: 15, gate: 5 };
-const STAT_RATIO_PER_10 = { hp: 1.45, atk: 1.40, def: 1.40 };
+// Enemy HP continues the legacy display trend. ATK/DEF are no longer trend
+// extrapolations: under turn-based combat (DOM-72) they are CONSUMED by the
+// round model, so they are solved — proportional to the expected player
+// loadout at the band, scaled so the model's win probability against a
+// band-appropriate opponent sits at the pricing nominal p0. One multiplier
+// serves every band because the round model is scale-invariant in the ratios.
+const STAT_ANCHOR = { hp: 200, gate: 5 };
+const STAT_RATIO_PER_10 = { hp: 1.45 };
+
+const FIGHT_CFG = {
+  roundDamageShare: T('combat.roundDamageShare'),
+  damageSpread: T('combat.damageSpread'),
+  firstStrikeEdge: T('combat.firstStrikeEdge'),
+  baseHp: T('start.health'),
+};
+
+// Expected loadout at a band: starting stats plus every generated item at or
+// below the gate, at upgrade level 0 — the conservative kit-owner baseline.
+function loadoutAt(gear, band) {
+  const owned = gear.filter(i => i.levelReq <= band);
+  return {
+    atk: T('start.attack') + owned.reduce((s, i) => s + i.atk, 0),
+    def: T('start.defense') + owned.reduce((s, i) => s + i.def, 0),
+    hp: T('start.health'),
+  };
+}
+
+// Solve the enemy-stat multiplier m so pWin(loadout vs m×loadout) ≈ p0.
+// Deterministic (seeded rng) so regenerated catalogs are reproducible; solved
+// once — the ratios are band-invariant and gear is knob-independent.
+let _enemyStatMult = null;
+function enemyStatMult(gear) {
+  if (_enemyStatMult !== null) return _enemyStatMult;
+  const L = loadoutAt(gear, 50);
+  const pWinAt = m => fmStats(L,
+    { atk: m * L.atk, def: m * L.def, maxHp: 1000 },
+    FIGHT_CFG, 4000, fmSeededRng(0xD0A472)).pWin;
+  let lo = 0.5, hi = 3;
+  for (let i = 0; i < 14; i++) {
+    const mid = (lo + hi) / 2;
+    if (pWinAt(mid) > p0) lo = mid; else hi = mid;
+  }
+  _enemyStatMult = (lo + hi) / 2;
+  return _enemyStatMult;
+}
 
 // ── Gear (DOM-73) ─────────────────────────────────────────────────────────────
 // GEAR_CONTENT is the identity layer: ids, display names, types and vendors.
@@ -304,32 +346,9 @@ function buildCatalogs(E, M, K) {
   const LOSS = T('loot.defeatLossRate');
   const rewardCash = L => BE_HOURS * jobCashPerHour(L) * (1 - p0) * LOSS / p0;
 
-  const enemies = [
-    ...EARLY_ENEMIES.map(e => ({ ...e, band: e.levelReq })),
-    ...NEW_ENEMIES.map(e => {
-      const steps = (e.gate - STAT_ANCHOR.gate) / 10;
-      return {
-        ...e, band: e.gate, levelReq: e.gate, weight: 1.0,
-        hp: nice(STAT_ANCHOR.hp * STAT_RATIO_PER_10.hp ** steps),
-        atk: nice(STAT_ANCHOR.atk * STAT_RATIO_PER_10.atk ** steps),
-        def: nice(STAT_ANCHOR.def * STAT_RATIO_PER_10.def ** steps),
-      };
-    }),
-  ].map(e => {
-    const R = rewardCash(e.band) * e.weight;
-    return {
-      id: e.id, name: e.name, role: e.role,
-      hp: e.hp, atk: e.atk, def: e.def,
-      levelReq: e.levelReq,
-      reward: {
-        cash: [nice(R * 0.8), nice(R * 1.2)],
-        clout: Math.max(1, Math.round(WC_RATIO * jobCpm(e.band) * e.weight)),
-      },
-    };
-  });
-
   // Gear (DOM-73). Prices track job income only, so they are independent of
   // the Clout knobs — rebuilt every candidate write purely for convenience.
+  // Built before enemies: enemy ATK/DEF are solved against the band loadout.
   const gear = GEAR_CONTENT.map(item => {
     const s = item.stats ?? GEAR_STATS_BY_TYPE[item.type](item.gate);
     const atk = Math.round(s.atk || 0), def = Math.round(s.def || 0), hp = Math.round(s.hp || 0);
@@ -346,6 +365,35 @@ function buildCatalogs(E, M, K) {
       upgradeable: true,
     };
   }).sort((a, b) => a.levelReq - b.levelReq || a.id.localeCompare(b.id));
+
+  // Enemies. Rewards priced from the band's job income (DOM-79/71/81);
+  // ATK/DEF solved so the band matchup sits at p0 against the expected
+  // loadout (DOM-72); HP keeps the legacy display trend.
+  const m = enemyStatMult(gear);
+  const enemies = [
+    ...EARLY_ENEMIES.map(e => ({ ...e, band: e.levelReq })),
+    ...NEW_ENEMIES.map(e => {
+      const steps = (e.gate - STAT_ANCHOR.gate) / 10;
+      return {
+        ...e, band: e.gate, levelReq: e.gate, weight: 1.0,
+        hp: nice(STAT_ANCHOR.hp * STAT_RATIO_PER_10.hp ** steps),
+      };
+    }),
+  ].map(e => {
+    const R = rewardCash(e.band) * e.weight;
+    const L = loadoutAt(gear, e.band);
+    return {
+      id: e.id, name: e.name, role: e.role,
+      hp: e.hp,
+      atk: Math.max(1, Math.round(m * L.atk)),
+      def: Math.max(1, Math.round(m * L.def)),
+      levelReq: e.levelReq,
+      reward: {
+        cash: [nice(R * 0.8), nice(R * 1.2)],
+        clout: Math.max(1, Math.round(WC_RATIO * jobCpm(e.band) * e.weight)),
+      },
+    };
+  });
 
   // Spots (DOM-74). rate = share of the gate's job $/h; price = payback days
   // of once-daily collects at the gate, where a day's collect is one full
@@ -462,6 +510,14 @@ function main() {
       + `${spotCapHoursAt(s.levelReq).toFixed(1)}h · $${s.price.toLocaleString()} `
       + `(payback ${(s.price / daily).toFixed(1)}d)`);
   }
+  console.log('Enemy stats solved against the round model (DOM-72): multiplier ×'
+    + enemyStatMult(gear).toFixed(3) + ' of the band loadout. Matchup check (p(win) at band):');
+  console.log('  ' + [1, 10, 50, 110].map(b => {
+    const e = enemies.filter(x => x.levelReq <= b).slice(-1)[0];
+    const st = fmStats(loadoutAt(gear, b), { atk: e.atk, def: e.def, maxHp: e.hp },
+                       FIGHT_CFG, 4000, fmSeededRng(0xBEEF + b));
+    return 'L' + b + ' vs ' + e.id + ': ' + (st.pWin * 100).toFixed(1) + '%';
+  }).join(' · '));
   console.log('Wrote data/jobs.json (' + jobsOut.length + ' jobs), data/enemies.json ('
     + enemies.length + ' enemies), data/store.json (' + gear.length + ' gear items) and '
     + 'data/properties.json (' + spots.length + ' spots).');

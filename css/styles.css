@@ -618,6 +618,60 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   color: var(--text);
   margin-bottom: 12px;
 }
+/* RUN — the secondary action beside the hostile HIT 'EM (DOM-72). One region,
+   one hostile primary; the escape hatch stays quiet. */
+.run-btn {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 10px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: filter .16s;
+}
+.run-btn:hover { border-color: var(--border-gold); }
+.run-btn:disabled, .attack-btn:disabled {
+  background: var(--chip-locked-bg);
+  border: 1px solid var(--chip-locked-border);
+  color: var(--disabled);
+  cursor: not-allowed;
+}
+
+/* THE HOSPITAL (DOM-72) — the recovery card at the top of the Hood tab. */
+.hospital-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.hospital-status { font-family: var(--ui); font-size: 13px; color: var(--body); }
+.hospital-timer { font-family: var(--ui); font-weight: 700; color: var(--green); }
+.hospital-heal-btn {
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter .16s;
+}
+.hospital-heal-btn:hover { border-color: var(--border-gold); }
+.hospital-heal-btn:disabled {
+  background: var(--chip-locked-bg);
+  border: 1px solid var(--chip-locked-border);
+  color: var(--disabled);
+  cursor: not-allowed;
+}
+
 .close-combat {
   background: var(--chrome-fill);
   border: none;

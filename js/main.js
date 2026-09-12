@@ -59,6 +59,12 @@ function applyLevelGrants() {
   // Once the Hospital exists this is also the free release —
   // see DOM-66's note on banking a level before a session.
   if (tune('progression.levelUpRefillsPools')) {
+    // DOM-82 (ratified option 1, 2026-09-12): a level-up is also the free
+    // Hospital release, in the same transaction as the refill — clear the
+    // state FIRST so the health credit isn't wasted on a hospitalized pool.
+    // Banking a nearly-complete level as an escape hatch is accepted play:
+    // it rewards planning and the ceiling is one level's worth.
+    G.hospitalizedUntil = null;
     ['moves', 'stamina', 'health'].forEach(pool => {
       credit(pool, G[pool].max - G[pool].current, REASON.LEVEL_UP_GRANT,
              { ref: { level: G.level } });
@@ -214,6 +220,7 @@ async function init() {
   renderStore();
   renderIapSection();
   renderProps();
+  renderHospital();   // releases lazily if the timer ran out while away (DOM-72)
   updateHUD();
 
   // Seed the whole nav from one call so the bottom tab, chip row and section
@@ -230,6 +237,8 @@ async function init() {
   setInterval(() => {
     G.lastSeen = Date.now();
     if (regenAll() > 0) { updateHUD(); GameState.save(); }
+    // Hospital countdown + lazy discharge ride the same heartbeat (DOM-72).
+    if (G.hospitalizedUntil !== null) { renderHospital(); updateHUD(); }
   }, 10000);
 }
 

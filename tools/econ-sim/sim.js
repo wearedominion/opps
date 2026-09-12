@@ -92,18 +92,14 @@ function breakEven(e, p) {
   return (p * mean(e.reward.cash)) / ((1 - p) * DEFEAT_LOSS_RATE);
 }
 
-// Expected Health cost per fight: winners take winHealthLoss, losers drop to
-// defeatHealthRemaining. Health regen then bounds sustainable fight rate.
-function fightHealthCost(p, maxHealth) {
-  const winDmg = mean(T('combat.winHealthLoss'));
-  const lossDmg = maxHealth - T('combat.defeatHealthRemaining');
-  return p * winDmg + (1 - p) * lossDmg;
-}
-// Fights/hour a player can sustain: limited by stamina regen AND health regen.
-function sustainableFightsPerHour(p, maxHealth) {
-  const byStamina = STAMINA_PER_HOUR / T('combat.staminaPerFight');
-  const byHealth  = HEALTH_PER_HOUR / fightHealthCost(p, maxHealth);
-  return { byStamina, byHealth, effective: Math.min(byStamina, byHealth) };
+// Fights/hour a player can sustain under turn-based combat (DOM-72): a defeat
+// hospitalizes (own timer, regen paused), so the free cadence is a CYCLE of
+// 1/(1−p) fights followed by hospital.fullHealSeconds. Stamina still caps the
+// paid path — a player buying every discharge with Cash fights at byStamina.
+function sustainableFightsPerHour(p) {
+  const byStamina  = STAMINA_PER_HOUR / T('combat.staminaPerFight');
+  const byHospital = (1 / (1 - p)) / (T('hospital.fullHealSeconds') / 3600);
+  return { byStamina, byHospital, effective: Math.min(byStamina, byHospital) };
 }
 
 const SPOT_COST_ALL   = PROPERTIES.reduce((s, pr) => s + pr.price, 0);
@@ -128,7 +124,7 @@ function ratesAtLevel(L, balance) {
   const jc = bestJob(L, cloutPerMove);
   const jm = bestJob(L, cashPerMove);
   const e  = bestEnemy(L);
-  const fights = sustainableFightsPerHour(p0, T('start.health')); // base pool
+  const fights = sustainableFightsPerHour(p0); // base pool
   return {
     level: L,
     jobCashPerHour:  cashPerMove(jm) * MOVES_PER_HOUR,
@@ -139,7 +135,7 @@ function ratesAtLevel(L, balance) {
     fightCloutPerHour: fightCloutEV(e, p0) * fights.effective,
     bestEnemyId: e.id,
     fightsPerHour: fights.effective,
-    fightRateLimiter: fights.byHealth < fights.byStamina ? 'health' : 'stamina',
+    fightRateLimiter: fights.byHospital < fights.byStamina ? 'hospital' : 'stamina',
     spotCashPerDayIntended: spotCashPerDay(L),
     breakEven: breakEven(e, p0),
   };
@@ -160,8 +156,8 @@ function simulateProgression(profile, horizonDays) {
     const L = levelForClout(clout);
     const jc = bestJob(L, cloutPerMove);
     const e  = bestEnemy(L);
-    const fr = sustainableFightsPerHour(p0, T('start.health'));
-    const fightsPerDay = Math.min(staminaPerDay, fr.byHealth * 24 * profile.staminaUse);
+    const fr = sustainableFightsPerHour(p0);
+    const fightsPerDay = Math.min(staminaPerDay, fr.byHospital * 24 * profile.staminaUse);
     clout += movesPerDay * cloutPerMove(jc) + fightsPerDay * fightCloutEV(e, p0);
     const newL = levelForClout(clout);
     levelAtDay[day] = newL;
@@ -241,10 +237,10 @@ function moneyCircuit() {
   return [1, 10, 50, MAX_LEVEL].map(L => {
     const gate = gates.filter(g => g <= L).pop();
     const r = ratesAtLevel(L, 0);
-    const fr = sustainableFightsPerHour(p0, T('start.health'));
+    const fr = sustainableFightsPerHour(p0);
     const fightsPerDay = Math.min(
       STAMINA_PER_HOUR * 24 * committed.staminaUse / T('combat.staminaPerFight'),
-      fr.byHealth * 24 * committed.staminaUse);
+      fr.byHospital * 24 * committed.staminaUse);
     const e = bestEnemy(L);
     const inflow = {
       jobsPerDay: r.jobCashPerHour * 24 * committed.movesUse,
@@ -334,11 +330,9 @@ function q4() {
   const shortfall = Math.max(0, lost - cashFromStartingMoves);
   const minutesRegen = shortfall > 0
     ? (shortfall / cashPerMove(j)) * T('pools.moves.regenSeconds') / 60 : 0;
-  // Health lockout: defeat leaves defeatHealthRemaining; fighting needs 20 HP
-  // (prototype gate in combat.js), healed by regen alone.
-  const hpFloor = T('combat.defeatHealthRemaining');
-  const minutesToFight = (20 - hpFloor) / T('pools.health.regenAmount')
-                       * T('pools.health.regenSeconds') / 60;
+  // Defeat lockout: a loss hospitalizes; fighting again means waiting out
+  // the Hospital timer (or paying the early-out).
+  const minutesToFight = T('hospital.fullHealSeconds') / 60;
   return {
     startCash, lossesModelled: pool, cashAfterLosses: afterLosses, cashLost: lost,
     bestJobId: j.id, cashFromStartingMoves, shortfall, minutesOfRegenToRecover: minutesRegen,
@@ -564,16 +558,19 @@ function run() {
   });
   say('     Payback at the gate: ' + fmt(Math.min(...sx.paybacks.map(p => p.paybackDays)))
     + '–' + fmt(Math.max(...sx.paybacks.map(p => p.paybackDays))) + ' days across the ladder.');
-  const fr = sustainableFightsPerHour(p0, T('start.health'));
-  say('  F3 FIGHT RATE: health regen caps fighting at ' + fmt(fr.byHealth) + '/h at p=' + p0
-    + ' (stamina alone would allow ' + fmt(fr.byStamina) + '/h) — the Hospital/heal loop, not Stamina, paces combat.');
-  say('  F4 CONTENT CEILING: job and enemy catalogs top out at levelReq 7 and 5.');
-  say('     Every rate above is FLAT from level 7 to 120 — Clout/day never grows,');
-  say('     while cloutToNext grows ×1.1/level. The curve is fine; the catalogs starve it (DOM-71).');
+  const fr = sustainableFightsPerHour(p0);
+  say('  F3 FIGHT RATE: the Hospital timer caps free fighting at ' + fmt(fr.byHospital) + '/h at p=' + p0
+    + ' (stamina caps the paid path at ' + fmt(fr.byStamina) + '/h) — the Hospital loop paces combat'
+    + ' and its Cash early-out is the recurring combat drain. RESOLVED as designed (DOM-72).');
+  const jobCeil = Math.max(...JOBS.map(j => j.levelReq));
+  const enemyCeil = Math.max(...ENEMIES.map(e => e.levelReq));
+  say('  F4 CONTENT CEILING: resolved (DOM-71/81) — catalogs run to levelReq '
+    + jobCeil + ' (jobs) and ' + enemyCeil + ' (enemies); Clout/day tracks the cost curve.');
   const grinderDays = sims.find(([n]) => n === 'grinder')[1].daysToLevel[120];
-  say('  F5 THE CAP IS UNREACHABLE: level 120 needs ' + fmt(cumClout[120])
+  say('  F5 THE CAP: level 120 needs ' + fmt(cumClout[120])
     + ' Clout ≈ ' + (committedSim.daysToLevel[120] === null ? '>' + horizon : fmt(committedSim.daysToLevel[120]))
-    + ' days committed / ' + (grinderDays === null ? '>' + horizon : fmt(grinderDays)) + ' days grinding non-stop.');
+    + ' days committed / ' + (grinderDays === null ? '>' + horizon : fmt(grinderDays))
+    + ' days grinding non-stop — on the ratified 365-day target.');
 
   // ── outputs ────────────────────────────────────────────────────────────────
   const outDir = path.join(__dirname, 'out');
@@ -597,7 +594,7 @@ function run() {
     capTarget: { ...capTarget, impliedCloutPerDay, currentCloutPerDay },
     ttl: Array.from({ length: MAX_LEVEL }, (_, i) => [i + 1,
       byName.casual.daysToLevel[i + 1], byName.committed.daysToLevel[i + 1], byName.grinder.daysToLevel[i + 1]]),
-    fightRate: sustainableFightsPerHour(p0, T('start.health')),
+    fightRate: sustainableFightsPerHour(p0),
     q1: q1(), q2: q2(), q3: q3(), q4: q4(),
     breakEvenPlan: breakEvenPlan(),
     launder: launder(), spots: spotModel(),
@@ -725,7 +722,7 @@ function buildHtml(json, outDir) {
     F2_CAP_L1: fmt(json.spots.checkpoints[0].capHours),
     F2_CAP_MAX: fmt(json.spots.checkpoints[json.spots.checkpoints.length - 1].capHours),
     F2_PAYBACK: fmt(json.spots.paybacks.reduce((s, p) => s + p.paybackDays, 0) / json.spots.paybacks.length),
-    F3_BY_HEALTH: String(Math.round(json.fightRate.byHealth * 10) / 10),
+    F3_BY_HOSPITAL: String(Math.round(json.fightRate.byHospital * 10) / 10),
     F3_BY_STAMINA: String(Math.round(json.fightRate.byStamina)),
     F4_JOB_CEIL: String(jobCeiling),
     F4_ENEMY_CEIL: String(enemyCeiling),
