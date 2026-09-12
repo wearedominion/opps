@@ -12,6 +12,9 @@ function doActivity(type) {
     updateHUD();
   }
   else if (type === 'rest') {
+    // Rest must not undercut the Hospital: 4 Moves would otherwise be a free
+    // instant discharge and the lockout would mean nothing (DOM-72).
+    if (isHospitalized()) { toast("You're in the Hospital. Heal up or wait it out.", true); return; }
     const restCost = tune('hoodActions.restMovesCost');
     if (G.moves.current < restCost) { toast('Not enough Moves to rest!', true); return; }
     if (G.health.current >= G.health.max) { toast('Already at full health', true); return; }

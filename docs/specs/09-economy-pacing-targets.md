@@ -1,6 +1,6 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.6 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.7 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
 **Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
@@ -101,7 +101,7 @@ shield **at current numbers** — recheck if `defeatLossRate` or starting balanc
 |---|---|---|
 | F1 | **Launder compounds ×2.3·10⁵ per day** (+10% of balance per 2 Moves, ~130/day committed). Every other number is noise until `hoodActions.launderRate` is zeroed. **RESOLVED 2026-09-11** — rate zeroed in the DOM-73 pass (§7); the action stays wired for a redesigned, bounded version. | ~~tuning, one field~~ closed |
 | F2 | **Spots as built are a $127k/h tap-farm** (full income per tap, 60s min). No accrual rate exists in tuning — the intended collect-on-login model cannot be tuned until DOM-74 defines one. **RESOLVED 2026-09-11** — the DOM-74 pass (§9) replaces per-tap income with cap-clamped accrual; the tap-farm is structurally gone. | ~~DOM-74~~ closed |
-| F3 | **Health, not Stamina, paces fighting**: at p=0.5 health regen sustains ~5.6 fights/h vs stamina's 20/h. The Hospital/heal loop is the real combat governor — price heals accordingly. | DOM-72 |
+| F3 | **Health, not Stamina, paces fighting**: at p=0.5 health regen sustains ~5.6 fights/h vs stamina's 20/h. The Hospital/heal loop is the real combat governor — price heals accordingly. **RESOLVED 2026-09-12** — the DOM-72 pass (§11) makes this the design: the Hospital timer gates free fighting at ~4/h and the priced early-out is the recurring combat drain. | ~~DOM-72~~ closed |
 | F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. **RESOLVED 2026-09-11** — the DOM-71/DOM-81 catalog pass (§6) extends both catalogs to L110 and lands the cap at exactly 365 committed days. | ~~DOM-71, DOM-81~~ closed |
 | F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. **RESOLVED 2026-09-11** — the DOM-73 pass (§7) gates every item and prices by rule at the gate (8h/8h/12h/4h by type). | ~~DOM-73~~ closed |
 
@@ -164,6 +164,7 @@ what holds the 63/37 mix.
 - The $0.99 Stamina-refresh mint (Q1) grows with the reward rescale (~34h of top-job income at a
   60-stamina pool) — the refresh grant/cap decision (DOM-69/DOM-76) is now more urgent, not less.
 - Enemy `hp/atk/def` above L5 are trend extrapolations; matchmaking (DOM-72) owns real stats.
+  *(Delivered by DOM-72, §11 — ATK/DEF are solved to the p0 matchup; HP stays the display trend.)*
 - Server-side payout and drop rolls (DOM-71 execution requirement) remain open — the prototype
   resolves everything client-side; drops ride in `doJob()` until resolution moves as a whole.
 
@@ -254,3 +255,27 @@ with no transfer rows. Found and fixed in the audit: defeat losses displayed as 
 Every settlement rule audited against the code: loss = rate × current balance at resolution ✓,
 single writer ✓, ledger row per movement ✓, attacker loses on the same rules ✓ (there is only one
 fight path), rewards scale with opponent band ✓ (DOM-71/81 pricing).
+
+## 11. DOM-72 (+ DOM-82) decision record — ratified 2026-09-12 (Jake)
+
+Turn-based combat and the Hospital, with the catalogs re-solved against the new pacing. Full
+mechanics record: 08 §9.8. The pacing-relevant facts:
+
+- **Fight cadence is Hospital-gated now**: a defeat hospitalizes (30-min timer, regen paused), so
+  free fighting runs at `1/(1−p0)` fights per lockout ≈ **4/h** (was 5.6/h health-regen-gated).
+  Stamina caps the paid path at 20/h; the Cash early-out (~1h of best-job income, prorated) is
+  the recurring combat drain F3 predicted — F3 resolved as designed.
+- **The re-solve reproduced E/M/K exactly** (0.6847 / 0.0010 / 0.0803): casual 8/26/41 at days
+  1/7/30, committed L120 = 365 days, mix 63/37 at every checkpoint. The win-clout ratio moved
+  3.01 → 4.20 — rarer fights pay more Clout each, same mix.
+- **Enemy stats are real now**: solved (×~1.14 of the band loadout) so band matchups sit at
+  p0 = 0.5 (46–53% verified at L10/50/110; L1 ~97% deliberate onboarding softness). The
+  "extrapolations, DOM-72 owns them" caveat is closed.
+- **Q1 note**: with stamina now the paid-path limiter, the $0.99 refresh question (DOM-69/76)
+  gets *more* urgent — a 60-stamina refresh is ~33.6h of top-job income in fight EV at the cap.
+- DOM-82 rides along: level-up clears the Hospital in the refill transaction (option 1 — banking
+  a level as an escape hatch is accepted play; ceiling is one level's worth).
+
+Still open, owners elsewhere: the matchmaking SEARCH surface (served shortlist + reroll wiring —
+`matchmaking.*` tuning exists, nothing reads it; needs its own ticket), premium heal SKU
+(DOM-69/76), server-side fight resolution (gameplay server).

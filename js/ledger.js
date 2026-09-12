@@ -45,6 +45,7 @@ const REASON = Object.freeze({
   GEAR_UPGRADE:      'gear_upgrade',
   REROLL_FEE:        'reroll_fee',
   HEAL_COST:         'heal_cost',
+  HOSPITAL_HEAL:     'hospital_heal',
   RESPEC_COST:       'respec_cost',
   SKILL_ALLOC:       'skill_alloc',
   ADMIN_ADJUST:      'admin_adjust',
