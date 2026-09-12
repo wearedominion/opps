@@ -354,6 +354,102 @@ function q4() {
   };
 }
 
+// ── E. EV — equivalent value in current-day USD (DOM-94) ─────────────────────
+// Ratified 2026-09-12 (Jake): the EV rate is anchored on the CHEAPEST SKU path
+// to Cash — the most Cash one real dollar can actually buy at that level — so
+// EV reads as the market price a rational spender faces. "Current day" means
+// the rate is a function of level: fight EV and job payouts scale with the
+// band, so a dollar buys ~5 orders of magnitude more Cash at the cap than at
+// L1. Free earn rates use the committed ZERO-SPEND profile — the same
+// movesUse/staminaUse shares, spot collects and Hospital cadence as the
+// pacing targets, so EV stays consistent with the rest of this report.
+const skuPriceUSD = sku => {
+  const p = IAP.find(x => x.sku === sku);
+  return p ? parseFloat(String(p.mockPrice).replace(/[^0-9.]/g, '')) : null;
+};
+
+// What one purchase of each pool SKU yields in Cash at level L, on the margin:
+// an extra Move runs the best cash job, an extra Stamina point is one more
+// fight at the nominal p with the empty-wallet EV (the optimistic bound the
+// rest of the report also uses for fight income).
+function evAnchors(L) {
+  const anchors = [];
+  const mv = IAP.find(x => x.effect && x.effect.type === 'grantPool' && x.effect.pool === 'moves');
+  if (mv) anchors.push({
+    sku: mv.sku, priceUSD: skuPriceUSD(mv.sku),
+    cash: mv.effect.amount * cashPerMove(bestJob(L, cashPerMove)),
+  });
+  const st = IAP.find(x => x.effect && x.effect.type === 'grantPool' && x.effect.pool === 'stamina');
+  if (st) anchors.push({
+    sku: st.sku, priceUSD: skuPriceUSD(st.sku),
+    cash: st.effect.amount * fightCashEV(bestEnemy(L), p0, 0),
+  });
+  anchors.forEach(a => { a.cashPerUSD = a.cash / a.priceUSD; });
+  return anchors;
+}
+
+function evRate(L) { // Cash per 1 USD — the cheapest (highest-yield) path wins
+  const best = evAnchors(L).reduce((m, a) => a.cashPerUSD > m.cashPerUSD ? a : m);
+  return { level: L, cashPerUSD: best.cashPerUSD, anchorSku: best.sku };
+}
+const evUSD = (cash, L) => cash / evRate(L).cashPerUSD;
+
+// Free earn per day by game system at level L, committed zero-spend profile.
+// Fights mirror simulateProgression's cadence: the stamina-regen share, capped
+// by the Hospital cycle share.
+function evFreeEarnAt(L) {
+  const c = TARGETS.playerProfiles.committed;
+  const r = ratesAtLevel(L, 0);
+  const fr = sustainableFightsPerHour(p0);
+  const fightsPerDay = Math.min(STAMINA_PER_HOUR * 24 * c.staminaUse,
+                                fr.byHospital * 24 * c.staminaUse);
+  const jobs = r.jobCashPerHour * 24 * c.movesUse;
+  const fights = fightCashEV(bestEnemy(L), p0, 0) * fightsPerDay;
+  const spots = r.spotCashPerDayIntended;
+  const rate = evRate(L);
+  return {
+    level: L, jobs, fights, spots, total: jobs + fights + spots,
+    cashPerUSD: rate.cashPerUSD, anchorSku: rate.anchorSku,
+    freeDayUSD: (jobs + fights + spots) / rate.cashPerUSD,
+  };
+}
+
+// The one-time completionist sinks, by vertical. Recurring drains (Hospital
+// heals, reroll fees, defeat losses) are deliberately excluded — "total cost
+// of game" is what a completionist must eventually bank, not what churn eats.
+function evCostOfGame() {
+  const capLv = T('gear.statCapLevel');
+  const upgCurve = T('gear.upgradeCost');
+  const upgrades = STORE.reduce((s, i) => {
+    let c = 0;
+    for (let k = 1; k <= capLv; k++) c += evalCurve(upgCurve, k, i.price);
+    return s + c;
+  }, 0);
+  const rows = [
+    { vertical: 'Gear catalog (' + STORE.length + ' items)', cash: GEAR_COST_ALL },
+    { vertical: 'Gear upgrades to the stat cap (LV ' + capLv + ' × ' + STORE.length + ')', cash: upgrades },
+    { vertical: 'Spots ladder (' + PROPERTIES.length + ' spots)', cash: SPOT_COST_ALL },
+  ];
+  rows.push({ vertical: 'TOTAL', cash: rows.reduce((s, r) => s + r.cash, 0) });
+  // Price the completionist's bill at the cap band — that's the "current day"
+  // a finished run ends on — alongside days-to-earn at the cap-band free rate.
+  const capFree = evFreeEarnAt(MAX_LEVEL);
+  rows.forEach(r => {
+    r.usdAtCap = r.cash / capFree.cashPerUSD;
+    r.freeDaysAtCap = r.cash / capFree.total;
+  });
+  return rows;
+}
+
+const EV_BANDS = [1, 10, 50, 110];
+function evReport() {
+  return {
+    bands: EV_BANDS.map(evFreeEarnAt),
+    anchorsAtCap: evAnchors(MAX_LEVEL),
+    costs: evCostOfGame(),
+  };
+}
+
 // DOM-79 — break-even placement vs the ratified anchor.
 // Target: BE(level) = breakEven.hoursOfJobIncome × best-job Cash/hour at that
 // level, at the nominal win probability. Implied win reward follows from
@@ -587,6 +683,28 @@ function run() {
     + ' days committed / ' + (grinderDays === null ? '>' + horizon : fmt(grinderDays))
     + ' days grinding non-stop — on the ratified 365-day target.');
 
+  const ev = evReport();
+  say('\n■ EV. Equivalent value — everything in current-day USD (DOM-94)');
+  say('    Anchor: cheapest SKU path to Cash (most Cash one dollar buys — today the '
+    + ev.bands[ev.bands.length - 1].anchorSku + '); free rates = committed zero-spend profile.');
+  say('    lvl    $1 buys (Cash)   jobs $/day     fights $/day   spots $/day    total $/day    free day EV');
+  say('    ' + '─'.repeat(102));
+  ev.bands.forEach(b => {
+    say('    ' + String(b.level).padEnd(6)
+      + ('$' + fmt(b.cashPerUSD)).padEnd(17)
+      + ('$' + fmt(b.jobs)).padEnd(15)
+      + ('$' + fmt(b.fights)).padEnd(15)
+      + ('$' + fmt(b.spots)).padEnd(15)
+      + ('$' + fmt(b.total)).padEnd(15)
+      + '$' + b.freeDayUSD.toFixed(2) + ' USD');
+  });
+  say('    Total cost of game by vertical (one-time completionist sinks; EV + days at the cap band):');
+  ev.costs.forEach(r => {
+    say('      ' + r.vertical.padEnd(46) + ('$' + fmt(r.cash)).padEnd(20)
+      + ('$' + r.usdAtCap.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD').padEnd(16)
+      + fmt(r.freeDaysAtCap) + ' free days');
+  });
+
   // ── outputs ────────────────────────────────────────────────────────────────
   const outDir = path.join(__dirname, 'out');
   fs.mkdirSync(outDir, { recursive: true });
@@ -615,6 +733,7 @@ function run() {
     launder: launder(), spots: spotModel(),
     upgradeSink: upgradeSink(),
     moneyCircuit: moneyCircuit(),
+    ev,
     targets: TARGETS,
   };
   fs.writeFileSync(path.join(outDir, 'results.json'), JSON.stringify(json, null, 2) + '\n');
@@ -721,6 +840,20 @@ function buildHtml(json, outDir) {
 
     BE_NOMINAL: money(beNominal),
     BE_HOURS: String(Math.round(beNominal / committedJobPerHour * 10) / 10),
+    EV_ANCHOR_SKU: json.ev.bands[json.ev.bands.length - 1].anchorSku,
+    EV_RATE_ROWS: json.ev.bands.map(b =>
+      `          <tr><td>L${b.level}</td><td class="money">${money(b.cashPerUSD)}</td>` +
+      `<td class="money">${money(b.jobs)}</td><td class="money">${money(b.fights)}</td>` +
+      `<td class="money">${money(b.spots)}</td><td class="money">${money(b.total)}</td>` +
+      `<td class="pos">$${b.freeDayUSD.toFixed(2)}</td></tr>`).join('\n'),
+    EV_COST_ROWS: json.ev.costs.map(r => {
+      const b = r.vertical === 'TOTAL';
+      const wrap = s => b ? `<b style="color:var(--text)">${s}</b>` : s;
+      return `          <tr><td>${wrap(r.vertical)}</td><td class="money">${wrap(money(r.cash))}</td>` +
+        `<td class="money">${wrap('$' + r.usdAtCap.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>` +
+        `<td>${wrap(fmt(r.freeDaysAtCap) + ' days')}</td></tr>`;
+    }).join('\n'),
+    EV_FREE_DAY_CAP: '$' + json.ev.bands[json.ev.bands.length - 1].freeDayUSD.toFixed(2),
     BE_ROWS: beRows,
     BE_ANCHOR: String(t.breakEven.hoursOfJobIncome),
     BE_PLAN_ROWS: json.breakEvenPlan.map(r =>

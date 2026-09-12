@@ -1,11 +1,11 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.8 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.9 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
 **Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
 (DOM-74, §9)** · **Cash circuit closed out (DOM-68, §10)** · **Stamina mint bounded, SKUs
-fixed-point (DOM-69/76, §12)**
+fixed-point (DOM-69/76, §12)** · **EV — USD conversion layer (DOM-94, §13)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
@@ -310,3 +310,31 @@ Stamina audit + monetization v1. Mechanics record: 08 §9.9. The pacing-relevant
 - **Still open**: server-side SKU → grant mirror + receipt flow hardening (DOM-80), premium /
   limited-supply gear (split to its own ticket: supply model, power ceiling, art), purchase
   frequency caps if live telemetry ever argues for them.
+
+## 13. EV — equivalent value in current-day USD (DOM-94, ratified 2026-09-12, Jake)
+
+One conversion that expresses any Cash amount in USD, bolted onto the simulator (§E in
+`sim.js`, tables at the bottom of the dashboard). Three ratified constructions:
+
+- **Anchor = the cheapest SKU path to Cash**: the EV rate at level L is the most Cash one real
+  dollar buys — today the stamina boost (+3 fights × empty-wallet fight EV per $0.99); the
+  moves boost is the second anchor and the rate picks whichever yields more. The rate is read
+  live from `data/monetization.json`, so re-pricing a SKU re-prices EV.
+- **"Current day" = a function of level**: fight EV and job payouts scale with the band, so
+  $1 buys ~500 Cash at L1 and ~$35.6M at L110. The table shows L1/10/50/110 rows.
+- **Free earn rate = the committed zero-spend profile** — the same movesUse/staminaUse shares,
+  spot collects/day and Hospital cadence as the pacing targets, with fight income at the
+  empty-wallet bound the rest of the report uses.
+
+Headline results at ship (regenerate with the sim — never quote these against newer data):
+
+- **A committed free day is worth ≈ $37–40 of EV at every band** — level-invariant by
+  construction, because the SKU anchor and the earn rates scale with the same fight/job EVs.
+  This is the free-vs-paid exchange rate: a dollar spent buys about 36 minutes of committed
+  play's output (`$0.99 ≈ 1.7h` of the fight faucet alone).
+- **Total cost of game** (one-time completionist sinks, priced at the cap band): gear catalog
+  ≈ $37.60 EV (0.9 free days), the Spots ladder ≈ $17 EV (0.4 days), and the gear upgrade
+  track to the LV-10 stat cap dominates at ≈ **$6,828 EV ≈ 170 free days** — the upgrade sink
+  is 99% of the game's total EV, which is exactly its DOM-88 job (the endgame drain).
+- Recurring drains (Hospital heals, reroll fees, defeat losses) are deliberately excluded from
+  "total cost of game": it measures what a completionist banks, not what churn eats.

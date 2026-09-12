@@ -202,7 +202,27 @@
           <tr><td>Days to level %%MAX_LEVEL%%</td><td>%%T_CAP%%</td><td>%%CAP_DAYS%%</td><td class="%%CAP_CLASS%%">%%CAP_VERDICT%%</td></tr>
           <tr><td>Faucet share (Moves/Fights/Spots)</td><td>%%T_FAUCETS%%</td><td>%%L_FAUCETS%%</td><td class="neg">off</td></tr>
           <tr><td>Sessions per day / length</td><td>%%T_SESSIONS%%</td><td colspan="2" style="text-align:right;color:var(--faint)">assumption, needs telemetry (DOM-78)</td></tr>
-          <tr><td>Hospitalized share</td><td>≤ %%T_HOSPITAL%%</td><td colspan="2" style="text-align:right;color:var(--faint)">Hospital not built (DOM-72)</td></tr>
+          <tr><td>Hospitalized share</td><td>≤ %%T_HOSPITAL%%</td><td colspan="2" style="text-align:right;color:var(--faint)">Hospital live (DOM-72); needs telemetry (DOM-78)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>EV — EQUIVALENT VALUE (CURRENT-DAY USD)</h2>
+      <p class="sub">One number that converts Cash into USD. The EV rate is the <b style="color:var(--text)">cheapest SKU path to Cash</b> — the most Cash one real dollar buys at that level (today: <code>%%EV_ANCHOR_SKU%%</code>) — so it reads as the market price a rational spender faces. Free earn rates are the <b style="color:var(--text)">committed zero-spend</b> profile, the same assumptions as the pacing targets above. Ratified 2026-09-12 (DOM-94). Free earn per day by game system:</p>
+      <table>
+        <thead><tr><th>Band</th><th>$1 buys (Cash)</th><th>Jobs / day</th><th>Fights / day</th><th>Spots / day</th><th>Total / day</th><th>Free day EV</th></tr></thead>
+        <tbody>
+%%EV_RATE_ROWS%%
+        </tbody>
+      </table>
+      <p class="sub" style="margin:12px 0 0">A committed free day holds near <b style="color:var(--text)">%%EV_FREE_DAY_CAP%% of EV at every band</b> — the economy scales together, so free play's dollar value is level-invariant by construction. Total cost of game by vertical (one-time completionist sinks — recurring drains like heals, rerolls and defeat losses excluded), priced at the cap band:</p>
+      <table style="margin-top:10px">
+        <thead><tr><th>Vertical</th><th>Cash</th><th>EV (USD)</th><th>Days of free earning</th></tr></thead>
+        <tbody>
+%%EV_COST_ROWS%%
         </tbody>
       </table>
     </div>
