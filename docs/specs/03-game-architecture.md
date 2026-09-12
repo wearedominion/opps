@@ -1,6 +1,7 @@
 # 03 — Game Architecture
 
-**Status:** v1.0 · Authoritative
+**Status:** v1.1 · Authoritative (refreshed 2026-09-12: Clout/ledger era — `addXP`,
+`G.money`/`G.rep`/`G.gems` and the nav drawer are gone)
 **Read before:** writing or modifying any game system (`js/*.js`).
 
 This document defines **how the game is structured in code**: the required systems, the module
@@ -15,31 +16,37 @@ OPPS is a **single-page, tab-based application** with no framework. It is organi
 **independent systems**, each in its own file under `js/`, coordinated by three shared concerns:
 
 - **State** — one global object `G` (the save game) behind the `GameState` persistence seam.
-- **Data** — content loaded from JSON into module-level arrays at boot.
+  Every balance change to `G` goes through the **ledger** (`js/ledger.js` `credit`/`debit` with
+  a reason code) — systems never mutate `G.cash` or a pool directly.
+- **Data** — content loaded from JSON into module-level arrays at boot; constants read through
+  `tune()`/`tuneCurve()` (`js/tuning.js`), which **throws** on a missing path rather than guess.
 - **UI shell** — `index.html` defines every tab and overlay; systems render into fixed element
-  IDs and are shown/hidden by `showTab()`.
+  IDs and are shown/hidden by `showTab()`. Navigation is a five-tab bottom bar (Hood, Map,
+  Moves, Opps, Empire) with the Empire screens behind a chip row — the old sidebar drawer is
+  gone (Chrome Money contract in [`CLAUDE.md`](../../CLAUDE.md)).
 
 ```
           ┌─────────────────────────────────────────────┐
           │                 index.html                   │
-          │  header/HUD · sidebar nav · tab containers   │
+          │ header/HUD · bottom tab bar · tab containers │
           │  overlays (combat, plug, level-up, toast)    │
           └───────────────┬──────────────────────────────┘
                           │ element IDs
    ┌──────────────────────┼───────────────────────────────────┐
    │        SYSTEMS (js/*.js, plain <script> load order)       │
-   │  hood jobs combat store properties plugs crew map map3d   │
-   │  stats notifications payments sound  hud  ui              │
+   │  hood jobs combat hospital store properties plugs crew    │
+   │  map map3d stats profile notifications payments sound     │
+   │  hud ui auth                                              │
    └──────────────────────┬───────────────────────────────────┘
-                          │ read/write
+                          │ credit/debit (js/ledger.js) + reads
              ┌────────────▼───────────┐        ┌──────────────────┐
              │   G  (game state)      │◄──────►│  GameState        │
              │   js/state.js          │  save  │  (localStorage /  │
              └────────────▲───────────┘  load  │   Jest SDK)       │
                           │                     └──────────────────┘
              ┌────────────┴───────────┐
-             │  DATA arrays           │  loaded once at boot from data/*.json
-             │  JOBS ENEMIES STORE…   │
+             │  DATA arrays + TUNING  │  loaded once at boot from data/*.json
+             │  JOBS ENEMIES STORE…   │  read via tune()/tuneCurve()
              └────────────────────────┘
 ```
 
@@ -52,21 +59,30 @@ their responsibilities.
 
 | File | Global surface | Responsibility |
 |---|---|---|
-| `js/state.js` | `G`, `GameState` | The save-game object **and** the single persistence seam (save/load/apply). |
-| `js/ui.js` | `$`, `showTab`, `log`, `toast`, `rand`, `showLevelUp`, nav drawer | Shared UI helpers used by everyone. |
-| `js/hud.js` | `updateHUD`, `collectIncome` | Renders the persistent stat header; computes property income. |
-| `js/main.js` | `init`, `addXP`, Moves-regen wiring, `loadGameData` | Boot orchestration, XP/leveling, Moves regen (engine in `js/regen.js`), JSON loading. |
-| `js/jobs.js` | `renderJobs`, `doJob` | Moves tab. |
-| `js/combat.js` | `renderEnemies`, `startCombat`, `hitEm`, `closeCombat`, `Sim` | Opps list + probabilistic combat simulation (canvas). |
-| `js/store.js` | `renderStore`, `buyItem` | The Plug (gear) tab. |
-| `js/properties.js` | `renderProps`, `buyProp` | Spots (passive income) tab. |
+| `js/state.js` | `G`, `GameState`, `SCHEMA_VERSION`, `migrate`, `ownsGear`/`gearInstance`/`grantGear` | The save-game object, the save migrations, **and** the single persistence seam (save/load/apply). |
+| `js/tuning.js` | `tune`, `tuneCurve`, `missingTuningPaths`, `TUNING_REQUIRED` | Reads `data/tuning.json` by dotted path; **throws** on missing values — no silent defaults. |
+| `js/ledger.js` | `credit`, `debit`, `REASON`, `ledgerRows`, `ledgerSummary` | The one funnel every balance change goes through: clamps, records a reasoned row, returns the applied delta. |
+| `js/progression.js` | `levelFromClout`, `cloutToReach`, `cloutProgress`, `rankForLevel` | Pure Clout → level/rank derivation against `data/progression.json` (also required by node for the sim/tests). |
+| `js/regen.js` | `regenPool`, `regenAll`, `secondsToFull` | ONE timestamp-based regen engine for all three pools; pauses health while hospitalized. |
+| `js/unlocks.js` | `isUnlocked`, `lockLabel` | Level/rank gating for content rows. |
+| `js/ui.js` | `$`, `showTab`, `log`, `toast`, `rand`, `showLevelUp` | Shared UI helpers used by everyone; owns the bottom tab bar + Empire chip row. |
+| `js/auth.js` | `Auth` | Guest vs registered identity (SDK-gated). |
+| `js/hud.js` | `updateHUD`, `collectIncome` | Renders the persistent stat header; computes Spot income. |
+| `js/main.js` | `init`, `addClout`, `syncLevel`, `applyLevelGrants`, `loadGameData` | Boot orchestration, Clout awards + level derivation + level-up grants, JSON loading. |
+| `js/jobs.js` | `renderJobs`, `doJob` | Moves tab (the jobs content ladder). |
+| `js/fightmath.js` | `fmRatio`, `fmRound`, `fmFight`, `fmStats`, `fmSeededRng` | The pure combat round model — shared verbatim by the client, the simulator and the catalog generator. |
+| `js/hospital.js` | `isHospitalized`, `hospitalize`, `syncHospital`, `hospitalHealNow`, `renderHospital` | The defeat lockout: timer, prorated Cash early-out, Hood-tab card. |
+| `js/combat.js` | `renderEnemies`, `startCombat`, `hitEm`, `runAway`, `closeCombat` | Opps list + the interactive turn-based round loop (driven by `fightmath.js`). |
+| `js/store.js` | `renderStore`, `buyItem`, `upgradeGear` | The Plug (gear) tab: purchases + the upgrade track. |
+| `js/properties.js` | `renderProps`, `buyProp`, `collectSpots` | Spots (accruing passive income) tab. |
 | `js/hood.js` | `doActivity` | Hood activities (collect / rest / launder). |
 | `js/stats.js` | `renderStats` | Stats tab. |
+| `js/profile.js` | `renderProfile`, skill allocation + equip pickers | Player Profile (skill points, equipped gear). |
 | `js/plugs.js` | `renderPlugs`, `openPlug`, `advancePlug`, `closePlug`, `PLUGS_DATA` | NPC connects + dialog modal. |
 | `js/crew.js` | `Crew`, `renderCrew`, `crewRefresh` | Referral-based crew system (SDK-gated). |
 | `js/map.js` | `GameMap` | 2D pan/zoom SVG city map. |
 | `js/map3d.js` | `Map3D`, `toggleMap3D` | Optional WebGL 3D map (Three.js, lazy-loaded). |
-| `js/payments.js` | `Payments`, `GEM_PACKS`, `GEM_SPENDS`, `renderGemSection` | IAP (Gems) + spend actions (SDK-gated). |
+| `js/payments.js` | `Payments`, `renderIapSection` | Direct-purchase SKUs from `data/monetization.json` (no hard currency), server receipt verify before grant (SDK-gated). |
 | `js/notifications.js` | `Notify` | Scheduled Jest push notifications (SDK-gated). |
 | `js/sound.js` | `Sound` | Synthesized Web Audio feedback (no assets). |
 
@@ -78,9 +94,17 @@ their responsibilities.
 ## 3. The state model (`G` + `GameState`)
 
 ### 3.1 `G` — the save game
-`G` (in `js/state.js`) is a single plain object holding **all persistent player state**: level,
-xp, money, rep, moves (was energy), health, attack, defense, inventory, properties, jobProgress, playerId,
-timestamps, crew count, gems, etc.
+`G` (in `js/state.js`) is a single plain object holding **all persistent player state**. The
+current shape (`SCHEMA_VERSION` 4 — the `G` literal in `js/state.js` is the source of truth):
+`schemaVersion` · `clout` (lifetime, cumulative — the progression source of truth) · `level` +
+`levelGranted` (derived cache + reward high-water mark) · `cash` · the three pools `moves` /
+`stamina` / `health` (one shared `{current, max, lastTick}` shape) · `attack` / `defense` ·
+`hospitalizedUntil` (epoch ms or null) · `inventory` (`{itemId: {level, duplicates}}`) ·
+`properties` + `spots` (per-Spot accrual anchors) · `jobProgress` · `skillPts` + `equipped` ·
+identity/social fields (`playerId`, `lastSeen`, `crewMemberCount`, `lieutenantsRewarded`,
+`recruitedBy`, `lastRegisterPromptAt`). See [`08-economy-schema.md`](./08-economy-schema.md) §3
+for the field-by-field contract. The prototype's `xp`/`xpNext`/`rep`/`money`/`energy`/`gems`
+fields no longer exist — the migrations in §3.4 rewrite old saves.
 
 **Rules:**
 - **All persistent player state lives on `G`.** If your feature needs to remember something across
@@ -88,7 +112,7 @@ timestamps, crew count, gems, etc.
 - **New fields MUST be additive and safe-by-default.** `GameState.apply()` does
   `Object.assign(G, saved)`, so a returning player's save won't contain your new field. Give it a
   sensible default in the `G` literal, and **never assume it exists** — read with a fallback
-  (`G.gems || 0`, `G.properties[id] || 0`).
+  (`G.spots[id] || null`, `G.properties[id] || 0`).
 - **Do not rename or repurpose existing fields.** Old saves depend on them. Migrate additively.
 - Keep `G` **JSON-serializable** (no functions, DOM nodes, class instances, or circular refs) —
   it is round-tripped through `JSON.stringify`/SDK storage.
@@ -132,9 +156,13 @@ sessions *and* devices. `GameState` maps directly onto the Jest Player API:
   see the Jest integration map in [`07-external-systems.md`](./07-external-systems.md) §2.)*
 
 ### 3.3 Data arrays
-Content is loaded once at boot into module-level arrays declared in `js/main.js`: `JOBS`,
-`ENEMIES`, `STORE_ITEMS`, `PROPERTIES`, `RANK_NAMES`. Systems read these to render. They are
-**content, not state** — never mutate them at runtime, and never persist them into `G`.
+Content is loaded once at boot into module-level globals declared in `js/main.js`: `JOBS`,
+`ENEMIES`, `STORE_ITEMS`, `PROPERTIES`, `RANK_NAMES`, `PROGRESSION`, `IAP_PRODUCTS`, `UNLOCKS`,
+and `TUNING` (read only through `tune()`/`tuneCurve()`). Systems read these to render. They are
+**content, not state** — never mutate them at runtime, and never persist them into `G`. The
+faucet/sink catalogs (jobs, enemies, store, properties) are **generated** by
+`tools/econ-sim/gen-catalog.js` against the ratified pacing targets — hand-editing a payout
+invalidates the solve ([`09-economy-pacing-targets.md`](./09-economy-pacing-targets.md)).
 
 ### 3.4 Save versioning & migration (implementation pattern)
 
@@ -153,12 +181,15 @@ cost over time.
 **sequentially, in memory**, from the stored version up to `SCHEMA_VERSION`, then write once.
 
 ```js
-const SCHEMA_VERSION = 3;                 // bump by exactly 1 per BREAKING change
+const SCHEMA_VERSION = 4;                 // bump by exactly 1 per BREAKING change
 
 // Each migration is PURE: (save) -> save, and sets schemaVersion to the next number.
+// The REAL chain (js/state.js — see its comments for the full reasoning):
 const MIGRATIONS = {
-  1: (s) => { s.bread = s.money; delete s.money; s.schemaVersion = 2; return s; }, // rename
-  2: (s) => { s.gems = s.gems ?? 0;              s.schemaVersion = 3; return s; }, // restructure
+  1: (s) => { /* xp + xpNext + rep -> cumulative clout */          s.schemaVersion = 2; return s; },
+  2: (s) => { /* money -> cash; energy/stamina/health -> the
+                 shared pool shape; gems removed */                s.schemaVersion = 3; return s; },
+  3: (s) => { /* inventory array-of-ids -> per-instance map */     s.schemaVersion = 4; return s; },
 };
 
 function migrate(saved) {
@@ -201,9 +232,10 @@ function migrate(saved) {
 globals, **order matters**. The current order is:
 
 ```
-jestsdk.js (external) → state → ui → sound → map → hud → jobs → combat →
-store → properties → hood → stats → crew → plugs → notifications →
-payments → map3d → main
+jestsdk.js (external) → state → tuning → ledger → progression → regen →
+unlocks → ui → auth → sound → map → hud → jobs → fightmath → hospital →
+combat → store → properties → hood → stats → profile → crew → plugs →
+notifications → payments → map3d → main
 ```
 
 **Rules:**
@@ -215,11 +247,13 @@ payments → map3d → main
   in `init()` and in `showTab()` — not at script-parse time.
 
 ### 4.2 `init()` (in `js/main.js`)
-Boot does, in order: SDK `init()` (if present) + capture `playerId` → `loadGameData()` (JSON,
-drives loading progress 0→80%) → `GameState.load()` + apply + offline Moves regen → `Crew.init()`
-→ `Payments.init()` → schedule notifications → initial renders (`renderJobs`, `renderEnemies`,
-`renderStore`, `renderProps`, `updateHUD`) → SDK loading progress 100% → start pool-regen
-intervals.
+Boot does, in order: SDK `init()` (if present) + capture `playerId` → `Auth.init()` →
+`loadGameData()` (JSON, drives loading progress 0→80%) → `GameState.load()` (migrations run
+inside the seam) + apply + `regenAll()` offline catch-up → `Crew.init()` → `Payments.init()` →
+`Notify.scheduleAll()` → initial renders (`renderJobs`, `renderEnemies`, `renderStore`,
+`renderIapSection`, `renderProps`, `renderHospital`, `updateHUD`) → `showTab('hood')` → SDK
+loading progress 100% → one 10-second heartbeat (display refresh + save when regen credited;
+regen itself is timestamp-based, so the interval never changes what a player earns).
 
 **If your system needs boot-time setup**, add a single call in `init()` at the right point, and
 make it **null-safe and SDK-guarded**. Follow the existing `Crew.init()` / `Payments.init()`
@@ -238,7 +272,7 @@ monotonic and always reach 100 — even on error paths.
 Two shapes are used. Match the one closest to your system; do not invent a third.
 
 ### 5.1 Namespaced object / IIFE (for systems with private state)
-Used by `Sound`, `Crew`, `Payments`, `Notify`, `GameMap`, `Map3D`, `Sim`. Encapsulate internals;
+Used by `Sound`, `Crew`, `Payments`, `Notify`, `GameMap`, `Map3D`, `Auth`. Encapsulate internals;
 expose a small API on one global:
 
 ```js
@@ -310,7 +344,10 @@ call `GameState.save()`.
 | Persistent event line | `log(msg, cls)` | `ui.js` |
 | Transient message | `toast(msg, isBad)` | `ui.js` |
 | Random int in range | `rand(min, max)` | `ui.js` |
-| Award XP + handle level-ups | `addXP(amount)` | `main.js` |
+| Award Clout + handle level-ups | `addClout(amount, reason, ref)` | `main.js` |
+| Grant / spend any balance | `credit(...)` / `debit(...)` + a `REASON` code | `ledger.js` |
+| Read a tuning constant / curve | `tune(path)` / `tuneCurve(path, n)` | `tuning.js` |
+| Level-gate a content row | `isUnlocked(row)` / `lockLabel(row)` | `unlocks.js` |
 | Refresh stat header | `updateHUD()` | `hud.js` |
 | Property income total | `collectIncome()` | `hud.js` |
 | Save / load | `GameState.save()` / `.load()` | `state.js` |
@@ -351,12 +388,19 @@ Follow every step. Anything marked **MUST** is a merge gate.
 
 ## 7. Cross-cutting rules
 
-- **Progression math lives in `addXP()`** (`main.js`). Level-up side effects (stat/Moves/health
-  bumps, re-renders) belong there. Don't duplicate leveling logic elsewhere.
-- **Economy is `G.money` / `G.rep` / `G.gems`.** Grant and spend through the action pattern; keep
-  the HUD in sync via `updateHUD()`.
-- **Combat outcomes are probabilistic** and computed in `combat.js`/`Sim`. If you add power
-  progression (gear, crew), feed it into odds there — don't fork a second combat resolver.
+- **Progression math lives in `addClout()` / `syncLevel()` / `applyLevelGrants()`** (`main.js`),
+  on the pure derivation in `js/progression.js` — level is always **derived** from lifetime
+  Clout, never stored as truth. Level-up side effects (pool refills, skill points, auto stat
+  gains, Hospital release) belong in `applyLevelGrants()`. Don't duplicate leveling logic
+  elsewhere.
+- **Economy is `G.cash` and `G.clout`, moved only by the ledger.** Every grant and spend is a
+  `credit()`/`debit()` with a `REASON` code (`js/ledger.js`) — never a direct `G.cash +=`. Keep
+  the HUD in sync via `updateHUD()`. Money supply is Σ credits − Σ debits by contract
+  ([`08-economy-schema.md`](./08-economy-schema.md) §4).
+- **Combat outcomes come from one model**: the pure round math in `js/fightmath.js`, driven
+  interactively by `combat.js` and reused verbatim by the economy simulator and catalog
+  generator. If you add power progression (gear, crew), feed it into the fighter stats there —
+  don't fork a second combat resolver.
 - **Notifications, payments, crew, sound, and the 3D map are optional enhancers.** Their failure
   is non-fatal by design. Preserve that.
 - **No blocking dialogs / `alert` / `confirm` / `prompt`.** Use `toast`, `log`, the feed, and the
@@ -370,6 +414,8 @@ Follow every step. Anything marked **MUST** is a merge gate.
 ## 8. Anti-patterns (do NOT do these)
 
 - ❌ Reading/writing `localStorage` or `JestSDK.data` outside `state.js`.
+- ❌ Mutating a balance directly (`G.cash += x`, `G.moves.current -= y`) instead of going through
+  the ledger's `credit`/`debit` with a `REASON` code.
 - ❌ Adding a second global state object, or stashing persistent state in module variables.
 - ❌ Hardcoding content that should be JSON (jobs, enemies, items, spots, store packs, tunables).
 - ❌ Assuming the Jest SDK, WebGL, Web Audio, or a CDN library exists without a guard/fallback.
