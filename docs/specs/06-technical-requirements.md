@@ -21,7 +21,8 @@ The TDD exists to catch tenet violations, architecture drift, and platform-contr
 - Any **new system file** in `js/` (a new tab, mechanic, or cross-cutting subsystem).
 - Any **new content type** or new `data/*.json` file.
 - Any change to **state/persistence** (`G` shape, `GameState`), **progression math**, or the
-  **economy** (money/rep/gems balance model).
+  **economy** (Cash/Clout balances, the ledger, or anything the pacing targets in
+  [`09-economy-pacing-targets.md`](./09-economy-pacing-targets.md) govern).
 - Any **new dependency** (client library, CDN asset) or change to the **build/CI/CD pipeline**.
 - Any change to an **external-system contract**: Jest SDK usage, payments/verification, crew,
   notifications, hosting/deployment (see [`07-external-systems.md`](./07-external-systems.md)).
@@ -87,7 +88,8 @@ OPPS uses a CI/CD pipeline that runs **unit, regression, and (where required) e2
 (tenet T9). Match your test effort to risk.
 
 ### 4.1 Unit tests — REQUIRED for non-trivial logic
-- Cover pure/gameplay logic: reward math, XP/leveling (`addXP` curve), Moves regen (including
+- Cover pure/gameplay logic: reward math, Clout/leveling (the clout → level derivation in
+  `js/progression.js` and `addClout`/`applyLevelGrants` in `js/main.js`), pool regen (including
   offline accrual), combat odds derivation, income calculation, purchase-grant logic, data
   validators.
 - Write logic to be **testable** — keep pure calculations separable from DOM writes where
@@ -106,7 +108,7 @@ OPPS uses a CI/CD pipeline that runs **unit, regression, and (where required) e2
   [`03-game-architecture.md`](./03-game-architecture.md) §3.4.
 
 ### 4.3 E2E tests — REQUIRED for critical flows
-- Critical player flows: boot → play a move → gain XP → level up; buy gear/spot; run a combat;
+- Critical player flows: boot → play a move → gain Clout → level up; buy gear/spot; run a combat;
   and especially the **purchase flow** (begin → verify → grant → complete, including the
   incomplete-purchase recovery path).
 - E2E runs in a headless browser in CI for flows the TDD marks critical.
@@ -148,7 +150,7 @@ deploys (test → prod)**. Practical gates:
 - [ ] Persistent state is on G with safe defaults; read defensively
 - [ ] No localStorage / JestSDK.data outside state.js
 - [ ] Script registered in correct load order; heavy libs lazy-loaded
-- [ ] Reuses shared helpers ($, log, toast, rand, addXP, updateHUD, collectIncome)
+- [ ] Reuses shared helpers ($, log, toast, rand, addClout, credit/debit, tune, updateHUD, collectIncome)
 
 **Tech** (02-tech-architecture.md)
 - [ ] No prohibited dependency/framework/bundler; no client secrets
