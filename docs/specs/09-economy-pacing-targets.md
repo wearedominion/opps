@@ -1,6 +1,6 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.9 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.10 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
 **Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
@@ -338,3 +338,38 @@ Headline results at ship (regenerate with the sim — never quote these against 
   is 99% of the game's total EV, which is exactly its DOM-88 job (the endgame drain).
 - Recurring drains (Hospital heals, reroll fees, defeat losses) are deliberately excluded from
   "total cost of game": it measures what a completionist banks, not what churn eats.
+
+---
+
+## 14. DOM-75 decision record — Crew, capacity & loadout (ratified 2026-09-13, Jake)
+
+**The second power economy is live: Cash buys items, only Crew buys the right to field them.**
+Four ratified decisions (full record: 08 §9.10): combat stats **derive from the fielded
+loadout** (nothing banks; v4→v5 migration un-banked every save); slot growth is **+1 per 5
+Lieutenants, round-robin weapon → armor → vehicle, hard cap +3 per type** (max 4 fielded per
+type at 45 Lieutenants — the game's power ceiling, deliberately bounded); the **flat
+per-Lieutenant ATK/DEF bonus is retired**; the Profile gear tab runs on the real catalog.
+
+Pacing consequences, from the re-solve:
+
+- **The expected loadout is now the best item per type at the band** (zero-crew baseline, one
+  slot per type), not "everything owned". Enemy ATK/DEF re-solved **per enemy** against real
+  HP so the band matchup sits at the pricing nominal p0 at every gate — the previous single
+  multiplier only held because the generator's stat curve was broken (`STAT_RATIO_PER_10`
+  lacked `atk`/`def`, shipping a zero-stat gear ladder above L7; fixed at ×1.40 per 10 levels,
+  matching its own comment).
+- **Nothing else moved**: E/M/K knobs re-solved to identical values (0.6847 / 0.0010 / 0.0803),
+  jobs, spot rates and all prices byte-identical, and the §13 EV table is unchanged ($1 = 511
+  Cash at L1; committed free day ≈ $37–40 at every band) — rewards and prices never read enemy
+  stats.
+- **Crew is now real, bounded power**: a full 45-Lieutenant crew fields 4 weapons / 4 armor /
+  4 vehicles against a solve that assumes 1 of each — roughly a fourfold gear-stat advantage at
+  band, earned only by recruiting. This is the one axis a spending player cannot shortcut, by
+  design. Premium gear (DOM-92) must respect the same slot capacity.
+- **Buying every item is now collection + prestige, not stacking power** — the DOM-88 upgrade
+  sink keeps its EV-dominant role (upgrades still price per item; only fielded items' upgrades
+  carry combat weight). If upgrade-sink appetite drops because benched items no longer add
+  power, that shows up in DOM-78 telemetry as slower late-game drain — flag for retune then,
+  not now.
+- The Lieutenant qualification test ("installed and played", self-invite-farm resistance) stays
+  open with DOM-77/DOM-80 — the client counts JestSDK referrals and can do no better alone.

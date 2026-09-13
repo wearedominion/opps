@@ -51,7 +51,8 @@ function doJob(jobId) {
   // client-side in the prototype; this moves server-side with the rest of it.
   for (const d of (job.drops || [])) {
     if (ownsGear(d.item) || Math.random() >= d.rate) continue;
-    grantGear(d.item);
+    grantGear(d.item, 'dropped');
+    autoFieldGear(d.item);
     const item = STORE_ITEMS.find(i => i.id === d.item);
     const label = item ? item.name : d.item;
     log(`${job.name} — found ${label}`, 'win');

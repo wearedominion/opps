@@ -29,7 +29,8 @@ function _fightCfg() {
 }
 
 function _playerFighter() {
-  return { atk: G.attack, def: G.defense, hp: G.health.current };
+  // Derived, not banked (DOM-75): base stats plus the capacity-limited loadout.
+  return { atk: effAttack(), def: effDefense(), hp: G.health.current };
 }
 
 function _enemyFighter(e) {
@@ -95,6 +96,19 @@ function startCombat(enemyId) {
 
   // The stake is placed when the fight starts; Run does not refund it.
   debit('stamina', staminaCost, REASON.FIGHT_COST, { ref: { enemyId: e.id } });
+
+  // Combat snapshot (DOM-75): freeze the stats and loadout the fight is fought
+  // with, plus the CP = A × (H + D) matchmaking proxy, stored at write time.
+  // Deliberately separate from the live Cash balance, which settles at
+  // resolution. Capture trigger and staleness rules are an open decision
+  // (owner: Bill) — entry-capture is the v1 placeholder.
+  var pf = _playerFighter();
+  G.combatSnapshot = {
+    atk: pf.atk, def: pf.def, hp: pf.hp,
+    loadout: JSON.parse(JSON.stringify(G.loadout || {})),
+    cp: pf.atk * (pf.hp + pf.def),
+    at: Date.now(),
+  };
 
   combatEnemy = Object.assign({}, e);
   _fight = { eHp: e.hp, round: 0, over: false };

@@ -9,8 +9,9 @@ function renderStats() {
     ['RANK', rank],
     ['LEVEL', G.level],
     ['CLOUT', G.clout.toLocaleString()],
-    ['ATTACK', G.attack],
-    ['DEFENSE', G.defense],
+    // Derived (DOM-75): base plus the fielded loadout — what combat actually uses.
+    ['ATTACK', effAttack() + (fieldedStats().atk ? ` (${G.attack} + ${fieldedStats().atk} GEAR)` : '')],
+    ['DEFENSE', effDefense() + (fieldedStats().def ? ` (${G.defense} + ${fieldedStats().def} GEAR)` : '')],
     ['CASH', '$' + G.cash.toLocaleString()],
     ['INCOME/COLLECT', '$' + collectIncome()],
     ['JOBS DONE', Object.values(G.jobProgress).reduce((a, b) => a + b, 0)],
@@ -29,11 +30,12 @@ function renderStats() {
       const item = STORE_ITEMS.find(i => i.id === id);
       if (!item) return '';
       const inst = gearInstance(id);
+      const fielded = fieldedGear().some(f => f.item.id === id);
       // Levels past the stat cap are pure prestige (DOM-88) — label them so the
       // player knows the stats stopped and the number is the point.
-      const lv = inst.level > 0
+      const lv = (inst.level > 0
         ? ` <span class="gear-level">LV ${inst.level}${inst.level > cap ? ' · PRESTIGE' : ''}</span>`
-        : '';
+        : '') + (fielded ? ' <span class="gear-level">FIELDED</span>' : '');
       const upgrade = item.upgradeable && tune('gear.upgradeEnabled')
         ? `<button class="gear-upgrade-btn" onclick="upgradeGear('${id}')"
              ${G.cash < gearUpgradeCost(item) ? 'disabled' : ''}>

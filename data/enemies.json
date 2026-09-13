@@ -4,8 +4,8 @@
     "name": "Local Snitch",
     "role": "Informant",
     "hp": 40,
-    "atk": 17,
-    "def": 6,
+    "atk": 25,
+    "def": 8,
     "levelReq": 1,
     "reward": {
       "cash": [
@@ -20,8 +20,8 @@
     "name": "Block Bully",
     "role": "Street Muscle",
     "hp": 70,
-    "atk": 17,
-    "def": 6,
+    "atk": 25,
+    "def": 8,
     "levelReq": 1,
     "reward": {
       "cash": [
@@ -37,7 +37,7 @@
     "role": "Auto Theft Ring",
     "hp": 90,
     "atk": 23,
-    "def": 11,
+    "def": 12,
     "levelReq": 2,
     "reward": {
       "cash": [
@@ -52,8 +52,8 @@
     "name": "Opp Crew",
     "role": "Gang of Hooligans",
     "hp": 120,
-    "atk": 23,
-    "def": 23,
+    "atk": 22,
+    "def": 22,
     "levelReq": 3,
     "reward": {
       "cash": [
@@ -68,8 +68,8 @@
     "name": "Undercover Fed",
     "role": "Federal Agent",
     "hp": 160,
-    "atk": 23,
-    "def": 23,
+    "atk": 22,
+    "def": 22,
     "levelReq": 4,
     "reward": {
       "cash": [
@@ -84,8 +84,8 @@
     "name": "Rival Boss",
     "role": "Gang Leader",
     "hp": 200,
-    "atk": 40,
-    "def": 23,
+    "atk": 39,
+    "def": 26,
     "levelReq": 5,
     "reward": {
       "cash": [
@@ -100,8 +100,8 @@
     "name": "Corner Captain",
     "role": "Block Chief",
     "hp": 240,
-    "atk": 40,
-    "def": 45,
+    "atk": 47,
+    "def": 56,
     "levelReq": 10,
     "reward": {
       "cash": [
@@ -116,8 +116,8 @@
     "name": "Trap House Boss",
     "role": "Rival Operator",
     "hp": 350,
-    "atk": 87,
-    "def": 45,
+    "atk": 56,
+    "def": 59,
     "levelReq": 20,
     "reward": {
       "cash": [
@@ -132,8 +132,8 @@
     "name": "Cartel Runner",
     "role": "Supply Muscle",
     "hp": 505,
-    "atk": 87,
-    "def": 45,
+    "atk": 77,
+    "def": 73,
     "levelReq": 30,
     "reward": {
       "cash": [
@@ -148,8 +148,8 @@
     "name": "Dirty Detective",
     "role": "Crooked Cop",
     "hp": 735,
-    "atk": 87,
-    "def": 45,
+    "atk": 115,
+    "def": 98,
     "levelReq": 40,
     "reward": {
       "cash": [
@@ -164,8 +164,8 @@
     "name": "Dock Syndicate",
     "role": "Waterfront Crew",
     "hp": 1060,
-    "atk": 87,
-    "def": 45,
+    "atk": 165,
+    "def": 129,
     "levelReq": 50,
     "reward": {
       "cash": [
@@ -180,8 +180,8 @@
     "name": "Club Kingpin",
     "role": "Nightlife Boss",
     "hp": 1540,
-    "atk": 87,
-    "def": 45,
+    "atk": 231,
+    "def": 169,
     "levelReq": 60,
     "reward": {
       "cash": [
@@ -196,8 +196,8 @@
     "name": "The Fixer",
     "role": "City Hall Broker",
     "hp": 2240,
-    "atk": 87,
-    "def": 45,
+    "atk": 316,
+    "def": 218,
     "levelReq": 70,
     "reward": {
       "cash": [
@@ -212,8 +212,8 @@
     "name": "Gun Runner Chief",
     "role": "Arms Ring Boss",
     "hp": 3250,
-    "atk": 87,
-    "def": 45,
+    "atk": 426,
+    "def": 282,
     "levelReq": 80,
     "reward": {
       "cash": [
@@ -228,8 +228,8 @@
     "name": "Commission Enforcer",
     "role": "Syndicate Muscle",
     "hp": 4710,
-    "atk": 87,
-    "def": 45,
+    "atk": 575,
+    "def": 371,
     "levelReq": 90,
     "reward": {
       "cash": [
@@ -244,8 +244,8 @@
     "name": "Shadow Boss",
     "role": "Underworld Power",
     "hp": 6820,
-    "atk": 87,
-    "def": 45,
+    "atk": 781,
+    "def": 491,
     "levelReq": 100,
     "reward": {
       "cash": [
@@ -260,8 +260,8 @@
     "name": "The Don",
     "role": "The Last Boss",
     "hp": 9890,
-    "atk": 87,
-    "def": 45,
+    "atk": 1070,
+    "def": 660,
     "levelReq": 110,
     "reward": {
       "cash": [

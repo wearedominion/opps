@@ -6,7 +6,7 @@
 // remove, re-key, unit change) and add the matching entry to MIGRATIONS below.
 // Additive changes — a new field with a default in the G literal — are NOT breaking
 // and MUST NOT bump this. See docs/specs/03-game-architecture.md §3.4.
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 const G = {
   schemaVersion: SCHEMA_VERSION,
@@ -23,16 +23,24 @@ const G = {
   stamina: { current: 3,   max: 3,   lastTick: 0 },   // fight pacing
   health:  { current: 100, max: 100, lastTick: 0 },   // combat HP
 
+  // BASE stats only (start + committed skill points). Gear no longer banks into
+  // these (DOM-75): combat reads effAttack()/effDefense(), which add the
+  // fielded loadout on top. Anything that mutates these is a base-stat grant.
   attack: 10, defense: 5,
   // Epoch ms or null (08 §3: one field, never a flag plus a timestamp that can
   // disagree). Non-null and in the future = hospitalized: cannot fight, cannot
   // rest, health regen paused, shielded from any future search (DOM-72).
   // Additive field with a default — no SCHEMA_VERSION bump.
   hospitalizedUntil: null,
-  // { itemId: { level, duplicates } } — per-instance gear state (DOM-88).
+  // { itemId: { level, duplicates, src } } — per-instance gear state (DOM-88).
   // `level` is the upgrade level (0 = as bought); `duplicates` counts spare
-  // copies for when tuning.gear.duplicatesRequired turns on.
+  // copies for when tuning.gear.duplicatesRequired turns on; `src` is the
+  // acquisition source ('bought' | 'dropped') for economy telemetry (DOM-75).
   inventory: {},
+  // { type: [itemId, ...] } — the fielded loadout (DOM-75). Index 0 is the
+  // primary; the rest are Crew-unlocked secondaries. Only items here (within
+  // slotCapacity) count in combat — owning is not fielding.
+  loadout: {},
   properties: {},
   // { spotId: { lastCollect } } — per-Spot accrual anchors (DOM-74). Additive
   // field with a default, so no SCHEMA_VERSION bump; a save without an anchor
@@ -48,7 +56,12 @@ const G = {
 
   // ── Player Profile (docs/tdds/2026-09-09-player-profile.md) ──
   skillPts: 0,          // unspent skill points, +5 per level
-  equipped: {},         // { slotId: itemId } — slot ids and item ids are permanent save keys
+
+  // Frozen at fight entry (DOM-75): { atk, def, hp, loadout, cp, at }. CP is
+  // the A × (H + D) matchmaking proxy, stored at write time. Capture trigger
+  // and staleness rules are an open decision (owner: Bill) — entry-capture is
+  // the v1 placeholder. Additive field with a default — no SCHEMA_VERSION bump.
+  combatSnapshot: null,
 };
 
 // ─────────────────────────────────────────────
@@ -143,6 +156,76 @@ const MIGRATIONS = {
     s.schemaVersion = 4;
     return s;
   },
+
+  // v4 -> v5: banked gear stats -> derived loadout (DOM-75).
+  //
+  // Under v4, buying or upgrading gear banked its stats into attack / defense /
+  // health.max permanently, and every owned item counted forever. Under v5 only
+  // the FIELDED loadout counts, derived at read time — so this migration
+  // un-banks: subtract every owned item's shipped stats (plus its capped
+  // upgrade gains) back out, leaving attack/defense as base-only (start +
+  // committed skill points).
+  //
+  // The stat table below is the catalog AS SHIPPED under v4, frozen as
+  // literals (§7.3: a migration must not read loaded content — the live
+  // catalog is regenerated and no longer matches what was banked). Most
+  // generated items shipped with 0/0/0 stats (the gen-catalog stat-ratio bug,
+  // fixed alongside DOM-75), so their un-bank is the upgrade gains only.
+  //
+  // Seeds the loadout with the best un-banked item per type — primaries only;
+  // Crew-unlocked secondaries are the player's to assign. Stamps every
+  // instance src:'bought' (drops existed, but the source was never recorded —
+  // 'bought' is the honest majority default). Deletes `equipped`, the
+  // prototype Profile's placeholder (its ids never pointed at real items).
+  4: (s) => {
+    const TABLE = { // id: [type, atk, def, hp] — v4 shipped values, frozen
+      knife: ['weapon', 5, 0, 0],    burner: ['utility', 5, 5, 0],
+      vest: ['armor', 0, 10, 0],     glock: ['weapon', 15, 0, 0],
+      bando: ['utility', 0, 20, 10], dirtbike: ['vehicle', 0, 0, 0],
+      mac11: ['weapon', 0, 0, 0],    stabvest: ['armor', 0, 0, 0],
+      ak: ['weapon', 30, 0, 0],      boxchevy: ['vehicle', 12, 0, 0],
+      kevlar: ['armor', 0, 0, 0],    coupe: ['vehicle', 0, 0, 0],
+      plates: ['armor', 0, 0, 0],    pump: ['weapon', 0, 0, 0],
+      ballistic: ['armor', 0, 0, 0], blacksuv: ['vehicle', 0, 0, 0],
+      switchie: ['weapon', 0, 0, 0], armsedan: ['vehicle', 0, 0, 0],
+      dragonskin: ['armor', 0, 0, 0], drummy: ['weapon', 0, 0, 0],
+      carbine: ['weapon', 0, 0, 0],  fullkev: ['armor', 0, 0, 0],
+      sprinter: ['vehicle', 0, 0, 0], fedvest: ['armor', 0, 0, 0],
+      lowkey: ['vehicle', 0, 0, 0],  sniper: ['weapon', 0, 0, 0],
+      beltfed: ['weapon', 0, 0, 0],  bunker: ['armor', 0, 0, 0],
+      gunboat: ['vehicle', 0, 0, 0], fiftycal: ['weapon', 0, 0, 0],
+      helo: ['vehicle', 0, 0, 0],    titanium: ['armor', 0, 0, 0],
+      exorig: ['armor', 0, 0, 0],    jet: ['vehicle', 0, 0, 0],
+      minigun: ['weapon', 0, 0, 0],  arsenal: ['weapon', 0, 0, 0],
+      fortress: ['armor', 0, 0, 0],  yacht: ['vehicle', 0, 0, 0],
+    };
+    // v4 upgrade banking, frozen: +1 ATK +1 DEF per level up to the cap (10);
+    // levels past the cap banked nothing (prestige).
+    const GAIN = { atk: 1, def: 1, cap: 10 };
+    const best = {}; // type -> { id, power } for loadout seeding
+    for (const id of Object.keys(s.inventory || {})) {
+      const inst = s.inventory[id];
+      inst.src = 'bought';
+      const row = TABLE[id];
+      if (!row) continue; // unknown id: nothing was banked for it under v4
+      const lv = Math.min(inst.level || 0, GAIN.cap);
+      const atk = row[1] + lv * GAIN.atk;
+      const def = row[2] + lv * GAIN.def;
+      s.attack = Math.max(0, (s.attack || 0) - atk);
+      s.defense = Math.max(0, (s.defense || 0) - def);
+      if (row[3] && s.health && typeof s.health === 'object') {
+        s.health.max = Math.max(1, (s.health.max || 1) - row[3]);
+        s.health.current = Math.min(s.health.current, s.health.max);
+      }
+      const power = atk + def + row[3];
+      if (!best[row[0]] || power > best[row[0]].power) best[row[0]] = { id: id, power: power };
+    }
+    s.loadout = {};
+    for (const type of Object.keys(best)) s.loadout[type] = [best[type].id];
+    delete s.equipped;
+    s.schemaVersion = 5;
+    return s;
+  },
 };
 
 // ── Gear ownership helpers (DOM-88) ──────────────────────────────────────────
@@ -153,9 +236,76 @@ function ownsGear(itemId) {
 function gearInstance(itemId) {
   return (G.inventory && G.inventory[itemId]) || null;
 }
-function grantGear(itemId) {
-  if (!G.inventory[itemId]) G.inventory[itemId] = { level: 0, duplicates: 0 };
+function grantGear(itemId, src) {
+  if (!G.inventory[itemId]) G.inventory[itemId] = { level: 0, duplicates: 0, src: src || 'bought' };
   return G.inventory[itemId];
+}
+
+// ── Loadout & derived combat stats (DOM-75) ──────────────────────────────────
+// Cash buys items; only Crew buys the right to equip them. G.loadout holds the
+// fielded item ids per type ([0] = primary), slotCapacity() says how many of
+// them count, and effAttack()/effDefense() are what combat actually reads.
+
+// Slots for a type: 1 base + Crew grants. Every `crew.lieutenantsPerSlot`
+// Lieutenants earns one +1 grant, distributed round-robin over
+// `crew.slotRotation` (weapon, then armor, then vehicle, ...), each type
+// capped at `crew.maxBonusSlotsPerType` bonus slots. Types outside the
+// rotation (utility) stay at the base slot. Clout per recruit is unbounded;
+// capacity is not — the power ceiling is deliberate (ratified 2026-09-13).
+function slotCapacity(type) {
+  const rot = tune('crew.slotRotation');
+  const i = rot.indexOf(type);
+  if (i === -1) return 1;
+  const grants = Math.floor((G.crewMemberCount || 0) / tune('crew.lieutenantsPerSlot'));
+  const bonus = Math.floor((grants - i + rot.length - 1) / rot.length);
+  return 1 + Math.max(0, Math.min(tune('crew.maxBonusSlotsPerType'), bonus));
+}
+
+// One item's contribution while fielded: catalog stats plus upgrade gains up
+// to the stat cap (DOM-88 semantics, now derived instead of banked).
+function gearItemStats(item, inst) {
+  const lv = Math.min(inst ? (inst.level || 0) : 0, tune('gear.statCapLevel'));
+  const gain = tune('gear.statGainPerLevel');
+  return { atk: (item.atk || 0) + lv * gain.attack, def: (item.def || 0) + lv * gain.defense };
+}
+
+// The loadout entries that actually count: owned, type-correct, and within
+// capacity. Capacity can shrink (the referral list is re-read every boot), so
+// the slice is defensive — over-capacity entries stay assigned but inert.
+function fieldedGear() {
+  const out = [];
+  for (const type of Object.keys(G.loadout || {})) {
+    const ids = (G.loadout[type] || []).slice(0, slotCapacity(type));
+    for (const id of ids) {
+      const item = STORE_ITEMS.find(i => i.id === id);
+      if (item && item.type === type && ownsGear(id)) {
+        out.push({ item: item, inst: gearInstance(id), type: type });
+      }
+    }
+  }
+  return out;
+}
+
+function fieldedStats() {
+  return fieldedGear().reduce((s, f) => {
+    const st = gearItemStats(f.item, f.inst);
+    return { atk: s.atk + st.atk, def: s.def + st.def };
+  }, { atk: 0, def: 0 });
+}
+
+function effAttack()  { return G.attack  + fieldedStats().atk; }
+function effDefense() { return G.defense + fieldedStats().def; }
+
+// Field an item in the first open slot of its type. Returns true if it landed;
+// false when every unlocked slot is taken (the item stays in the stash).
+function autoFieldGear(itemId) {
+  const item = STORE_ITEMS.find(i => i.id === itemId);
+  if (!item || !ownsGear(itemId)) return false;
+  const ids = G.loadout[item.type] = G.loadout[item.type] || [];
+  if (ids.indexOf(itemId) !== -1) return true;
+  if (ids.length >= slotCapacity(item.type)) return false;
+  ids.push(itemId);
+  return true;
 }
 
 // Runs the chain fully in memory. Never persists intermediate versions.

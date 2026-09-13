@@ -5,69 +5,13 @@
 // ─────────────────────────────────────────────
 
 // ═════════════════════════════════════════════
-//  CONTENT — TEMPORARY HARDCODE
-//  !! TENET T4 (JSON-first) EXCEPTION, called out per
-//     docs/specs/03-game-architecture.md §6 step 3.
-//  These three tables are placeholder content lifted from the design
-//  prototype. They are shaped to move verbatim into data/gear.json and
-//  data/skills.json once the live design data is authored — at which point
-//  they are deleted here, loaded in loadGameData(), and the progress
-//  denominator in js/main.js goes / 5 -> / 7.
-//  Open decision (handoff gap 2): whether gear lives in its own file or
-//  store.json gains slot/tier/pow fields. Unresolved — see the TDD §7.
+//  GEAR — REAL CATALOG (DOM-75)
+//  The prototype's hardcoded GEAR_SLOTS / GEAR_ITEMS body-doll is gone: the
+//  loadout runs on data/store.json (weapon / armor / vehicle / utility), one
+//  primary slot per type plus Crew-unlocked secondaries, capacity from
+//  slotCapacity() (js/state.js). This closed the TDD §7 open decision:
+//  gear lives in store.json; there is no separate gear.json.
 // ═════════════════════════════════════════════
-
-const GEAR_SLOTS = [
-  { id: 'head',  label: 'HEAD',        body: true,  area: '1 / 1' },
-  { id: 'handR', label: 'RIGHT HAND',  body: true,  area: '1 / 3' },
-  { id: 'torso', label: 'TORSO',       body: true,  area: '2 / 1' },
-  { id: 'handL', label: 'LEFT HAND',   body: true,  area: '2 / 3' },
-  { id: 'legs',  label: 'LEGS / KICKS',body: true,  area: '3 / 1' },
-  { id: 'ride',  label: 'RIDE',        body: false },
-  { id: 'stash', label: 'STASH',       body: false },
-];
-
-// slot ids and item ids are PERMANENT save keys (they land in G.equipped).
-// Lowercase, never reused, never renamed.
-const GEAR_ITEMS = {
-  head: [
-    { id: 'h1', name: 'BLACK DURAG', tier: 'COMMON', pow: 3,  buff: '+3 NERVE', owned: true },
-    { id: 'h2', name: 'FITTED CAP',  tier: 'RARE',   pow: 7,  buff: '+7 NERVE', owned: true },
-    { id: 'h3', name: 'SKI MASK',    tier: 'ELITE',  pow: 14, buff: '+14 NERVE · LOWERS ID RISK', owned: false, req: 'LV 15' },
-  ],
-  torso: [
-    { id: 'c1', name: 'PLATED ROPE', tier: 'COMMON', pow: 4,  buff: '+4 CLOUT/JOB', owned: true },
-    { id: 'c2', name: 'ICED CUBAN',  tier: 'RARE',   pow: 10, buff: '+10 CLOUT/JOB', owned: true },
-    { id: 't1', name: 'KEVLAR VEST', tier: 'ELITE',  pow: 16, buff: '+16 DEFENSE · −4 SPEED', owned: true },
-    { id: 'c3', name: 'VVS PENDANT', tier: 'LEGEND', pow: 22, buff: '+22 CLOUT/JOB', owned: false, req: 'LV 30' },
-  ],
-  handR: [
-    { id: 'w1', name: 'RUSTY .38',      tier: 'COMMON', pow: 5,  buff: '+5 MUSCLE', owned: true },
-    { id: 'w2', name: 'CHROME .45',     tier: 'RARE',   pow: 11, buff: '+11 MUSCLE', owned: true },
-    { id: 'w3', name: 'STREET SWEEPER', tier: 'ELITE',  pow: 19, buff: '+19 MUSCLE · −3 NERVE', owned: true },
-    { id: 'w4', name: 'GOLD DESERT',    tier: 'LEGEND', pow: 28, buff: '+28 MUSCLE', owned: false, req: 'LV 22' },
-  ],
-  handL: [
-    { id: 'p1', name: 'BURNER FLIP',     tier: 'COMMON', pow: 5,  buff: '+5 INTEL', owned: true },
-    { id: 'o1', name: 'BOX CUTTER',      tier: 'RARE',   pow: 8,  buff: '+8 MUSCLE', owned: true },
-    { id: 'p2', name: 'ENCRYPTED SLAB',  tier: 'ELITE',  pow: 15, buff: '+15 INTEL · SEE OPP THREAT', owned: true },
-  ],
-  legs: [
-    { id: 'k1', name: 'SCUFFED AF1s',       tier: 'COMMON', pow: 3, buff: '+3 SPEED', owned: true },
-    { id: 'k2', name: 'RED BOTTOMS',        tier: 'RARE',   pow: 9, buff: '+9 SPEED · +2 CLOUT/JOB', owned: true },
-    { id: 'k3', name: 'CONSTRUCTION TIMBS', tier: 'RARE',   pow: 8, buff: '+8 DEFENSE', owned: false, req: 'LV 12' },
-  ],
-  ride: [
-    { id: 'r1', name: 'BEAT CIVIC',      tier: 'COMMON', pow: 6,  buff: '+6 ESCAPE', owned: true },
-    { id: 'r2', name: 'BLACKED CHARGER', tier: 'RARE',   pow: 13, buff: '+13 ESCAPE', owned: true },
-    { id: 'r3', name: 'DONK ON 26s',     tier: 'ELITE',  pow: 17, buff: '+17 ESCAPE · +4 CLOUT/JOB', owned: false, req: '$18K' },
-  ],
-  stash: [
-    { id: 's1', name: 'SHOEBOX',          tier: 'COMMON', pow: 4,  buff: 'BAG +$500', owned: true },
-    { id: 's2', name: 'FLOOR SAFE',       tier: 'RARE',   pow: 12, buff: 'BAG +$2,000', owned: true },
-    { id: 's3', name: 'TRAP HOUSE VAULT', tier: 'ELITE',  pow: 20, buff: 'BAG +$6,000', owned: false, req: 'LV 18' },
-  ],
-};
 
 // A skill raises either a POOL ceiling (`pool` -> G[pool].max, topping up
 // G[pool].current to match) or a flat STAT (`stat` -> G[stat]). Exactly one of
@@ -103,7 +47,7 @@ function pfSkillGrant(id) { return tune('skills.grant.' + id); }
 
 let pfTab = 'skills';
 let pfPending = {};      // { skillId: ranksStaged }
-let pfGearPick = null;   // slotId of the open picker
+let pfGearPick = null;   // { type, idx } of the open slot picker
 let pfInfoKey = null;    // skillId of the open info popup
 let pfConfirmOpen = false;
 
@@ -117,40 +61,38 @@ function pfEsc(s) {
   ));
 }
 
-function pfAllItems() {
-  const out = [];
-  GEAR_SLOTS.forEach(sl => (GEAR_ITEMS[sl.id] || []).forEach(it => out.push({ ...it, slot: sl.id })));
-  return out;
+// Gear types in display order: the Crew rotation first, then whatever else the
+// catalog carries (utility). Data-driven — a new type in store.json just shows up.
+function pfGearTypes() {
+  const rot = tune('crew.slotRotation').slice();
+  for (const i of STORE_ITEMS) if (rot.indexOf(i.type) === -1) rot.push(i.type);
+  return rot;
 }
 
 function pfFindItem(itemId) {
-  return pfAllItems().find(i => i.id === itemId) || null;
+  return STORE_ITEMS.find(i => i.id === itemId) || null;
 }
 
-// Placeholder ownership: real data drives this from G.inventory. The hardcoded
-// `owned` flag is prototype seed data and goes away with the JSON migration.
-function pfOwns(item) {
-  if (!item) return false;
-  return ownsGear(item.id) || item.owned === true;
+// Rarity label from the ladder position — display flavour only, quartiles of
+// the 16 tier gates. Colors ride the existing tier-* classes.
+function pfTierLabel(item) {
+  const t = item.tier || 1;
+  return t <= 4 ? 'COMMON' : t <= 8 ? 'RARE' : t <= 12 ? 'ELITE' : 'LEGEND';
 }
 
-function pfSlotLabel(slotId) {
-  const s = GEAR_SLOTS.find(x => x.id === slotId);
-  return s ? s.label : slotId;
+// Lieutenants required to unlock bonus slot `idx` (1-based secondaries) of a
+// type. null = never (past the cap, or the type is outside the rotation).
+function pfSlotUnlockAt(type, idx) {
+  const rot = tune('crew.slotRotation');
+  const i = rot.indexOf(type);
+  if (i === -1 || idx > tune('crew.maxBonusSlotsPerType')) return null;
+  return ((idx - 1) * rot.length + i + 1) * tune('crew.lieutenantsPerSlot');
 }
 
-// Total gear power from the equipped loadout. Derived — never banked into G.
-function pfGearPower(equipped) {
-  const eq = equipped || {};
-  return Object.keys(eq).reduce((sum, slotId) => {
-    const it = pfFindItem(eq[slotId]);
-    return sum + (it && it.slot === slotId ? (it.pow || 0) : 0);
-  }, 0);
-}
-
-function pfBodySlotsFilled(equipped) {
-  const eq = equipped || {};
-  return GEAR_SLOTS.filter(s => s.body && eq[s.id]).length;
+// Total fielded gear power (ATK + DEF, upgrades included). Derived — never banked.
+function pfGearPower() {
+  const s = fieldedStats();
+  return s.atk + s.def;
 }
 
 function pfSkillDef(id) { return SKILL_DEFS.find(s => s.id === id) || null; }
@@ -178,23 +120,28 @@ function pfCanAfford(skillId) {
 // never per-render.
 function pfPublicProjection(state) {
   const s = state || G;
-  const eq = s.equipped || {};
+  const lo = s.loadout || {};
+  const gear = [];
+  for (const type of Object.keys(lo)) {
+    (lo[type] || []).forEach((id, slot) => {
+      const it = pfFindItem(id);
+      if (!it || it.type !== type) return;
+      // Upgrade level is public by design (DOM-88): prestige levels exist to be
+      // seen. Raw stats stay private; the name and level carry the flex.
+      const inst = (s.inventory || {})[id];
+      gear.push({ type: type, slot: slot, name: it.name, tier: pfTierLabel(it),
+                  level: inst ? inst.level : 0 });
+    });
+  }
   return {
     handle: s.handle || 'PLAYER',
     level: s.level,
     clout: s.clout,
     rank: rankForLevel(s.level),
-    gear: GEAR_SLOTS.map(sl => {
-      const it = pfFindItem(eq[sl.id]);
-      if (!it || it.slot !== sl.id) return null;
-      // Upgrade level is public by design (DOM-88): prestige levels exist to be
-      // seen. Raw stats stay private; the level number carries the flex.
-      const inst = (s.inventory || {})[it.id];
-      return { slot: sl.id, slotLabel: sl.label, name: it.name, tier: it.tier,
-               level: inst ? inst.level : 0 };
-    }).filter(Boolean),
-    // Deliberately absent: attack, defense, the health / moves / stamina pools,
-    // cash, skillPts and unequipped inventory.
+    gear: gear,
+    // Deliberately absent: attack, defense (base AND effective), the health /
+    // moves / stamina pools, cash, skillPts, slot capacity, the combat
+    // snapshot / CP, and unfielded inventory — per the combat-intel rules.
   };
 }
 
@@ -344,35 +291,68 @@ function pfRenderSkills() {
 }
 
 // ── GEAR ──
-function pfSlotBox(slot) {
-  const eq = G.equipped || {};
-  const it = pfFindItem(eq[slot.id]);
-  const filled = !!(it && it.slot === slot.id);
-  const area = slot.area ? `style="grid-area:${slot.area}"` : '';
+// One row of slot chips per gear type: the primary, then Crew-unlocked
+// secondaries, then the still-locked slots naming their price in soldiers.
+function pfSlotBox(type, idx, capacity) {
+  const ids = (G.loadout || {})[type] || [];
+  if (idx >= capacity) {
+    const need = pfSlotUnlockAt(type, idx);
+    return `
+      <div class="pf-slot locked">
+        <div class="pf-slot-label">+${idx}</div>
+        <div class="pf-slot-name is-empty">LOCKED</div>
+        <div class="pf-slot-buff">${need} SOLDIERS</div>
+      </div>`;
+  }
+  const it = pfFindItem(ids[idx]);
+  const filled = !!(it && it.type === type);
+  const inst = filled ? gearInstance(it.id) : null;
+  const lv = inst && inst.level > 0 ? ` · LV ${inst.level}` : '';
   return `
-    <button class="pf-slot${filled ? '' : ' empty'}" ${area} onclick="pfOpenPicker('${slot.id}')">
-      <div class="pf-slot-label">${slot.label}</div>
-      <div class="pf-slot-name ${filled ? 'tier-' + it.tier : 'is-empty'}">${filled ? pfEsc(it.name) : 'EMPTY'}</div>
-      <div class="pf-slot-buff">${filled ? pfEsc(it.buff) : 'Tap to equip'}</div>
+    <button class="pf-slot${filled ? '' : ' empty'}${idx === 0 ? ' primary' : ''}" onclick="pfOpenPicker('${type}',${idx})">
+      <div class="pf-slot-label">${idx === 0 ? 'PRIMARY' : '+' + idx}</div>
+      <div class="pf-slot-name ${filled ? 'tier-' + pfTierLabel(it) : 'is-empty'}">${filled ? pfEsc(it.name) : 'EMPTY'}</div>
+      <div class="pf-slot-buff">${filled ? pfEsc(it.desc) + lv : 'Tap to equip'}</div>
     </button>`;
 }
 
 function pfRenderGear() {
-  const eq = G.equipped || {};
-  const body = GEAR_SLOTS.filter(s => s.body);
-  const off = GEAR_SLOTS.filter(s => !s.body);
-  const owned = pfAllItems().filter(pfOwns);
+  const types = pfGearTypes();
+  const maxBonus = tune('crew.maxBonusSlotsPerType');
+  const rot = tune('crew.slotRotation');
+  const fielded = fieldedGear();
+  const totalCap = types.reduce((s, t) => s + slotCapacity(t), 0);
+  const owned = STORE_ITEMS.filter(i => ownsGear(i.id));
+
+  const typeRows = types.map(type => {
+    const cap = slotCapacity(type);
+    const shown = rot.indexOf(type) === -1 ? cap : 1 + maxBonus;
+    const boxes = [];
+    for (let i = 0; i < shown; i++) boxes.push(pfSlotBox(type, i, cap));
+    return `
+      <div class="pf-typerow">
+        <div class="pf-sec-head">
+          <h4>${type.toUpperCase()}</h4>
+          <div class="pf-sec-rule"></div>
+          <span class="pf-sec-count">${Math.min((G.loadout?.[type] || []).length, cap)}/${cap} FIELDED</span>
+        </div>
+        <div class="pf-slots-row">${boxes.join('')}</div>
+      </div>`;
+  }).join('');
 
   const invRows = owned.length ? owned.map(it => {
-    const isEq = eq[it.slot] === it.id;
+    const isEq = fielded.some(f => f.item.id === it.id);
+    const inst = gearInstance(it.id);
+    const lv = inst && inst.level > 0 ? ` · LV ${inst.level}` : '';
+    const src = inst && inst.src === 'dropped' ? ' · FOUND' : '';
     return `
-      <button class="pf-inv-row${isEq ? ' equipped' : ''}" onclick="pfEquip('${it.slot}','${it.id}')">
+      <button class="pf-inv-row${isEq ? ' equipped' : ''}" onclick="pfToggleField('${it.id}')">
         <div class="pf-inv-main">
           <div class="pf-inv-name">${pfEsc(it.name)}</div>
-          <div class="pf-inv-meta">${pfSlotLabel(it.slot)} · ${pfEsc(it.buff)}</div>
+          <div class="pf-inv-meta">${it.type.toUpperCase()} · ${pfEsc(it.desc)}${lv}${src}</div>
         </div>
-        <span class="pf-inv-tier tier-${it.tier}">${it.tier}</span>
-        <span class="pf-inv-status${isEq ? ' on' : ''}">${isEq ? 'EQUIPPED' : 'EQUIP'}</span>
+        <span class="pf-inv-tier tier-${pfTierLabel(it)}">${pfTierLabel(it)}</span>
+        <span class="pf-inv-status${isEq ? ' on' : ''}">${isEq ? 'FIELDED' : 'FIELD'}</span>
       </button>`;
   }).join('') : `
       <div class="pf-empty bare">
@@ -382,30 +362,26 @@ function pfRenderGear() {
 
   return `
     <div class="pf-gear">
-      <div class="pf-doll">
-        ${body.map(pfSlotBox).join('')}
-        <div class="pf-figure">
-          <svg width="84" height="196" viewBox="0 0 90 210" fill="none" role="img" aria-label="Equipment slots on a body outline">
-            <circle cx="45" cy="19" r="14" fill="var(--control)" stroke="var(--border-ctrl)"/>
-            <rect x="28" y="39" width="34" height="60" rx="7" fill="var(--control)" stroke="var(--border-ctrl)"/>
-            <rect x="13" y="43" width="11" height="54" rx="5.5" fill="var(--panel)" stroke="var(--border)"/>
-            <rect x="66" y="43" width="11" height="54" rx="5.5" fill="var(--panel)" stroke="var(--border)"/>
-            <rect x="30" y="103" width="13" height="72" rx="6" fill="var(--panel)" stroke="var(--border)"/>
-            <rect x="47" y="103" width="13" height="72" rx="6" fill="var(--panel)" stroke="var(--border)"/>
-            <rect x="27" y="178" width="17" height="9" rx="4.5" fill="var(--control)" stroke="var(--border-ctrl)"/>
-            <rect x="46" y="178" width="17" height="9" rx="4.5" fill="var(--control)" stroke="var(--border-ctrl)"/>
-          </svg>
+      <div class="pf-ledger">
+        <div class="pf-ledger-cell">
+          <div class="pf-eyebrow">GEAR POWER</div>
+          <div class="pf-ledger-val avail">${pfGearPower()}</div>
         </div>
-        <div class="pf-gearpow">
-          <div class="pf-slot-label">GEAR POWER</div>
-          <div class="pf-gearpow-val">${pfGearPower(eq)}</div>
-          <div class="pf-gearpow-sub">${pfBodySlotsFilled(eq)}/5 SLOTS</div>
+        <div class="pf-ledger-div"></div>
+        <div class="pf-ledger-cell">
+          <div class="pf-eyebrow">FIELDED</div>
+          <div class="pf-ledger-val">${fielded.length}/${totalCap}</div>
+        </div>
+        <div class="pf-ledger-div"></div>
+        <div class="pf-ledger-cell">
+          <div class="pf-eyebrow">SOLDIERS</div>
+          <div class="pf-ledger-val">${G.crewMemberCount || 0}</div>
         </div>
       </div>
-      <div class="pf-off">${off.map(pfSlotBox).join('')}</div>
+      ${typeRows}
       <div>
         <div class="pf-sec-head">
-          <h4>INVENTORY</h4>
+          <h4>STASH</h4>
           <div class="pf-sec-rule"></div>
           <span class="pf-sec-count">${owned.length} ${owned.length === 1 ? 'ITEM' : 'ITEMS'}</span>
         </div>
@@ -447,28 +423,27 @@ function pfRenderOverlays() {
 
 function pfRenderPicker() {
   if (!pfGearPick) return '';
-  const slot = GEAR_SLOTS.find(s => s.id === pfGearPick);
-  if (!slot) return '';
-  const eq = G.equipped || {};
-  const items = GEAR_ITEMS[slot.id] || [];
+  const type = pfGearPick.type, idx = pfGearPick.idx;
+  const ids = (G.loadout || {})[type] || [];
+  const items = STORE_ITEMS.filter(i => i.type === type && ownsGear(i.id));
   const rows = items.length ? items.map(it => {
-    const owns = pfOwns(it);
-    const isEq = eq[slot.id] === it.id;
-    const state = isEq ? 'EQUIPPED' : owns ? 'EQUIP' : (it.req || 'LOCKED');
+    const at = ids.indexOf(it.id);
+    const isHere = at === idx;
+    const inst = gearInstance(it.id);
+    const lv = inst && inst.level > 0 ? ` · LV ${inst.level}` : '';
     return `
-      <button class="pf-pick-row${owns ? '' : ' locked'}"
-        ${owns ? `onclick="pfEquip('${slot.id}','${it.id}')"` : 'disabled'}>
+      <button class="pf-pick-row" onclick="pfEquip('${type}',${idx},'${it.id}')">
         <div class="pf-inv-main">
           <div class="pf-inv-name lg">${pfEsc(it.name)}</div>
-          <div class="pf-inv-meta">${pfEsc(it.buff)}</div>
+          <div class="pf-inv-meta">${pfEsc(it.desc)}${lv}</div>
         </div>
-        <span class="pf-inv-tier tier-${it.tier}">${it.tier}</span>
-        <span class="pf-inv-status${isEq ? ' on' : ''}">${state}</span>
+        <span class="pf-inv-tier tier-${pfTierLabel(it)}">${pfTierLabel(it)}</span>
+        <span class="pf-inv-status${at !== -1 ? ' on' : ''}">${isHere ? 'EQUIPPED' : at !== -1 ? 'MOVE HERE' : 'EQUIP'}</span>
       </button>`;
   }).join('') : `
       <div class="pf-empty">
         <div class="pf-empty-label">EMPTY</div>
-        <div class="pf-empty-hint">Nothing fits this slot yet.</div>
+        <div class="pf-empty-hint">You own nothing that fits this slot. Hit the Plug.</div>
       </div>`;
 
   return `
@@ -476,10 +451,10 @@ function pfRenderPicker() {
       <div class="pf-panel sheet" onclick="event.stopPropagation()">
         <div class="pf-panel-head">
           <div class="pf-fill">
-            <div class="pf-panel-title">${slot.label}</div>
+            <div class="pf-panel-title">${type.toUpperCase()} ${idx === 0 ? '— PRIMARY' : '— SLOT +' + idx}</div>
             <div class="pf-panel-sub">CHOOSE WHAT YOU CARRY</div>
           </div>
-          ${eq[slot.id] ? `<button class="pf-unequip" onclick="pfUnequip('${slot.id}')">UNEQUIP</button>` : ''}
+          ${ids[idx] ? `<button class="pf-unequip" onclick="pfUnequip('${type}',${idx})">UNEQUIP</button>` : ''}
           <button class="pf-x" onclick="pfClosePicker()" aria-label="Close">✕</button>
         </div>
         <div class="pf-panel-body flush">
@@ -625,8 +600,8 @@ function pfCommitSkills() {
   GameState.save();
 }
 
-function pfOpenPicker(slotId) {
-  pfGearPick = slotId;
+function pfOpenPicker(type, idx) {
+  pfGearPick = { type: type, idx: idx };
   if (typeof Sound !== 'undefined' && Sound.click) Sound.click();
   renderProfile();
 }
@@ -636,40 +611,67 @@ function pfClosePicker() {
   renderProfile();
 }
 
-function pfEquip(slotId, itemId) {
+// Put an owned item in a specific slot. An item already fielded elsewhere in
+// the type SWAPS with the occupant (one instance is one instance, and the
+// occupant is never silently destroyed); equipping from the stash over a
+// filled slot benches the occupant. Slot arrays stay dense.
+function pfEquip(type, idx, itemId) {
   const item = pfFindItem(itemId);
-  if (!item || item.slot !== slotId) return;
-  if (!pfOwns(item)) { toast("You don't own that yet.", true); return; }
+  if (!item || item.type !== type) return;
+  if (!ownsGear(itemId)) { toast("You don't own that yet.", true); return; }
+  if (idx >= slotCapacity(type)) { toast('That slot needs more soldiers.', true); return; }
 
-  G.equipped = G.equipped || {};
-  if (G.equipped[slotId] === itemId) {   // tapping the equipped item unequips it
-    delete G.equipped[slotId];
-    log('GEAR — took off ' + item.name, 'info');
-    toast(item.name + ' unequipped');
+  G.loadout = G.loadout || {};
+  const ids = G.loadout[type] = G.loadout[type] || [];
+  const at = ids.indexOf(itemId);
+  if (at === idx) { pfGearPick = null; renderProfile(); return; } // already here
+  if (at !== -1) {
+    if (idx < ids.length) { ids[at] = ids[idx]; ids[idx] = itemId; } // swap slots
+    else { ids.splice(at, 1); ids.push(itemId); }                   // move to the open slot
   } else {
-    G.equipped[slotId] = itemId;
-    log('GEAR — equipped ' + item.name + ' — ' + item.buff, 'info');
-    toast(item.name + ' equipped');
+    if (idx < ids.length) ids[idx] = itemId;                        // occupant benched
+    else ids.push(itemId);
   }
 
   pfGearPick = null;
+  log('GEAR — fielded ' + item.name + ' — ' + item.desc, 'info');
+  toast(item.name + ' fielded');
   if (typeof Sound !== 'undefined' && Sound.click) Sound.click();
   updateHUD();
   renderProfile();
   GameState.save();
 }
 
-function pfUnequip(slotId) {
-  G.equipped = G.equipped || {};
-  const item = pfFindItem(G.equipped[slotId]);
+function pfUnequip(type, idx) {
+  const ids = (G.loadout || {})[type] || [];
+  const item = pfFindItem(ids[idx]);
   if (!item) { pfGearPick = null; renderProfile(); return; }
-  delete G.equipped[slotId];
+  ids.splice(idx, 1);   // dense: secondaries shift up behind the gap
   pfGearPick = null;
-  log('GEAR — took off ' + item.name, 'info');
-  toast(item.name + ' unequipped');
+  log('GEAR — benched ' + item.name, 'info');
+  toast(item.name + ' benched');
   updateHUD();
   renderProfile();
   GameState.save();
+}
+
+// Stash-row tap: field into the first open slot of its type, or bench it if
+// it is already fielded.
+function pfToggleField(itemId) {
+  const item = pfFindItem(itemId);
+  if (!item || !ownsGear(itemId)) return;
+  const ids = (G.loadout || {})[item.type] || [];
+  const at = ids.indexOf(itemId);
+  if (at !== -1 && at < slotCapacity(item.type)) { pfUnequip(item.type, at); return; }
+  if (autoFieldGear(itemId)) {
+    log('GEAR — fielded ' + item.name + ' — ' + item.desc, 'info');
+    toast(item.name + ' fielded');
+    updateHUD();
+    renderProfile();
+    GameState.save();
+  } else {
+    toast('No open ' + item.type + ' slot. Recruit soldiers or swap.', true);
+  }
 }
 
 function pfOpenInfo(key) { pfInfoKey = key; renderProfile(); }
