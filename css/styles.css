@@ -80,15 +80,6 @@ body {
   overflow: hidden;
 }
 
-/* chrome-clipped text. Only four things use this: the OPPS wordmark,
-   the HUD bread figure, crew stat counters, purchase card amounts. */
-.chrome-text {
-  background: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-}
-
 /* ═══════════════════════════════════════════════════════════
    APP SHELL
    The bezel is a prototype presentation device and is NOT built.
@@ -855,14 +846,13 @@ main::-webkit-scrollbar { width: 0; height: 0; }
 }
 .levelup-banner.show { display: block; }
 @keyframes slideDown { from { opacity: 0; top: 50px; } to { opacity: 1; top: 70px; } }
+/* "chrome text" per the selector table = --chrome ink; the clipped gradient
+   is reserved for the four sanctioned uses (DOM-99) */
 .levelup-text {
   font-family: var(--display);
   font-size: 20px;
   letter-spacing: 2px;
-  background: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
+  color: var(--chrome);
 }
 
 /* ── TOAST ── */
@@ -890,7 +880,9 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   text-align: center;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.bad { border-color: var(--border-red); color: var(--red); }
+/* refusals keep the gold frame — red is combat-only (DOM-98); the plainer
+   --text ink is what separates a refusal from the chrome of a good toast */
+.toast.bad { color: var(--text); }
 
 /* ── IN-APP PURCHASES ── */
 .iap-grid {
@@ -921,14 +913,13 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   border-radius: var(--r-pill);
   white-space: nowrap;
 }
+/* pack NAME is a title, not money — the clip sanction covers gem pack
+   AMOUNTS, and v1 sells no gems; price below stays --chrome (DOM-99) */
 .iap-name {
   font-family: var(--display);
   font-size: 22px;
   letter-spacing: 1px;
-  background: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
+  color: var(--text);
   margin-bottom: 4px;
 }
 .iap-price {
@@ -1538,7 +1529,6 @@ img.plug-portrait {
 .pf-seg.staged { background: var(--chrome-fill); }
 
 .pf-warn { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
-.pf-warn-mark { color: var(--red); font-family: var(--ui); font-size: 11px; }
 .pf-warn-text { font-size: 11px; color: var(--muted); line-height: 1.4; text-wrap: pretty; }
 .pf-actions { display: flex; gap: 10px; }
 .pf-btn-reset {
@@ -1698,10 +1688,11 @@ img.plug-portrait {
 .pf-panel-body::-webkit-scrollbar { width: 0; height: 0; }
 .pf-panel-foot { display: flex; gap: 10px; padding: 12px var(--gap-section) var(--gap-section); }
 
+/* plain secondary — unequipping your own gear isn't hostile (DOM-98) */
 .pf-unequip {
   flex: none; font-family: var(--display); font-size: 12px;
-  letter-spacing: 1px; color: var(--red); background: var(--control);
-  border: 1px solid var(--border-red); border-radius: var(--r-pill); padding: 9px 14px;
+  letter-spacing: 1px; color: var(--text); background: var(--control);
+  border: 1px solid var(--border-ctrl); border-radius: var(--r-pill); padding: 9px 14px;
   cursor: pointer; transition: filter .16s;
 }
 .pf-unequip:hover { filter: brightness(1.15); }
@@ -1820,10 +1811,10 @@ img.plug-portrait {
 .metric-val { font-family: var(--ui); font-weight: 500; font-size: 12px; color: var(--text); }
 .metric-track { height: 7px; border-radius: var(--r-pill); background: var(--track); overflow: hidden; }
 .metric-fill { height: 100%; border-radius: var(--r-pill); transition: width .4s; }
-/* fills are fixed per meter — these legacy names map onto the contract's set */
-.metric-fill.amber { background: var(--xp); }        /* XP */
-.metric-fill.lime  { background: var(--energy-fill); } /* energy */
-.metric-fill.gold  { background: var(--green); }      /* health */
+/* fills are fixed per meter (contract: XP --xp, energy --energy-fill, health --green) */
+.metric-fill.xp     { background: var(--xp); }
+.metric-fill.energy { background: var(--energy-fill); }
+.metric-fill.health { background: var(--green); }
 
 /* ── BOTTOM TABS ──
    Five tabs: Hood, Map, Moves, Opps, Empire. Replaces the nav drawer. */

@@ -77,7 +77,9 @@ var Map3D = (function () {
     // ground
     var ground = new THREE.Mesh(
       new THREE.PlaneGeometry(W + 900, H + 900),
-      new THREE.MeshLambertMaterial({ color: 0x494741, emissive: 0x232219, emissiveIntensity: 0.85 })
+      // Contract map palette: ground reads as #17171c (the .map-outer base).
+      // The emissive follows it cool — the old 0x232219 was the retired warm grey.
+      new THREE.MeshLambertMaterial({ color: 0x17171c, emissive: 0x111116, emissiveIntensity: 0.85 })
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.5;
@@ -283,18 +285,19 @@ var Map3D = (function () {
     }
     var tracked = [];
     data.labels.forEach(function (l) {
-      var op = l.op != null ? l.op : 0.55;
+      // District ink matches the 2D map: solid --ghost (#55555f), no alpha dim
+      // (contract bans opacity below 1 on content) and no text-shadow (the one
+      // sanctioned shadow is --modal-shadow).
       var el = mkLabel(l.t.toUpperCase(),
         'font:400 ' + Math.round((l.size || 20) * 0.85) + 'px Anton,sans-serif;' +
-        'letter-spacing:2px;color:rgba(169,177,189,' + (op * 0.9).toFixed(2) + ');' +
-        'text-shadow:0 1px 6px rgba(0,0,0,0.85);');
+        'letter-spacing:2px;color:#55555f;');
       tracked.push({ el: el, v: new THREE.Vector3(X(l.x), 5, Z(l.y)), dy: 0, cx: true });
     });
     data.pins.forEach(function (p) {
       var el = mkLabel(
-        '<div style="font:400 9px Anton,sans-serif;letter-spacing:1px;color:' + p.color + '">' +
+        '<div style="font:400 12px Anton,sans-serif;letter-spacing:1px;color:' + p.color + '">' +
           p.label + '</div>' +
-        (p.sub ? '<div style="font:400 8px \'Space Grotesk\',sans-serif;color:#8e8e9a;margin-top:1px">' +
+        (p.sub ? '<div style="font:400 10px \'Space Grotesk\',sans-serif;color:#8e8e9a;margin-top:1px">' +
           p.sub + '</div>' : ''),
         'background:rgba(17,17,22,0.9);border:1px solid #26262e;' +
         'border-radius:999px;padding:4px 9px;'

@@ -89,7 +89,7 @@ const Sound = (() => {
 
   // Wire click sound to all buttons globally
   document.addEventListener('pointerdown', (e) => {
-    if (e.target && e.target.closest && e.target.closest('button, .attack-btn, .do-job-btn, .nav-item')) {
+    if (e.target && e.target.closest && e.target.closest('button, .attack-btn, .do-job-btn')) {
       click();
     }
   });
