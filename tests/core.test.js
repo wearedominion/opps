@@ -46,7 +46,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 // loosening value comparison.
 const plain = o => JSON.parse(JSON.stringify(o));
 
-console.log('\nsave migration — full chain v1 -> v4');
+console.log('\nsave migration — full chain v1 -> v5');
 
 test('fixture migrates to the current schema version', () => {
   const { save, upgraded, fromFuture } = migrate(clone(FIXTURE));
@@ -55,14 +55,16 @@ test('fixture migrates to the current schema version', () => {
   assert.strictEqual(fromFuture, false);
 });
 
-test('golden: a v1 fixture migrates all the way to the exact expected v4 save', () => {
+test('golden: a v1 fixture migrates all the way to the exact expected v5 save', () => {
   const save = plain(migrate(clone(FIXTURE)).save);
   // v1 -> v2: level 5 under the v1 curve had cleared 100+160+256+409 = 925,
   //           plus xp remainder 200 plus rep 340 = 1465 clout.
   // v2 -> v3: money -> cash, and the three pools collapse to {current, max, lastTick}.
   // v3 -> v4: inventory array -> per-instance {level, duplicates} map.
+  // v4 -> v5: gear un-banks (knife −5 ATK, vest −10 DEF), the loadout seeds
+  //           the best owned item per type, `equipped` (placeholder) dies.
   assert.deepStrictEqual(save, {
-    schemaVersion: 4,
+    schemaVersion: 5,
     level: 5,
     clout: 1465,
     levelGranted: 5,
@@ -70,8 +72,10 @@ test('golden: a v1 fixture migrates all the way to the exact expected v4 save', 
     moves:   { current: 7,   max: 18,  lastTick: 1757000000000 },
     stamina: { current: 8,   max: 10,  lastTick: 0 },
     health:  { current: 130, max: 160, lastTick: 0 },
-    attack: 22, defense: 13,
-    inventory: { knife: { level: 0, duplicates: 0 }, vest: { level: 0, duplicates: 0 } },
+    attack: 17, defense: 3,
+    inventory: { knife: { level: 0, duplicates: 0, src: 'bought' },
+                 vest:  { level: 0, duplicates: 0, src: 'bought' } },
+    loadout: { weapon: ['knife'], armor: ['vest'] },
     properties: { corner: 2 },
     jobProgress: { lookout: 10, runner: 4 },
     playerId: 'p_test_0001',
@@ -82,14 +86,13 @@ test('golden: a v1 fixture migrates all the way to the exact expected v4 save', 
     lieutenantsRewarded: 3,
     recruitedBy: null,
     skillPts: 5,
-    equipped: { weapon: 'knife' },
   });
 });
 
-test('golden: a v2 fixture produces the exact expected v4 save', () => {
+test('golden: a v2 fixture produces the exact expected v5 save', () => {
   const save = plain(migrate(clone(FIXTURE_V2)).save);
   assert.deepStrictEqual(save, {
-    schemaVersion: 4,
+    schemaVersion: 5,
     level: 11,
     clout: 1465,
     levelGranted: 11,
@@ -97,9 +100,13 @@ test('golden: a v2 fixture produces the exact expected v4 save', () => {
     moves:   { current: 4,  max: 22,  lastTick: 1757199000000 },
     stamina: { current: 2,  max: 6,   lastTick: 0 },
     health:  { current: 90, max: 205, lastTick: 0 },
-    attack: 40, defense: 25,
-    inventory: { knife: { level: 0, duplicates: 0 }, vest: { level: 0, duplicates: 0 },
-                 glock: { level: 0, duplicates: 0 } },
+    // v5 un-banks knife+glock (−20 ATK) and vest (−10 DEF); the loadout takes
+    // the best weapon (glock 15 > knife 5) and the only armor.
+    attack: 20, defense: 15,
+    inventory: { knife: { level: 0, duplicates: 0, src: 'bought' },
+                 vest:  { level: 0, duplicates: 0, src: 'bought' },
+                 glock: { level: 0, duplicates: 0, src: 'bought' } },
+    loadout: { weapon: ['glock'], armor: ['vest'] },
     properties: { corner: 3 },
     jobProgress: { lookout: 10, runner: 8 },
     playerId: 'p_test_0002',
@@ -108,27 +115,33 @@ test('golden: a v2 fixture produces the exact expected v4 save', () => {
     lieutenantsRewarded: 5,
     recruitedBy: null,
     skillPts: 35,
-    equipped: { weapon: 'glock' },
   });
 });
 
-test('golden: a v3 fixture produces the exact expected v4 save', () => {
+test('golden: a v3 fixture produces the exact expected v5 save', () => {
   const save = plain(migrate(clone(FIXTURE_V3)).save);
   const expected = clone(FIXTURE_V3);
-  expected.schemaVersion = 4;
-  // The ONLY change v3 -> v4 makes: every owned id becomes a fresh instance.
+  expected.schemaVersion = 5;
+  // v3 -> v4: every owned id becomes a fresh instance (v5 stamps src).
   expected.inventory = {
-    knife: { level: 0, duplicates: 0 }, vest:  { level: 0, duplicates: 0 },
-    glock: { level: 0, duplicates: 0 }, bando: { level: 0, duplicates: 0 },
-    mac11: { level: 0, duplicates: 0 },
+    knife: { level: 0, duplicates: 0, src: 'bought' }, vest:  { level: 0, duplicates: 0, src: 'bought' },
+    glock: { level: 0, duplicates: 0, src: 'bought' }, bando: { level: 0, duplicates: 0, src: 'bought' },
+    mac11: { level: 0, duplicates: 0, src: 'bought' },
   };
+  // v4 -> v5 un-banks the shipped stats: knife+glock −20 ATK, vest+bando
+  // −30 DEF, bando −10 max HP (mac11 shipped 0/0/0 under the stat-ratio bug).
+  expected.attack = 88 - 20;
+  expected.defense = 61 - 30;
+  expected.health.max = 240 - 10;
+  expected.loadout = { weapon: ['glock'], armor: ['vest'], utility: ['bando'] };
+  delete expected.equipped;
   assert.deepStrictEqual(save, expected);
 });
 
 test('v3 -> v4: an empty inventory array becomes an empty map', () => {
   const { save } = migrate({ schemaVersion: 3, level: 1, clout: 0, inventory: [] });
   assert.deepStrictEqual(plain(save.inventory), {});
-  assert.strictEqual(save.schemaVersion, 4);
+  assert.strictEqual(save.schemaVersion, SCHEMA_VERSION);
 });
 
 test('v3 -> v4: a junk inventory becomes empty rather than crashing the chain', () => {
@@ -679,13 +692,19 @@ const FIGHT_CFG = {
   firstStrikeEdge: tune('combat.firstStrikeEdge', TUNE),
   baseHp: tune('start.health', TUNE),
 };
-// The generator's expected-loadout formula, mirrored: start stats + every
-// item at or below the band, upgrades at level 0.
+// The generator's expected-loadout formula, mirrored (DOM-75): start stats +
+// the best item PER TYPE at or below the band, upgrades at level 0 — the
+// zero-crew one-slot-per-type baseline the enemies are solved against.
 function loadoutAt(band) {
-  const owned = STORE_DATA.filter(i => i.levelReq <= band);
+  const best = {};
+  for (const i of STORE_DATA) {
+    if (i.levelReq > band) continue;
+    if (!best[i.type] || i.atk + i.def > best[i.type].atk + best[i.type].def) best[i.type] = i;
+  }
+  const picks = Object.keys(best).map(t => best[t]);
   return {
-    atk: tune('start.attack', TUNE) + owned.reduce((s, i) => s + i.atk, 0),
-    def: tune('start.defense', TUNE) + owned.reduce((s, i) => s + i.def, 0),
+    atk: tune('start.attack', TUNE) + picks.reduce((s, i) => s + i.atk, 0),
+    def: tune('start.defense', TUNE) + picks.reduce((s, i) => s + i.def, 0),
     hp: tune('start.health', TUNE),
   };
 }
@@ -803,6 +822,162 @@ test('stamina regen continues while hospitalized; only health pauses (open decis
   assert.strictEqual(regenPool('stamina', T0 + 3 * MIN), 1, 'stamina paused');
   assert.strictEqual(regenPool('moves', T0 + 5 * MIN), 1, 'moves paused');
   assert.strictEqual(regenPool('health', T0 + 3 * MIN), 0, 'health regenned in the Hospital');
+});
+
+console.log('\nCrew, capacity & loadout — DOM-75 locked rules');
+
+// state.js in a vm with real tuning + the live catalog: the loadout layer under test.
+function loadLoadout(over) {
+  const ctx = {
+    console, JSON, Object, Math, Date,
+    tune: p => tune(p, TUNE),
+    STORE_ITEMS: STORE_DATA,
+  };
+  ctx.globalThis = ctx;
+  const src = fs.readFileSync(path.join(ROOT, 'js/state.js'), 'utf8')
+    + '\n;globalThis.__s = { G, slotCapacity, gearItemStats, fieldedGear, fieldedStats,'
+    + ' effAttack, effDefense, autoFieldGear, grantGear };';
+  vm.runInNewContext(src, ctx);
+  const S = ctx.__s;
+  Object.assign(S.G, over || {});
+  return S;
+}
+
+test('the crew knobs are the ratified rule: 5 per slot, weapon→armor→vehicle, cap +3', () => {
+  assert.strictEqual(tune('crew.lieutenantsPerSlot', TUNE), 5);
+  assert.deepStrictEqual(tune('crew.slotRotation', TUNE), ['weapon', 'armor', 'vehicle']);
+  assert.strictEqual(tune('crew.maxBonusSlotsPerType', TUNE), 3);
+  assert.strictEqual(tune('crew.cloutPerRecruit', TUNE), 250);
+});
+
+test('the flat per-Lieutenant ATK/DEF bonus is retired (ratified 2026-09-13)', () => {
+  assert.ok(!('attackPerLieutenant' in TUNE.crew) && !('defensePerLieutenant' in TUNE.crew),
+    'the unbounded stat faucet is back');
+  const crewSrc = fs.readFileSync(path.join(ROOT, 'js/crew.js'), 'utf8');
+  assert.ok(!/getBonus/.test(crewSrc), 'crew.js still carries the stat bonus');
+});
+
+test('slot capacity: 1 per type base, +1 per 5 Lieutenants round-robin, capped at +3', () => {
+  const capAt = (n, type) => loadLoadout({ crewMemberCount: n }).slotCapacity(type);
+  assert.deepStrictEqual([0, 5, 10, 15, 20, 45, 200].map(n => capAt(n, 'weapon')),
+    [1, 2, 2, 2, 3, 4, 4]);
+  assert.deepStrictEqual([0, 5, 10, 15, 25, 45].map(n => capAt(n, 'armor')),
+    [1, 1, 2, 2, 3, 4]);
+  assert.deepStrictEqual([0, 10, 15, 30, 45].map(n => capAt(n, 'vehicle')),
+    [1, 1, 2, 3, 4]);
+  // utility sits outside the rotation: always the base slot
+  assert.deepStrictEqual([0, 45, 500].map(n => capAt(n, 'utility')), [1, 1, 1]);
+});
+
+test('combat stats derive from the fielded loadout — owning is not fielding', () => {
+  const S = loadLoadout({
+    attack: 10, defense: 5, crewMemberCount: 0,
+    inventory: { glock: { level: 0, duplicates: 0, src: 'bought' },
+                 knife: { level: 12, duplicates: 0, src: 'bought' },
+                 vest:  { level: 0, duplicates: 0, src: 'bought' } },
+    loadout: { weapon: ['glock'] },
+  });
+  const glock = STORE_DATA.find(i => i.id === 'glock');
+  assert.strictEqual(S.effAttack(), 10 + glock.atk, 'only the fielded weapon counts');
+  assert.strictEqual(S.effDefense(), 5, 'owned-but-benched vest adds nothing');
+});
+
+test('upgrade gains derive per instance, capped at the stat cap', () => {
+  const S = loadLoadout({});
+  const knife = STORE_DATA.find(i => i.id === 'knife');
+  const st = S.gearItemStats(knife, { level: 12 });
+  const cap = tune('gear.statCapLevel', TUNE);
+  const gain = tune('gear.statGainPerLevel', TUNE);
+  assert.strictEqual(st.atk, knife.atk + cap * gain.attack, 'level 12 pays like level 10');
+  assert.strictEqual(st.def, knife.def + cap * gain.defense);
+});
+
+test('capacity gates the loadout: a second weapon only counts with the Crew slot', () => {
+  const base = {
+    attack: 10, defense: 5,
+    inventory: { glock: { level: 0, duplicates: 0, src: 'bought' },
+                 knife: { level: 0, duplicates: 0, src: 'bought' } },
+    loadout: { weapon: ['glock', 'knife'] },
+  };
+  const glock = STORE_DATA.find(i => i.id === 'glock');
+  const knife = STORE_DATA.find(i => i.id === 'knife');
+  const solo = loadLoadout(Object.assign({ crewMemberCount: 0 }, JSON.parse(JSON.stringify(base))));
+  assert.strictEqual(solo.effAttack(), 10 + glock.atk, 'over-capacity secondary leaked into combat');
+  const crewed = loadLoadout(Object.assign({ crewMemberCount: 5 }, JSON.parse(JSON.stringify(base))));
+  assert.strictEqual(crewed.effAttack(), 10 + glock.atk + knife.atk, '5 Lieutenants = the weapon slot');
+});
+
+test('autoFieldGear fills an open slot and refuses when the type is full', () => {
+  const S = loadLoadout({
+    crewMemberCount: 0,
+    inventory: { glock: { level: 0, duplicates: 0, src: 'bought' },
+                 knife: { level: 0, duplicates: 0, src: 'bought' } },
+    loadout: {},
+  });
+  assert.strictEqual(S.autoFieldGear('glock'), true);
+  assert.strictEqual(S.autoFieldGear('glock'), true, 'already fielded reports success');
+  assert.strictEqual(S.autoFieldGear('knife'), false, 'no free weapon slot at zero crew');
+  assert.deepStrictEqual(plain(S.G.loadout.weapon), ['glock']);
+});
+
+test('nothing banks gear stats any more (code shape)', () => {
+  const storeSrc = fs.readFileSync(path.join(ROOT, 'js/store.js'), 'utf8');
+  assert.ok(!/G\.(attack|defense)\s*\+=/.test(storeSrc), 'store.js banks stats');
+  assert.ok(!/G\.health\.max\s*\+=/.test(storeSrc), 'store.js banks max HP');
+  const combatSrc = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+  assert.ok(/atk:\s*effAttack\(\),\s*def:\s*effDefense\(\)/.test(combatSrc),
+    'combat does not read the derived stats');
+});
+
+test('the combat snapshot freezes stats + loadout with CP = A × (H + D) at fight entry', () => {
+  const combatSrc = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+  const writes = combatSrc.match(/G\.combatSnapshot\s*=/g) || [];
+  assert.strictEqual(writes.length, 1, 'exactly one snapshot write, at entry');
+  assert.ok(combatSrc.indexOf('G.combatSnapshot') < combatSrc.indexOf('function hitEm'),
+    'snapshot is written at entry, not mid-fight');
+  assert.ok(/cp:\s*pf\.atk\s*\*\s*\(pf\.hp\s*\+\s*pf\.def\)/.test(combatSrc), 'the CP proxy formula');
+});
+
+test('acquisition source lands on the instance: bought vs dropped', () => {
+  const storeSrc = fs.readFileSync(path.join(ROOT, 'js/store.js'), 'utf8');
+  const jobsSrc = fs.readFileSync(path.join(ROOT, 'js/jobs.js'), 'utf8');
+  assert.ok(/grantGear\([^)]+,\s*'bought'\)/.test(storeSrc), 'purchases are not tagged');
+  assert.ok(/grantGear\([^)]+,\s*'dropped'\)/.test(jobsSrc), 'drops are not tagged');
+});
+
+test('the catalog has real stats and no HP items (stat-ratio fix + bando fold)', () => {
+  assert.ok(STORE_DATA.every(i => i.hp === 0), 'fielded-gear HP has no pool plumbing');
+  const ladder = STORE_DATA.filter(i => i.levelReq >= 10);
+  assert.ok(ladder.every(i => i.atk + i.def > 0),
+    'the zero-stat gear ladder is back (gen-catalog STAT_RATIO_PER_10)');
+});
+
+test('the public Profile exposes the loadout, never raw stats (DOM-75 acceptance)', () => {
+  const profileSrc = fs.readFileSync(path.join(ROOT, 'js/profile.js'), 'utf8');
+  const fn = profileSrc.match(/function pfPublicProjection[\s\S]*?\n\}/);
+  assert.ok(fn, 'pfPublicProjection not found');
+  const ctx = {
+    console, JSON, Object, Math,
+    STORE_ITEMS: STORE_DATA,
+    tune: p => tune(p, TUNE),
+    rankForLevel: () => 'SOLDIER',
+    G: {},
+  };
+  ctx.globalThis = ctx;
+  vm.runInNewContext(fn[0]
+    + '\nfunction pfFindItem(id){return STORE_ITEMS.find(i=>i.id===id)||null;}'
+    + '\nfunction pfTierLabel(it){const t=it.tier||1;return t<=4?"COMMON":t<=8?"RARE":t<=12?"ELITE":"LEGEND";}'
+    + '\nglobalThis.__proj = pfPublicProjection;', ctx);
+  const pub = ctx.__proj({
+    handle: 'OPP', level: 12, clout: 5000,
+    attack: 40, defense: 30, cash: 99999, skillPts: 9,
+    health: { current: 10, max: 100 },
+    inventory: { glock: { level: 3, duplicates: 0, src: 'bought' } },
+    loadout: { weapon: ['glock'] },
+    combatSnapshot: { cp: 123456 },
+  });
+  assert.deepStrictEqual(Object.keys(pub).sort(), ['clout', 'gear', 'handle', 'level', 'rank']);
+  assert.deepStrictEqual(plain(pub.gear), [{ type: 'weapon', slot: 0, name: 'Glock 19', tier: 'COMMON', level: 3 }]);
 });
 
 console.log('\nMonetization — DOM-76 v1 SKUs');

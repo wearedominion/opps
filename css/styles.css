@@ -1550,11 +1550,8 @@ img.plug-portrait {
 
 /* ── 4. GEAR tab ── */
 .pf-gear { display: flex; flex-direction: column; gap: 13px; }
-.pf-doll {
-  display: grid; grid-template-columns: 1fr 84px 1fr;
-  grid-template-rows: auto auto auto; gap: 8px; align-items: center;
-}
-.pf-figure { grid-area: 1 / 2 / 4 / 3; display: flex; align-items: center; justify-content: center; }
+.pf-typerow { display: flex; flex-direction: column; gap: 0; }
+.pf-slots-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .pf-slot {
   border: 1px solid var(--border); border-radius: 14px; background: var(--panel-fill);
   padding: 11px 13px; cursor: pointer; transition: border-color .16s;
@@ -1562,6 +1559,10 @@ img.plug-portrait {
 }
 .pf-slot:hover { border-color: var(--border-gold); }
 .pf-slot.empty { border-style: dashed; border-color: var(--border-ctrl); }
+.pf-slot.primary { border-color: var(--border-gold); }
+/* locked slots state the gate at full contrast (contract: never dim) */
+.pf-slot.locked { background: #141419; border: 1px solid #22222a; cursor: default; }
+.pf-slot.locked .pf-slot-buff { color: var(--disabled); }
 .pf-slot-label {
   font-family: var(--ui); font-size: 10px;
   letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
@@ -1580,20 +1581,6 @@ img.plug-portrait {
   margin-top: 2px; font-family: var(--ui); font-size: 10px;
   color: var(--faint); line-height: 1.3;
 }
-.pf-gearpow {
-  grid-area: 3 / 3; border: 1px solid var(--border-gold); border-radius: 14px;
-  background: var(--panel-fill); padding: 11px 13px;
-}
-.pf-gearpow-val {
-  margin-top: 2px; font-family: var(--ui); font-weight: 500;
-  font-size: 17px; color: var(--chrome); line-height: 1.15;
-}
-.pf-gearpow-sub {
-  font-family: var(--ui); font-size: 10px;
-  letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
-}
-.pf-off { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
 .pf-sec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .pf-sec-head h4 {
   margin: 0; font-family: var(--display);

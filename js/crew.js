@@ -61,11 +61,18 @@ const Crew = {
     });
   },
 
-  getBonus() {
-    return {
-      attack: this._memberCount * tune('crew.attackPerLieutenant'),
-      defense: this._memberCount * tune('crew.defensePerLieutenant'),
-    };
+  // Crew's power is gear slots (DOM-75): the flat per-Lieutenant ATK/DEF bonus
+  // is retired (ratified 2026-09-13) — an unbounded stat faucet double-dipped
+  // on the capacity reward and broke the power ceiling.
+  //
+  // Progress toward the next slot grant. Returns null once every rotation type
+  // sits at the bonus cap — recruiting past the ceiling still pays Clout.
+  nextSlot() {
+    const per = tune('crew.lieutenantsPerSlot');
+    const rot = tune('crew.slotRotation');
+    const grants = Math.floor(this._memberCount / per);
+    if (grants >= rot.length * tune('crew.maxBonusSlotsPerType')) return null;
+    return { type: rot[grants % rot.length], need: (grants + 1) * per - this._memberCount };
   },
 
   getCount() {
@@ -75,7 +82,9 @@ const Crew = {
 
 function renderCrew() {
   const count = Crew.getCount();
-  const bonus = Crew.getBonus();
+  const rot = tune('crew.slotRotation');
+  const slots = rot.reduce((s, t) => s + slotCapacity(t) - 1, 0); // Crew-earned only
+  const next = Crew.nextSlot();
   const pc = (typeof Auth !== 'undefined') ? Auth.copy() : {};
   const isGuest = typeof Auth !== 'undefined' && Auth.canPrompt();
 
@@ -96,17 +105,17 @@ function renderCrew() {
           <div class="crew-stat-label">SOLDIERS</div>
         </div>
         <div class="crew-stat">
-          <div class="crew-stat-val">+${bonus.attack}</div>
-          <div class="crew-stat-label">CREW ATK</div>
+          <div class="crew-stat-val">+${slots}</div>
+          <div class="crew-stat-label">GEAR SLOTS</div>
         </div>
         <div class="crew-stat">
-          <div class="crew-stat-val">+${bonus.defense}</div>
-          <div class="crew-stat-label">CREW DEF</div>
+          <div class="crew-stat-val">${next ? next.need : 'MAX'}</div>
+          <div class="crew-stat-label">${next ? 'TO NEXT ' + next.type.toUpperCase() + ' SLOT' : 'SLOTS EARNED'}</div>
         </div>
       </div>
       ${count === 0
         ? `<p class="crew-empty">No soldiers yet. Send the link, build the team.</p>`
-        : `<p class="crew-active">Your ${count} soldier${count > 1 ? 's' : ''} boost your stats in every fight.</p>`
+        : `<p class="crew-active">Your ${count} soldier${count > 1 ? 's' : ''} let you field more gear in every fight.</p>`
       }
       <button class="crew-invite-btn" onclick="Crew.invite()">SEND THE LINK</button>
       <button class="crew-refresh-btn" onclick="crewRefresh()">REFRESH CREW</button>
@@ -122,9 +131,10 @@ function renderCrew() {
     <div class="card">
       <div class="card-title">HOW IT WORKS</div>
       <div class="crew-rules">
-        <div>+${tune('crew.attackPerLieutenant')} ATK per crew member</div>
-        <div>+${tune('crew.defensePerLieutenant')} DEF per crew member</div>
-        <div>Bonuses apply to every fight</div>
+        <div>Cash buys gear. Crew earns the right to carry it.</div>
+        <div>Every ${tune('crew.lieutenantsPerSlot')} soldiers: +1 gear slot — ${rot.join(', then ')}</div>
+        <div>Up to +${tune('crew.maxBonusSlotsPerType')} extra slots per type</div>
+        <div>+${tune('crew.cloutPerRecruit')} Clout per recruit, no limit</div>
       </div>
     </div>
   `;

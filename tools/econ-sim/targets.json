@@ -40,10 +40,13 @@
   "newPlayerOfflineCapHours": 1.0,
 
   "playerProfiles": {
-    "_comment": "Share of daily pool regen actually spent. Committed ~= plays every session to empty pools; casual logs in twice and leaves regen on the table; grinder is the ceiling case for exploit math.",
+    "_comment": "Share of daily pool regen actually spent. Committed ~= plays every session to empty pools; casual logs in twice and leaves regen on the table; grinder is the ceiling case for exploit math. Spender profiles are committed usage plus a weekly boost budget (usdPerWeek), spent daily on the best Clout-per-dollar SKU path — the headroom check that paid pacing relief cannot shortcut the curve.",
     "casual":    { "movesUse": 0.40, "staminaUse": 0.20 },
     "committed": { "movesUse": 0.90, "staminaUse": 0.60 },
-    "grinder":   { "movesUse": 1.00, "staminaUse": 1.00 }
+    "grinder":   { "movesUse": 1.00, "staminaUse": 1.00 },
+    "spender3":  { "movesUse": 0.90, "staminaUse": 0.60, "usdPerWeek": 3 },
+    "spender10": { "movesUse": 0.90, "staminaUse": 0.60, "usdPerWeek": 10 },
+    "spender50": { "movesUse": 0.90, "staminaUse": 0.60, "usdPerWeek": 50 }
   },
 
   "assumptions": {
