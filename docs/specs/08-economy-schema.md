@@ -476,14 +476,15 @@ save migration in §5.2. All DOM-65 or later.
 
 ## 7. Tests
 
-`node tests/migration.test.js` — golden-file test for the v1 → v2 save migration and the
-Clout → level derivation, required by [`04-game-data-spec.md`](./04-game-data-spec.md) §7.4.
-24 assertions: the exact migrated save, deterministic re-runs, the from-future guard, every one of
-the 120 level boundaries, cap behaviour, the missing-table case, and every rank-band boundary.
+`node tests/core.test.js` (formerly `tests/migration.test.js`) — the repo's regression suite,
+required by [`04-game-data-spec.md`](./04-game-data-spec.md) §7.4. It began as the golden-file
+test for the save migration chain and now also pins the Clout → level derivation, tuning access,
+curve evaluation, unlock gates, the ledger, the regen engine, the Moves/Stamina pool contracts,
+fight math, monetization SKUs, and rank bands.
 
 There is no test runner in the repo yet, so it is a plain Node script that exits non-zero on
-failure. Move it into a runner when one is adopted; do not let a migration ship without its
-golden test in the meantime.
+failure. It runs in CI on every push and pull request to `main`
+(`.github/workflows/tests.yml`); run it locally before committing as well.
 
 ---
 
