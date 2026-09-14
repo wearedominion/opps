@@ -31,6 +31,10 @@ const PROGRESSION = readJSON('data/progression.json').levels;
 const JOBS        = readJSON('data/jobs.json');
 const ENEMIES     = readJSON('data/enemies.json');
 const STORE       = readJSON('data/store.json');
+// Cash-sink math reads BUYABLE only (DOM-18): blue+ rarities are drop-only,
+// so they are never a purchase sink — their notional value is drop upside,
+// quantified in dropReport(), never silently mixed into the circuit.
+const BUYABLE     = STORE.filter(i => !i.dropOnly);
 const PROPERTIES  = readJSON('data/properties.json');
 const UNLOCKS     = readJSON('data/unlocks.json');
 const IAP         = readJSON('data/monetization.json');
@@ -104,7 +108,7 @@ function sustainableFightsPerHour(p) {
 }
 
 const SPOT_COST_ALL   = PROPERTIES.reduce((s, pr) => s + pr.price, 0);
-const GEAR_COST_ALL   = STORE.reduce((s, i) => s + i.price, 0);
+const GEAR_COST_ALL   = BUYABLE.reduce((s, i) => s + i.price, 0);
 
 // Spots (DOM-74): per-hour accrual clamped by the level-gated offline cap.
 // A day's spot income is capped by how often the player empties the bank —
@@ -199,7 +203,7 @@ function simulateProgression(profile, horizonDays) {
 // set (DOM-73: hours × best-job $/h at the gate) — so the column reads as a
 // check on the pricing rule, not on late-game trivialization.
 function gearAffordability(L) {
-  return STORE.filter(i => (i.levelReq || 1) <= L).map(i => {
+  return BUYABLE.filter(i => (i.levelReq || 1) <= L).map(i => {
     const gate = i.levelReq || 1;
     return {
       id: i.id, price: i.price, levelReq: gate,
@@ -223,7 +227,7 @@ function upgradeSink(ratioOverride) {
   const committedShare = TARGETS.playerProfiles.committed.movesUse;
 
   const bands = [10, 50, MAX_LEVEL_BAND].map(L => {
-    const kit = STORE.filter(i => (i.levelReq || 1) === L && i.upgradeable);
+    const kit = BUYABLE.filter(i => (i.levelReq || 1) === L && i.upgradeable);
     const kitPrice = kit.reduce((s, i) => s + i.price, 0);
     const dayIncome = ratesAtLevel(L, 0).jobCashPerHour * 24 * committedShare;
     return {
@@ -287,12 +291,55 @@ function questReport() {
   };
 }
 
+// ── Rarity drops (DOM-18) ────────────────────────────────────────────────────
+// Every job completion and fight win makes one roll: a proc gate then the
+// rarity ladder rarest-first, both tuning knobs. Own-once keeps the faucet
+// finite — this report prices the pacing (how often each tier lands for the
+// committed player) and the total notional value sitting behind the lottery.
+function dropReport() {
+  const proc = T('drops.procChance');
+  const odds = T('drops.rarityChance');
+  const order = ['mythic', 'orange', 'purple', 'blue', 'green', 'grey'];
+  for (const i of STORE) {
+    if (!(i.rarity in odds)) {
+      throw new Error('item ' + i.id + ' rarity "' + i.rarity + '" has no drop odds in tuning');
+    }
+  }
+  const perAction = {};
+  let miss = 1;
+  for (const r of order) { perAction[r] = proc * miss * (odds[r] || 0); miss *= 1 - (odds[r] || 0); }
+  const committed = TARGETS.playerProfiles.committed;
+  const bands = [10, 50, MAX_LEVEL_BAND].map(L => {
+    const jc = bestJob(L, cloutPerMove);
+    const jobsPerDay = MOVES_PER_HOUR * 24 * committed.movesUse / jc.moves;
+    const winsPerDay = sustainableFightsPerHour(p0).effective * 24 * committed.staminaUse * p0;
+    const actionsPerDay = jobsPerDay + winsPerDay;
+    return {
+      band: L,
+      actionsPerDay,
+      greensPerDay: actionsPerDay * perAction.green,
+      daysPerBlue: 1 / (actionsPerDay * perAction.blue),
+      daysPerPurple: 1 / (actionsPerDay * perAction.purple),
+    };
+  });
+  const counts = {};
+  for (const i of STORE) counts[i.rarity] = (counts[i.rarity] || 0) + 1;
+  const dropOnly = STORE.filter(i => i.dropOnly);
+  return {
+    procChance: proc, rarityChance: odds, perAction, counts,
+    dropOnlyItems: dropOnly.length,
+    dropOnlyValue: dropOnly.reduce((s, i) => s + i.price, 0),
+    buyableItems: BUYABLE.length,
+    bands,
+  };
+}
+
 function moneyCircuit() {
   const committed = TARGETS.playerProfiles.committed;
   const curve = T('gear.upgradeCost');
   const cumTo5 = Array.from({ length: 5 }, (_, i) => curve.base * Math.pow(curve.ratio, i))
     .reduce((a, b) => a + b, 0);
-  const gates = [...new Set(STORE.map(i => i.levelReq || 1))].sort((a, b) => a - b);
+  const gates = [...new Set(BUYABLE.map(i => i.levelReq || 1))].sort((a, b) => a - b);
   return [1, 10, 50, MAX_LEVEL].map(L => {
     const gate = gates.filter(g => g <= L).pop();
     const r = ratesAtLevel(L, 0);
@@ -306,7 +353,7 @@ function moneyCircuit() {
       spotsPerDay: r.spotCashPerDayIntended,
       fightWinsPerDay: p0 * mean(e.reward.cash) * fightsPerDay, // empty-wallet bound
     };
-    const kit = STORE.filter(i => (i.levelReq || 1) === gate);
+    const kit = BUYABLE.filter(i => (i.levelReq || 1) === gate);
     const kitPrice = kit.reduce((s, i) => s + i.price, 0);
     const spot = PROPERTIES.find(p => (p.levelReq || 1) === gate);
     const sinks = {
@@ -478,14 +525,14 @@ function evFreeEarnAt(L) {
 function evCostOfGame() {
   const capLv = T('gear.statCapLevel');
   const upgCurve = T('gear.upgradeCost');
-  const upgrades = STORE.reduce((s, i) => {
+  const upgrades = BUYABLE.reduce((s, i) => {
     let c = 0;
     for (let k = 1; k <= capLv; k++) c += evalCurve(upgCurve, k, i.price);
     return s + c;
   }, 0);
   const rows = [
-    { vertical: 'Gear catalog (' + STORE.length + ' items)', cash: GEAR_COST_ALL },
-    { vertical: 'Gear upgrades to the stat cap (LV ' + capLv + ' × ' + STORE.length + ')', cash: upgrades },
+    { vertical: 'Gear catalog (' + BUYABLE.length + ' buyable of ' + STORE.length + ' items)', cash: GEAR_COST_ALL },
+    { vertical: 'Gear upgrades to the stat cap (LV ' + capLv + ' × ' + BUYABLE.length + ')', cash: upgrades },
     { vertical: 'Spots ladder (' + PROPERTIES.length + ' spots)', cash: SPOT_COST_ALL },
   ];
   rows.push({ vertical: 'TOTAL', cash: rows.reduce((s, r) => s + r.cash, 0) });
@@ -788,6 +835,21 @@ function run() {
     + (qr.cloutShareOfCurve * 100).toFixed(4) + '% of the lifetime curve) — max bonus '
     + qr.maxHours + 'h vs the ' + TARGETS.breakEven.hoursOfJobIncome + 'h break-even anchor.');
 
+  say('\n■ D. Rarity drops (DOM-18) — one roll per job/fight win; own-once keeps the faucet finite.');
+  const dr = dropReport();
+  const pc = v => String(parseFloat((v * 100).toFixed(4)));
+  say('    Proc ' + pc(dr.procChance) + '%/action; ladder/proc: grey '
+    + pc(dr.rarityChance.grey) + '% · green ' + pc(dr.rarityChance.green)
+    + '% · blue ' + pc(dr.rarityChance.blue) + '% · purple ' + pc(dr.rarityChance.purple)
+    + '% · orange ' + pc(dr.rarityChance.orange) + '% (reserved) · mythic reserved.');
+  say('    Catalog: ' + dr.buyableItems + ' buyable (grey/green) + ' + dr.dropOnlyItems
+    + ' drop-only (blue/purple/orange, $' + fmt(dr.dropOnlyValue) + ' notional — never a purchase sink).');
+  dr.bands.forEach(b => {
+    say('    L' + pad(String(b.band), 3) + ' committed ~' + Math.round(b.actionsPerDay)
+      + ' actions/day → greens ' + b.greensPerDay.toFixed(2) + '/day · a blue every '
+      + b.daysPerBlue.toFixed(1) + 'd · a purple every ' + Math.round(b.daysPerPurple) + 'd');
+  });
+
   // ── outputs ────────────────────────────────────────────────────────────────
   const outDir = path.join(__dirname, 'out');
   fs.mkdirSync(outDir, { recursive: true });
@@ -817,6 +879,7 @@ function run() {
     upgradeSink: upgradeSink(),
     moneyCircuit: moneyCircuit(),
     quests: questReport(),
+    drops: dropReport(),
     ev,
     targets: TARGETS,
   };
@@ -968,6 +1031,12 @@ function buildHtml(json, outDir) {
     F6_CAP: String(T('crew.maxBonusSlotsPerType')),
     F6_MAX_LT: String(T('crew.lieutenantsPerSlot') * T('crew.slotRotation').length
       * T('crew.maxBonusSlotsPerType')),
+    F8_PROC: String(Math.round(json.drops.procChance * 100)) + '%',
+    F8_BUYABLE: String(json.drops.buyableItems),
+    F8_DROPONLY: String(json.drops.dropOnlyItems),
+    F8_GREENS_DAY: json.drops.bands[1].greensPerDay.toFixed(1),
+    F8_DAYS_BLUE: String(Math.round(json.drops.bands[1].daysPerBlue)),
+    F8_DAYS_PURPLE: String(Math.round(json.drops.bands[1].daysPerPurple)),
     UPG_RATIO: String(json.upgradeSink.ratio),
     UPG_NEXT_LV: String(json.upgradeSink.statCapLevel + 1),
     UPG_NEXT_DAYS: fmt(json.upgradeSink.prestige[0].daysOfMaxedIncome),

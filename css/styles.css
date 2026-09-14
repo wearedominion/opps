@@ -38,6 +38,16 @@
   --green:      #4fd39a;  /* health, income, drop pins */
   --xp:         #6f8cff;  /* XP meter only */
 
+  /* rarity (DOM-18, CLAUDE.md "Rarity") — item NAME ink + 1px border tint,
+     never a card fill, never a glow, never chrome-clipped. Mythic is
+     reserved: tokens ship, no v1 item or drop odds carry it. */
+  --rarity-common:    #a6a6b2;  --rarity-common-edge:    #33333d;
+  --rarity-uncommon:  #8fbf78;  --rarity-uncommon-edge:  #33412f;
+  --rarity-rare:      #56b3c9;  --rarity-rare-edge:      #24404a;
+  --rarity-epic:      #a08ae6;  --rarity-epic-edge:      #3a3354;
+  --rarity-legendary: #d99a4e;  --rarity-legendary-edge: #4a3823;
+  --rarity-mythic:    #cf6f9e;  --rarity-mythic-edge:    #48293a;
+
   --chrome-fill:  linear-gradient(135deg,#f3e0b4,#e8c98a 40%,#c9a55c);
   --panel-fill:   linear-gradient(180deg,#181820,#111116);
   --energy-fill:  linear-gradient(90deg,#e8c98a,#a8873f);
@@ -1361,12 +1371,15 @@ img.plug-portrait {
 }
 .pf-x:hover { border-color: var(--border-gold); }
 
-/* tier colours, re-derived from the Chrome Money ramp.
-   Built dynamically in js/profile.js as 'tier-' + it.tier — not dead code. */
-.tier-COMMON { color: var(--muted); }
-.tier-RARE   { color: var(--body); }
-.tier-ELITE  { color: var(--green); }
-.tier-LEGEND { color: var(--chrome); }
+/* rarity name inks (DOM-18): authored tiers grey→orange, labels from
+   RARITY_LABELS in js/drops.js. Built dynamically in js/profile.js and
+   js/store.js as 'tier-' + label — not dead code. Mythic reserved. */
+.tier-COMMON    { color: var(--rarity-common); }
+.tier-UNCOMMON  { color: var(--rarity-uncommon); }
+.tier-RARE      { color: var(--rarity-rare); }
+.tier-EPIC      { color: var(--rarity-epic); }
+.tier-LEGENDARY { color: var(--rarity-legendary); }
+.tier-MYTHIC    { color: var(--rarity-mythic); }
 
 /* ── screen container ── */
 #tab-profile.tab.active { display: block; }
@@ -1573,10 +1586,12 @@ img.plug-portrait {
 }
 .pf-slot-name.is-empty { color: var(--disabled); }
 /* tier colours need the extra specificity to beat .pf-slot-name's own colour */
-.pf-slot-name.tier-COMMON { color: var(--muted); }
-.pf-slot-name.tier-RARE   { color: var(--body); }
-.pf-slot-name.tier-ELITE  { color: var(--green); }
-.pf-slot-name.tier-LEGEND { color: var(--chrome); }
+.pf-slot-name.tier-COMMON    { color: var(--rarity-common); }
+.pf-slot-name.tier-UNCOMMON  { color: var(--rarity-uncommon); }
+.pf-slot-name.tier-RARE      { color: var(--rarity-rare); }
+.pf-slot-name.tier-EPIC      { color: var(--rarity-epic); }
+.pf-slot-name.tier-LEGENDARY { color: var(--rarity-legendary); }
+.pf-slot-name.tier-MYTHIC    { color: var(--rarity-mythic); }
 .pf-slot-buff {
   margin-top: 2px; font-family: var(--ui); font-size: 10px;
   color: var(--faint); line-height: 1.3;
@@ -1923,3 +1938,15 @@ img.plug-portrait {
   background: #141419; border: 1px solid #22222a; color: var(--disabled);
 }
 .pq-claim.ready { background: var(--chrome-fill); border: none; color: var(--chrome-ink); }
+
+/* ── Rarity edges (DOM-18) ──
+   The 1px border tint half of the CLAUDE.md Rarity rule — the name ink is
+   the tier-* classes above. Last in the file on purpose: it wins the
+   same-specificity tie against .pf-slot.primary / .store-item borders.
+   Never a fill, never a glow. Mythic reserved. */
+.rar-COMMON    { border-color: var(--rarity-common-edge); }
+.rar-UNCOMMON  { border-color: var(--rarity-uncommon-edge); }
+.rar-RARE      { border-color: var(--rarity-rare-edge); }
+.rar-EPIC      { border-color: var(--rarity-epic-edge); }
+.rar-LEGENDARY { border-color: var(--rarity-legendary-edge); }
+.rar-MYTHIC    { border-color: var(--rarity-mythic-edge); }

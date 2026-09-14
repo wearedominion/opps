@@ -214,6 +214,7 @@ function _endFight(enemyDead) {
     $('combat-result').style.color = 'var(--green)';
     log('Smoked ' + enemy.name + ' -- won $' + cashWon.toLocaleString() + ' + ' + enemy.reward.clout + ' Clout', 'win');
     Quests.onFightWin(enemy.id);
+    rollDrop(enemy.name); // fight wins roll the rarity ladder too (DOM-18)
     Sound.win();
   } else {
     // The loss is a share of the CURRENT balance at resolution, never a

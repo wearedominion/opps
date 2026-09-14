@@ -1,11 +1,12 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.11 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.12 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
 **Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
 (DOM-74, §9)** · **Cash circuit closed out (DOM-68, §10)** · **Stamina mint bounded, SKUs
-fixed-point (DOM-69/76, §12)** · **EV — USD conversion layer (DOM-94, §13)**
+fixed-point (DOM-69/76, §12)** · **EV — USD conversion layer (DOM-94, §13)** ·
+**Rarity drop ladder, blue+ drop-only (DOM-18, §16)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
 `data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
@@ -386,3 +387,24 @@ out at 3h (vs the 8h break-even anchor) and adds **$10,155 Cash + 932 Clout life
 (0.001% of the Clout curve)**. EV of the whole catalog ≈ $8 — quests point the player at
 content; they cannot shortcut it. The simulator re-derives every bonus from the rule and
 throws on drift, so a hand-edited quests.json cannot silently out-pay a band.
+
+## 16. DOM-18 decision record — Rarity & drops (ratified 2026-09-14, Jake)
+
+**Rarity is the axis Cash can't buy.** Full record: 08 §9.12. The pacing-relevant facts:
+
+- **The ladder is an order of magnitude per step, per drop event** (not per action): one 18%
+  proc gate on every job completion and fight win, then rarest-first at the literal odds —
+  purple 0.099% → blue 0.99% → green 9.9% → grey 99%. Orange and mythic are reserved (odds 0).
+- **Nothing moved.** E/M/K re-solved identical (0.6847 / 0.0010 / 0.0803), casual d1/d7/d30 =
+  8/26/41, committed days to L120 = 365, Clout mix 63/37 at every checkpoint, enemy matchups
+  at p0 — because the enemy solve and every sim cash sink read the **buyable floor only**.
+  The 49 blue+ items ($2.63B notional across the whole catalog) are lottery upside, priced by
+  `dropReport()` and excluded from purchase-sink math by construction.
+- **Committed pacing at L50:** ~66 drop-eligible actions/day → ~1.2 greens/day (own-once, so
+  band greens exhaust in days and further procs fizzle), a blue every ~8.5 days, a purple
+  every ~85 days. The +15%/step stat premium (≤ ×1.52 at orange) sits under one 10-level
+  climb (×1.40/band), so a lucky purple never outruns a band of progression — and drops never
+  gate it either, since the buyable green ladder alone holds the solve's nominal.
+- **Store sink preserved:** grey/green purchases are untouched; a green drop (~1/day) is the
+  old tier-top-job lottery generalized (old per-job rates were 2.5–5%; the new green
+  per-action rate is ~1.8%). Dashboard finding F8.

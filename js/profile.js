@@ -73,11 +73,10 @@ function pfFindItem(itemId) {
   return STORE_ITEMS.find(i => i.id === itemId) || null;
 }
 
-// Rarity label from the ladder position — display flavour only, quartiles of
-// the 16 tier gates. Colors ride the existing tier-* classes.
+// Rarity is AUTHORED catalog data since DOM-18 (it was a ladder-position
+// quartile before). Labels come from js/drops.js; colours ride tier-* classes.
 function pfTierLabel(item) {
-  const t = item.tier || 1;
-  return t <= 4 ? 'COMMON' : t <= 8 ? 'RARE' : t <= 12 ? 'ELITE' : 'LEGEND';
+  return RARITY_LABELS[item.rarity] || 'COMMON';
 }
 
 // Lieutenants required to unlock bonus slot `idx` (1-based secondaries) of a
@@ -309,7 +308,7 @@ function pfSlotBox(type, idx, capacity) {
   const inst = filled ? gearInstance(it.id) : null;
   const lv = inst && inst.level > 0 ? ` · LV ${inst.level}` : '';
   return `
-    <button class="pf-slot${filled ? '' : ' empty'}${idx === 0 ? ' primary' : ''}" onclick="pfOpenPicker('${type}',${idx})">
+    <button class="pf-slot${filled ? ' rar-' + pfTierLabel(it) : ' empty'}${idx === 0 ? ' primary' : ''}" onclick="pfOpenPicker('${type}',${idx})">
       <div class="pf-slot-label">${idx === 0 ? 'PRIMARY' : '+' + idx}</div>
       <div class="pf-slot-name ${filled ? 'tier-' + pfTierLabel(it) : 'is-empty'}">${filled ? pfEsc(it.name) : 'EMPTY'}</div>
       <div class="pf-slot-buff">${filled ? pfEsc(it.desc) + lv : 'Tap to equip'}</div>
@@ -347,9 +346,9 @@ function pfRenderGear() {
     const src = inst && inst.src === 'dropped' ? ' · FOUND'
       : inst && inst.src === 'quest' ? ' · EARNED' : '';
     return `
-      <button class="pf-inv-row${isEq ? ' equipped' : ''}" onclick="pfToggleField('${it.id}')">
+      <button class="pf-inv-row${isEq ? ' equipped' : ''} rar-${pfTierLabel(it)}" onclick="pfToggleField('${it.id}')">
         <div class="pf-inv-main">
-          <div class="pf-inv-name">${pfEsc(it.name)}</div>
+          <div class="pf-inv-name tier-${pfTierLabel(it)}">${pfEsc(it.name)}</div>
           <div class="pf-inv-meta">${it.type.toUpperCase()} · ${pfEsc(it.desc)}${lv}${src}</div>
         </div>
         <span class="pf-inv-tier tier-${pfTierLabel(it)}">${pfTierLabel(it)}</span>
@@ -433,9 +432,9 @@ function pfRenderPicker() {
     const inst = gearInstance(it.id);
     const lv = inst && inst.level > 0 ? ` · LV ${inst.level}` : '';
     return `
-      <button class="pf-pick-row" onclick="pfEquip('${type}',${idx},'${it.id}')">
+      <button class="pf-pick-row rar-${pfTierLabel(it)}" onclick="pfEquip('${type}',${idx},'${it.id}')">
         <div class="pf-inv-main">
-          <div class="pf-inv-name lg">${pfEsc(it.name)}</div>
+          <div class="pf-inv-name lg tier-${pfTierLabel(it)}">${pfEsc(it.name)}</div>
           <div class="pf-inv-meta">${pfEsc(it.desc)}${lv}</div>
         </div>
         <span class="pf-inv-tier tier-${pfTierLabel(it)}">${pfTierLabel(it)}</span>

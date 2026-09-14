@@ -81,31 +81,32 @@ const RATIO = PROGRESSION[1].cloutToNext / PROGRESSION[0].cloutToNext;
 // made day 30 overshoot): early levels are fast because the cost curve is low,
 // not because income ramps. Drop tables sit on the tier-top jobs and stop
 // where the 6-item gear catalog ends (DOM-73).
+// Per-job drop tables are GONE (DOM-18, 2026-09-14): drops now roll globally
+// on every job completion and fight win — a proc gate then the rarity ladder,
+// both tuning knobs (drops.*). js/drops.js owns the client roll.
 const EARLY_JOBS = [
-  { id: 'lookout',  name: 'Be a Lookout',    moves: 1, levelReq: 1, times: 10, cash: [20, 40],    shape: 10.0, drops: [] },
-  { id: 'runner',   name: 'Run Packages',    moves: 2, levelReq: 1, times: 8,  cash: [50, 90],    shape: 10.0, drops: [] },
-  { id: 'boost',    name: 'Boost a Whip',    moves: 3, levelReq: 2, times: 6,  cash: [100, 180],  shape: 10.5, drops: [{ item: 'knife', rate: 0.05 }] },
-  { id: 'stash',    name: 'Guard the Stash', moves: 2, levelReq: 2, times: 8,  cash: [80, 130],   shape: 11.0, drops: [] },
-  { id: 'shake',    name: 'Shake a Block',   moves: 3, levelReq: 3, times: 5,  cash: [150, 250],  shape: 11.5, drops: [] },
-  { id: 'hit',      name: 'Pull a Lick',     moves: 4, levelReq: 3, times: 4,  cash: [200, 400],  shape: 12.0, drops: [{ item: 'burner', rate: 0.04 }] },
-  { id: 'move',     name: 'Move Weight',     moves: 5, levelReq: 5, times: 3,  cash: [400, 700],  shape: 13.0, drops: [{ item: 'vest', rate: 0.04 }] },
-  { id: 'takeover', name: 'Block Takeover',  moves: 6, levelReq: 7, times: 2,  cash: [600, 1000], shape: 14.0, drops: [{ item: 'glock', rate: 0.03 }] },
+  { id: 'lookout',  name: 'Be a Lookout',    moves: 1, levelReq: 1, times: 10, cash: [20, 40],    shape: 10.0 },
+  { id: 'runner',   name: 'Run Packages',    moves: 2, levelReq: 1, times: 8,  cash: [50, 90],    shape: 10.0 },
+  { id: 'boost',    name: 'Boost a Whip',    moves: 3, levelReq: 2, times: 6,  cash: [100, 180],  shape: 10.5 },
+  { id: 'stash',    name: 'Guard the Stash', moves: 2, levelReq: 2, times: 8,  cash: [80, 130],   shape: 11.0 },
+  { id: 'shake',    name: 'Shake a Block',   moves: 3, levelReq: 3, times: 5,  cash: [150, 250],  shape: 11.5 },
+  { id: 'hit',      name: 'Pull a Lick',     moves: 4, levelReq: 3, times: 4,  cash: [200, 400],  shape: 12.0 },
+  { id: 'move',     name: 'Move Weight',     moves: 5, levelReq: 5, times: 3,  cash: [400, 700],  shape: 13.0 },
+  { id: 'takeover', name: 'Block Takeover',  moves: 6, levelReq: 7, times: 2,  cash: [600, 1000], shape: 14.0 },
 ];
 
-// Each gate's tier-top job drops that gate's weapon at a low rate (the free
-// lottery beside the purchase path — own-once, so the EV vanishes on hit).
 const NEW_JOBS = [
-  { id: 'traphouse',  name: 'Run a Trap House',        gate: 10,  moves: 6, times: 3, drops: [{ item: 'bando', rate: 0.03 }, { item: 'mac11', rate: 0.025 }] },
-  { id: 'fixfight',   name: 'Fix a Fight',             gate: 20,  moves: 6, times: 3, drops: [{ item: 'ak', rate: 0.025 }] },
-  { id: 'hijack',     name: 'Hijack a Shipment',       gate: 30,  moves: 7, times: 3, drops: [{ item: 'pump', rate: 0.025 }] },
-  { id: 'precinct',   name: 'Flip a Precinct',         gate: 40,  moves: 7, times: 2, drops: [{ item: 'switchie', rate: 0.025 }] },
-  { id: 'docks',      name: 'Run the Docks',           gate: 50,  moves: 7, times: 2, drops: [{ item: 'drummy', rate: 0.025 }] },
-  { id: 'club',       name: 'Own the Night Club',      gate: 60,  moves: 8, times: 2, drops: [{ item: 'carbine', rate: 0.025 }] },
-  { id: 'contract',   name: 'Rig the City Contract',   gate: 70,  moves: 8, times: 2, drops: [{ item: 'sniper', rate: 0.025 }] },
-  { id: 'interstate', name: 'Run Guns Interstate',     gate: 80,  moves: 8, times: 2, drops: [{ item: 'beltfed', rate: 0.025 }] },
-  { id: 'judge',      name: 'Buy a Judge',             gate: 90,  moves: 8, times: 2, drops: [{ item: 'fiftycal', rate: 0.025 }] },
-  { id: 'commission', name: 'Take the Commission Seat', gate: 100, moves: 8, times: 2, drops: [{ item: 'minigun', rate: 0.025 }] },
-  { id: 'runcity',    name: 'Run the City',            gate: 110, moves: 8, times: 2, drops: [{ item: 'arsenal', rate: 0.025 }] },
+  { id: 'traphouse',  name: 'Run a Trap House',        gate: 10,  moves: 6, times: 3 },
+  { id: 'fixfight',   name: 'Fix a Fight',             gate: 20,  moves: 6, times: 3 },
+  { id: 'hijack',     name: 'Hijack a Shipment',       gate: 30,  moves: 7, times: 3 },
+  { id: 'precinct',   name: 'Flip a Precinct',         gate: 40,  moves: 7, times: 2 },
+  { id: 'docks',      name: 'Run the Docks',           gate: 50,  moves: 7, times: 2 },
+  { id: 'club',       name: 'Own the Night Club',      gate: 60,  moves: 8, times: 2 },
+  { id: 'contract',   name: 'Rig the City Contract',   gate: 70,  moves: 8, times: 2 },
+  { id: 'interstate', name: 'Run Guns Interstate',     gate: 80,  moves: 8, times: 2 },
+  { id: 'judge',      name: 'Buy a Judge',             gate: 90,  moves: 8, times: 2 },
+  { id: 'commission', name: 'Take the Commission Seat', gate: 100, moves: 8, times: 2 },
+  { id: 'runcity',    name: 'Run the City',            gate: 110, moves: 8, times: 2 },
 ];
 
 // Cash per move continues the existing top job's rate geometrically, so the
@@ -165,7 +166,9 @@ const FIGHT_CFG = {
 function loadoutAt(gear, band) {
   const best = {};
   for (const i of gear) {
-    if (i.levelReq > band) continue;
+    // dropOnly (blue+) is excluded: the solve prices the BUYABLE floor
+    // (DOM-18) — a lucky drop lifts a player above nominal, like Crew slots.
+    if (i.dropOnly || i.levelReq > band) continue;
     if (!best[i.type] || i.atk + i.def > best[i.type].atk + best[i.type].def) best[i.type] = i;
   }
   const picks = Object.keys(best).map(t => best[t]);
@@ -212,49 +215,118 @@ function enemyStatMult(gear, e) {
 // Tommy the Fence, armor through Theresa the Connect, vehicles through Big
 // Homie Marco the Mechanic, utility through Kylie the Lookout — and the
 // L110 endgame kit is Dex's "big one". Ids must exist in js/plugs.js.
+// Rarity (DOM-18, ratified 2026-09-14): five authored tiers, an order of
+// magnitude apart in drop odds — grey → green → blue → purple → orange.
+// The buyable ladder is grey (sub-L10 starters) and green (the main ladder);
+// blue/purple/orange are DROP-ONLY variants at the same gates, priced and
+// statted at +15% per rarity step over the gate baseline (blue ×1.15,
+// purple ×1.32, orange ×1.52) — deliberately under one 10-level climb
+// (×1.40) so a lucky drop never outruns progression. Oranges never drop in
+// v1 (rate 0 in tuning): they are the supply shelf for DOM-92 premium /
+// event items, visible but unreachable. The enemy p0 solve reads ONLY the
+// buyable baseline (loadoutAt skips dropOnly), so rarity shifts no balance.
+const RARITY_STEP = 1.15;
+// mythic is plumbed (tokens, labels, odds authored 0) but RESERVED — no v1
+// item may carry it; writeCatalogs throws if one appears.
+const RARITY_PREMIUM = { grey: 0, green: 0, blue: 1, purple: 2, orange: 3, mythic: 4 };
+const rarityMult = r => RARITY_STEP ** RARITY_PREMIUM[r];
+
 const GEAR_CONTENT = [
-  // legacy six — ids are load-bearing (saves, drop tables)
-  { id: 'knife',    name: 'Switchblade',      type: 'weapon',  gate: 1,   price: 200, stats: { atk: 5 } },
-  { id: 'burner',   name: 'Burner Phone',     type: 'utility', gate: 2,   price: 600, stats: { atk: 5, def: 5 } },
-  { id: 'vest',     name: 'Bulletproof Vest', type: 'armor',   gate: 3,   price: 500, stats: { def: 10 } },
-  { id: 'glock',    name: 'Glock 19',         type: 'weapon',  gate: 5,   stats: { atk: 15 } },
+  // legacy six — ids are load-bearing (saves, quest steps)
+  { id: 'knife',    name: 'Switchblade',      type: 'weapon',  gate: 1,   rarity: 'grey', price: 200, stats: { atk: 5 } },
+  { id: 'burner',   name: 'Burner Phone',     type: 'utility', gate: 2,   rarity: 'grey', price: 600, stats: { atk: 5, def: 5 } },
+  { id: 'vest',     name: 'Bulletproof Vest', type: 'armor',   gate: 3,   rarity: 'grey', price: 500, stats: { def: 10 } },
+  { id: 'glock',    name: 'Glock 19',         type: 'weapon',  gate: 5,   rarity: 'grey', stats: { atk: 15 } },
   // bando's legacy +10 HP folded into DEF (DOM-75): fielded-gear HP would need
   // pool plumbing regen/hospital don't have, and this was the only hp item.
-  { id: 'bando',    name: 'Safe House',       type: 'utility', gate: 7,   stats: { def: 25 } },
-  { id: 'ak',       name: 'Draco',            type: 'weapon',  gate: 20 },
-  // the ladder
-  { id: 'mac11',    name: 'MAC-11',           type: 'weapon',  gate: 10 },
-  { id: 'stabvest', name: 'Stab Vest',        type: 'armor',   gate: 10 },
-  { id: 'dirtbike', name: 'Dirt Bike',        type: 'vehicle', gate: 10 },
-  { id: 'kevlar',   name: 'Kevlar Hoodie',    type: 'armor',   gate: 20 },
-  { id: 'boxchevy', name: 'Box Chevy',        type: 'vehicle', gate: 20 },
-  { id: 'pump',     name: 'Pump Shotty',      type: 'weapon',  gate: 30 },
-  { id: 'plates',   name: 'Steel Plates',     type: 'armor',   gate: 30 },
-  { id: 'coupe',    name: 'Foreign Coupe',    type: 'vehicle', gate: 30 },
-  { id: 'switchie', name: 'Switchie',         type: 'weapon',  gate: 40 },
-  { id: 'ballistic', name: 'Ballistic Shield', type: 'armor',  gate: 40 },
-  { id: 'blacksuv', name: 'Blacked-Out SUV',  type: 'vehicle', gate: 40 },
-  { id: 'drummy',   name: 'Drummy',           type: 'weapon',  gate: 50 },
-  { id: 'dragonskin', name: 'Dragon Skin',    type: 'armor',   gate: 50 },
-  { id: 'armsedan', name: 'Armored Sedan',    type: 'vehicle', gate: 50 },
-  { id: 'carbine',  name: 'Chopped Carbine',  type: 'weapon',  gate: 60 },
-  { id: 'fullkev',  name: 'Full Kevlar Suit', type: 'armor',   gate: 60 },
-  { id: 'sprinter', name: 'Stash Sprinter',   type: 'vehicle', gate: 60 },
-  { id: 'sniper',   name: 'Rooftop Rifle',    type: 'weapon',  gate: 70 },
-  { id: 'fedvest',  name: 'Fed-Grade Vest',   type: 'armor',   gate: 70 },
-  { id: 'lowkey',   name: 'Low-Key Limo',     type: 'vehicle', gate: 70 },
-  { id: 'beltfed',  name: 'Belt-Fed',         type: 'weapon',  gate: 80 },
-  { id: 'bunker',   name: 'Bunker Gear',      type: 'armor',   gate: 80 },
-  { id: 'gunboat',  name: 'Harbor Gunboat',   type: 'vehicle', gate: 80 },
-  { id: 'fiftycal', name: 'Fifty Cal',        type: 'weapon',  gate: 90 },
-  { id: 'titanium', name: 'Titanium Weave',   type: 'armor',   gate: 90 },
-  { id: 'helo',     name: 'Private Helo',     type: 'vehicle', gate: 90 },
-  { id: 'minigun',  name: 'Minigun',          type: 'weapon',  gate: 100 },
-  { id: 'exorig',   name: 'Exo Rig',          type: 'armor',   gate: 100 },
-  { id: 'jet',      name: 'Private Jet',      type: 'vehicle', gate: 100 },
-  { id: 'arsenal',  name: 'The Arsenal',      type: 'weapon',  gate: 110, plug: 'plug-dex' },
-  { id: 'fortress', name: 'Mobile Fortress',  type: 'armor',   gate: 110, plug: 'plug-dex' },
-  { id: 'yacht',    name: 'Armored Yacht',    type: 'vehicle', gate: 110, plug: 'plug-dex' },
+  { id: 'bando',    name: 'Safe House',       type: 'utility', gate: 7,   rarity: 'grey', stats: { def: 25 } },
+  { id: 'ak',       name: 'Draco',            type: 'weapon',  gate: 20,  rarity: 'green' },
+  // the green ladder — the buyable baseline the enemy solve is anchored to.
+  // Names carry the DOM-18 real-name pass; ids never change.
+  { id: 'mac11',    name: 'MAC-11',           type: 'weapon',  gate: 10,  rarity: 'green' },
+  { id: 'stabvest', name: 'Stab Vest',        type: 'armor',   gate: 10,  rarity: 'green' },
+  { id: 'dirtbike', name: 'Dirt Bike',        type: 'vehicle', gate: 10,  rarity: 'green' },
+  { id: 'kevlar',   name: 'Kevlar Hoodie',    type: 'armor',   gate: 20,  rarity: 'green' },
+  { id: 'boxchevy', name: 'Box Chevy',        type: 'vehicle', gate: 20,  rarity: 'green' },
+  { id: 'pump',     name: 'Mossberg 500',     type: 'weapon',  gate: 30,  rarity: 'green' },
+  { id: 'plates',   name: 'AR500 Plates',     type: 'armor',   gate: 30,  rarity: 'green' },
+  { id: 'coupe',    name: 'AMG Coupe',        type: 'vehicle', gate: 30,  rarity: 'green' },
+  { id: 'switchie', name: 'Switchie',         type: 'weapon',  gate: 40,  rarity: 'green' },
+  { id: 'ballistic', name: 'Ballistic Shield', type: 'armor',  gate: 40,  rarity: 'green' },
+  { id: 'blacksuv', name: 'Blacked-Out Tahoe', type: 'vehicle', gate: 40, rarity: 'green' },
+  { id: 'drummy',   name: 'Drum-Fed AR-15',   type: 'weapon',  gate: 50,  rarity: 'green' },
+  { id: 'dragonskin', name: 'Dragon Skin',    type: 'armor',   gate: 50,  rarity: 'green' },
+  { id: 'armsedan', name: 'Armored Sedan',    type: 'vehicle', gate: 50,  rarity: 'green' },
+  { id: 'carbine',  name: 'M4 Carbine',       type: 'weapon',  gate: 60,  rarity: 'green' },
+  { id: 'fullkev',  name: 'Full Kevlar Suit', type: 'armor',   gate: 60,  rarity: 'green' },
+  { id: 'sprinter', name: 'Stash Sprinter',   type: 'vehicle', gate: 60,  rarity: 'green' },
+  { id: 'sniper',   name: 'Remington 700',    type: 'weapon',  gate: 70,  rarity: 'green' },
+  { id: 'fedvest',  name: 'FBI Raid Vest',    type: 'armor',   gate: 70,  rarity: 'green' },
+  { id: 'lowkey',   name: 'Low-Key Limo',     type: 'vehicle', gate: 70,  rarity: 'green' },
+  { id: 'beltfed',  name: 'M249 SAW',         type: 'weapon',  gate: 80,  rarity: 'green' },
+  { id: 'bunker',   name: 'EOD Suit',         type: 'armor',   gate: 80,  rarity: 'green' },
+  { id: 'gunboat',  name: 'Harbor Gunboat',   type: 'vehicle', gate: 80,  rarity: 'green' },
+  { id: 'fiftycal', name: 'Barrett .50 Cal',  type: 'weapon',  gate: 90,  rarity: 'green' },
+  { id: 'titanium', name: 'Titanium Weave',   type: 'armor',   gate: 90,  rarity: 'green' },
+  { id: 'helo',     name: 'Private Helo',     type: 'vehicle', gate: 90,  rarity: 'green' },
+  { id: 'minigun',  name: 'M134 Minigun',     type: 'weapon',  gate: 100, rarity: 'green' },
+  { id: 'exorig',   name: 'Exo Rig',          type: 'armor',   gate: 100, rarity: 'green' },
+  { id: 'jet',      name: 'Private Jet',      type: 'vehicle', gate: 100, rarity: 'green' },
+  { id: 'arsenal',  name: 'The Arsenal',      type: 'weapon',  gate: 110, rarity: 'green', plug: 'plug-dex' },
+  { id: 'fortress', name: 'Mobile Fortress',  type: 'armor',   gate: 110, rarity: 'green', plug: 'plug-dex' },
+  { id: 'yacht',    name: 'Armored Yacht',    type: 'vehicle', gate: 110, rarity: 'green', plug: 'plug-dex' },
+  // blue — drop-only, one per type per main gate (×1.15 over the baseline)
+  { id: 'tec9',     name: 'TEC-9',            type: 'weapon',  gate: 10,  rarity: 'blue' },
+  { id: 'ceramic',  name: 'Ceramic Plates',   type: 'armor',   gate: 10,  rarity: 'blue' },
+  { id: 'ninja',    name: 'Ninja 400',        type: 'vehicle', gate: 10,  rarity: 'blue' },
+  { id: 'ak47',     name: 'AK-47',            type: 'weapon',  gate: 20,  rarity: 'blue' },
+  { id: 'iiia',     name: 'Level IIIA Vest',  type: 'armor',   gate: 20,  rarity: 'blue' },
+  { id: 'donk',     name: 'Donk Caprice',     type: 'vehicle', gate: 20,  rarity: 'blue' },
+  { id: 'spas12',   name: 'SPAS-12',          type: 'weapon',  gate: 30,  rarity: 'blue' },
+  { id: 'riot',     name: 'Riot Armor',       type: 'armor',   gate: 30,  rarity: 'blue' },
+  { id: 'hellcat',  name: 'Hellcat',          type: 'vehicle', gate: 30,  rarity: 'blue' },
+  { id: 'mp5',      name: 'MP5',              type: 'weapon',  gate: 40,  rarity: 'blue' },
+  { id: 'lvl4',     name: 'Level IV Plates',  type: 'armor',   gate: 40,  rarity: 'blue' },
+  { id: 'escalade', name: 'Armored Escalade', type: 'vehicle', gate: 40,  rarity: 'blue' },
+  { id: 'scar17',   name: 'SCAR 17',          type: 'weapon',  gate: 50,  rarity: 'blue' },
+  { id: 'jugg',     name: 'Juggernaut Vest',  type: 'armor',   gate: 50,  rarity: 'blue' },
+  { id: 'maybach',  name: 'Maybach S680',     type: 'vehicle', gate: 50,  rarity: 'blue' },
+  { id: 'hk416',    name: 'HK416',            type: 'weapon',  gate: 60,  rarity: 'blue' },
+  { id: 'interceptor', name: 'Interceptor Rig', type: 'armor', gate: 60,  rarity: 'blue' },
+  { id: 'gwagon',   name: 'G-Wagon',          type: 'vehicle', gate: 60,  rarity: 'blue' },
+  { id: 'svd',      name: 'Dragunov SVD',     type: 'weapon',  gate: 70,  rarity: 'blue' },
+  { id: 'spectra',  name: 'Spectra Shield',   type: 'armor',   gate: 70,  rarity: 'blue' },
+  { id: 'phantom',  name: 'Rolls Phantom',    type: 'vehicle', gate: 70,  rarity: 'blue' },
+  { id: 'm240',     name: 'M240 Bravo',       type: 'weapon',  gate: 80,  rarity: 'blue' },
+  { id: 'blastsuit', name: 'Blast Suit',      type: 'armor',   gate: 80,  rarity: 'blue' },
+  { id: 'cigboat',  name: 'Cigarette Boat',   type: 'vehicle', gate: 80,  rarity: 'blue' },
+  { id: 'tac50',    name: 'TAC-50',           type: 'weapon',  gate: 90,  rarity: 'blue' },
+  { id: 'graphene', name: 'Graphene Weave',   type: 'armor',   gate: 90,  rarity: 'blue' },
+  { id: 'blackhawk', name: 'Black Hawk',      type: 'vehicle', gate: 90,  rarity: 'blue' },
+  { id: 'gau19',    name: 'GAU-19',           type: 'weapon',  gate: 100, rarity: 'blue' },
+  { id: 'pwrframe', name: 'Powered Frame',    type: 'armor',   gate: 100, rarity: 'blue' },
+  { id: 'g650',     name: 'Gulfstream G650',  type: 'vehicle', gate: 100, rarity: 'blue' },
+  { id: 'goldak',   name: 'Gold-Plated AK',   type: 'weapon',  gate: 110, rarity: 'blue' },
+  { id: 'citadel',  name: 'Citadel Rig',      type: 'armor',   gate: 110, rarity: 'blue' },
+  { id: 'megayacht', name: 'Megayacht',       type: 'vehicle', gate: 110, rarity: 'blue' },
+  // purple — drop-only, one per main gate, type rotating (×1.32)
+  { id: 'fiveseven', name: 'FN Five-seveN',   type: 'weapon',  gate: 10,  rarity: 'purple' },
+  { id: 'boron',    name: 'Boron Carbide Vest', type: 'armor', gate: 20,  rarity: 'purple' },
+  { id: 'demon',    name: 'Demon 170',        type: 'vehicle', gate: 30,  rarity: 'purple' },
+  { id: 'p90',      name: 'FN P90',           type: 'weapon',  gate: 40,  rarity: 'purple' },
+  { id: 'adaptive', name: 'Adaptive Plate Rig', type: 'armor', gate: 50,  rarity: 'purple' },
+  { id: 'chiron',   name: 'Chiron',           type: 'vehicle', gate: 60,  rarity: 'purple' },
+  { id: 'g28',      name: 'HK G28',           type: 'weapon',  gate: 70,  rarity: 'purple' },
+  { id: 'titanshell', name: 'Titan Exoshell', type: 'armor',   gate: 80,  rarity: 'purple' },
+  { id: 'stealthhelo', name: 'Stealth Helo',  type: 'vehicle', gate: 90,  rarity: 'purple' },
+  { id: 'xm7',      name: 'SIG XM7',          type: 'weapon',  gate: 100, rarity: 'purple' },
+  { id: 'aegis',    name: 'Aegis Plate',      type: 'armor',   gate: 110, rarity: 'purple' },
+  // orange — never drops in v1 (rate 0): the DOM-92 premium/event shelf (×1.52)
+  { id: 'golddeagle', name: 'Gold Desert Eagle', type: 'weapon', gate: 20, rarity: 'orange' },
+  { id: 'thebeast', name: 'The Beast',        type: 'vehicle', gate: 40,  rarity: 'orange' },
+  { id: 'midas',    name: 'Midas Plate',      type: 'armor',   gate: 60,  rarity: 'orange' },
+  { id: 'railgun',  name: 'Railgun Prototype', type: 'weapon', gate: 80,  rarity: 'orange' },
+  { id: 'leviathan', name: 'The Leviathan',   type: 'vehicle', gate: 110, rarity: 'orange' },
 ];
 
 // ── Plug quests (DOM-90) ──────────────────────────────────────────────────────
@@ -384,7 +456,6 @@ function buildCatalogs(E, M, K) {
       clout: Math.max(1, Math.round(j.cpm * j.moves)),
       levelReq: j.levelReq,
       times: j.times,
-      drops: j.drops,
     };
   });
 
@@ -404,17 +475,26 @@ function buildCatalogs(E, M, K) {
   // the Clout knobs — rebuilt every candidate write purely for convenience.
   // Built before enemies: enemy ATK/DEF are solved against the band loadout.
   const gear = GEAR_CONTENT.map(item => {
+    // Rarity premium (DOM-18): stats AND the notional price carry ×1.15 per
+    // step over the gate baseline. Drop-only items keep a price because the
+    // DOM-88 upgrade cost curve scales by it — they just can't be bought.
+    const mult = rarityMult(item.rarity);
     const s = item.stats ?? GEAR_STATS_BY_TYPE[item.type](item.gate);
-    const atk = Math.round(s.atk || 0), def = Math.round(s.def || 0), hp = Math.round(s.hp || 0);
-    const price = item.price ?? nice(GEAR_HOURS_BY_TYPE[item.type] * jobCashPerHour(item.gate));
+    const atk = Math.round((s.atk || 0) * mult), def = Math.round((s.def || 0) * mult),
+          hp = Math.round((s.hp || 0) * mult);
+    const price = item.price
+      ?? nice(GEAR_HOURS_BY_TYPE[item.type] * jobCashPerHour(item.gate) * mult);
     const desc = [atk && `+${atk} ATK`, def && `+${def} DEF`, hp && `+${hp} HP`]
       .filter(Boolean).join(' ');
+    const dropOnly = RARITY_PREMIUM[item.rarity] > 0;
     return {
       id: item.id, name: item.name, desc,
       type: item.type,
       tier: gates.indexOf(item.gate) + 1,
       levelReq: item.gate,
-      plug: item.plug ?? PLUG_BY_TYPE[item.type],
+      rarity: item.rarity,
+      // drop-only gear has no vendor: it never renders in a store
+      ...(dropOnly ? { dropOnly: true } : { plug: item.plug ?? PLUG_BY_TYPE[item.type] }),
       price, atk, def, hp,
       upgradeable: true,
     };
@@ -498,10 +578,25 @@ function writeCatalogs(E, M, K) {
         throw new Error('quest ' + q.id + ' (L' + q.levelReq + ') requires ' + s.id
           + ' gated at L' + row.levelReq + ' — uncompletable at its own gate');
       }
+      if (s.type === 'item' && row.dropOnly) {
+        throw new Error('quest ' + q.id + ' requires drop-only item "' + s.id
+          + '" — a 0.99%-or-worse lottery is not a quest step');
+      }
     }
     if (q.reward.item && !gear.find(g => g.id === q.reward.item)) {
       throw new Error('quest ' + q.id + ' rewards unknown item "' + q.reward.item + '"');
     }
+  }
+  // Rarity contract (DOM-18): every item authored into a tier; drop-only iff
+  // it carries a premium; buyables keep a vendor; a dangling combination here
+  // would strand an item unreachable or leak a drop tier into a store.
+  for (const g of gear) {
+    if (!(g.rarity in RARITY_PREMIUM)) throw new Error(g.id + ': unknown rarity "' + g.rarity + '"');
+    if (!!g.dropOnly !== (RARITY_PREMIUM[g.rarity] > 0)) {
+      throw new Error(g.id + ': dropOnly must hold exactly for blue/purple/orange');
+    }
+    if (g.rarity === 'mythic') throw new Error(g.id + ': mythic is reserved — no v1 items');
+    if (!g.dropOnly && !g.plug) throw new Error(g.id + ': buyable item with no vendor');
   }
   fs.writeFileSync(path.join(ROOT, 'data/jobs.json'), JSON.stringify(jobsOut, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/enemies.json'), JSON.stringify(enemies, null, 2) + '\n');
@@ -584,11 +679,28 @@ function main() {
   // Gear pricing readback: hours of best-job income at each item's own gate.
   const bestCpmAt = L => Math.max(...jobsOut.filter(j => j.levelReq <= L)
     .map(j => (j.cash[0] + j.cash[1]) / 2 / j.moves));
-  console.log('Gear price rule (hours of best-job income at the gate; starters authored):');
+  console.log('Gear price rule (hours of best-job income at the gate; starters authored; buyables only):');
   for (const g of [...new Set(gear.map(i => i.levelReq))]) {
-    const rows = gear.filter(i => i.levelReq === g).map(i =>
+    const rows = gear.filter(i => i.levelReq === g && !i.dropOnly).map(i =>
       `${i.id} $${i.price.toLocaleString()} (${(i.price / (bestCpmAt(g) * MOVES_PER_HOUR)).toFixed(1)}h)`);
     console.log(`  L${g}: ${rows.join(' · ')}`);
+  }
+  // Rarity readback (DOM-18): tier counts and the per-action drop pacing the
+  // tuned knobs produce (proc gate × rarest-first ladder).
+  const proc = T('drops.procChance'), odds = T('drops.rarityChance');
+  const perAction = {};
+  let miss = 1;
+  for (const r of ['mythic', 'orange', 'purple', 'blue', 'green', 'grey']) {
+    perAction[r] = proc * miss * odds[r];
+    miss *= (1 - odds[r]);
+  }
+  console.log('Rarity (DOM-18): drop proc ' + (proc * 100).toFixed(0) + '%/action, ladder rarest-first:');
+  for (const r of ['grey', 'green', 'blue', 'purple', 'orange', 'mythic']) {
+    const n = gear.filter(i => i.rarity === r).length;
+    const drop = gear.filter(i => i.rarity === r && i.dropOnly).length ? 'drop-only' : 'buyable';
+    console.log('  ' + r + ': ' + n + ' items (' + drop + ') · '
+      + (odds[r] * 100).toFixed(4) + '%/proc → ' + (perAction[r] ? '1 per '
+      + Math.round(1 / perAction[r]).toLocaleString() + ' actions' : 'never (reserved)'));
   }
   console.log('Spot rule (rate = ' + SPOT_RATE_SHARE * 100 + '% of gate job $/h; price = '
     + SPOT_PAYBACK_DAYS + ' days of once-daily full-bank collects at the gate):');

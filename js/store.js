@@ -6,13 +6,18 @@ function renderStore() {
   const container = $('store-list');
   container.innerHTML = '';
   STORE_ITEMS.forEach(item => {
+    // Drop-only rarities (blue+) never reach a store: rarity is the thing
+    // Cash can't buy (DOM-18). They surface in the Profile gear tab instead.
+    if (item.dropOnly) return;
     const owned = ownsGear(item.id);
     const locked = G.level < (item.levelReq || 1);
     const canAfford = G.cash >= item.price;
     const div = document.createElement('div');
-    div.className = 'store-item';
+    // Rarity shows as name ink + a 1px border tint (CLAUDE.md "Rarity") —
+    // stores only ever carry COMMON/UNCOMMON, the drop tiers never render here.
+    div.className = 'store-item rar-' + RARITY_LABELS[item.rarity];
     div.innerHTML = `
-      <div class="item-name">${item.name}</div>
+      <div class="item-name tier-${RARITY_LABELS[item.rarity]}">${item.name}</div>
       <div class="item-desc">${item.desc}</div>
       <div class="item-price">$${item.price.toLocaleString()}</div>
       <button class="buy-btn" onclick="buyItem('${item.id}')" ${owned || locked || !canAfford ? 'disabled' : ''}>
@@ -26,6 +31,7 @@ function renderStore() {
 function buyItem(itemId) {
   const item = STORE_ITEMS.find(i => i.id === itemId);
   if (!item) return;
+  if (item.dropOnly) { toast('Not for sale. It drops or it doesn\'t.', true); return; }
   if (G.level < (item.levelReq || 1)) { toast('Locked until level ' + item.levelReq + '!', true); return; }
   if (G.cash < item.price) { toast("You're broke for that!", true); return; }
   if (ownsGear(itemId)) { toast('Already owned!', true); return; }

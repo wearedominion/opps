@@ -594,18 +594,20 @@ L10 to L110 (ratified: static catalog, not level-scaled payouts — a new tier i
 - `hp`/`atk`/`def` continue the legacy power trend and are **matchmaking inputs, not economy
   data** — DOM-72 owns them.
 
-### 9.3 Drop tables
+### 9.3 Drop tables — **superseded by the DOM-18 rarity roll (2026-09-14, §9.12)**
 
-`drops` on a job is the only non-purchase route to gear in v1. Contract: one roll per entry per
-run, **server-side** with the rest of move resolution; an item the player already owns never
-drops (inventory is one-of-each). Tables sit on tier-top jobs and now run the full ladder
-(DOM-73): each gate's job drops that gate's **weapon** at 2.5% (plus the two legacy flavour
-entries at gates 10/20). Drop EV ≈ 0.2h of income per run against a ~0.6h Moves cost — a real
-bonus that self-limits because owning the item ends the stream; the purchase path stays primary.
+Per-job `drops` arrays are gone. Drops now roll **globally on every job completion and fight
+win**: a proc gate (`tuning drops.procChance`) then the rarity ladder checked rarest-first
+(`tuning drops.rarityChance`). Own-once still holds — an item the player already owns never
+drops, and a tier with nothing left to give at the player's level fizzles silently. Contract
+unchanged in one respect: the roll is **server-side** with the rest of resolution once the
+server exists.
 
-> The prototype rolls drops in `js/jobs.js` `doJob()` because *all* resolution is client-side
-> pre-server; the roll moves server-side wholesale with the rest of it (DOM-71 execution
-> requirement, still open). Drops are not ledger rows — inventory is not a ledger resource.
+> The prototype rolls in `js/drops.js` `rollDrop()` (hooked from `doJob` and the `_endFight`
+> win branch) because *all* resolution is client-side pre-server; it moves server-side
+> wholesale (DOM-71 execution requirement, still open — integrity: DOM-77, since drop rolls
+> are now the acquisition path for gear Cash can't buy). Drops are not ledger rows —
+> inventory is not a ledger resource.
 
 ### 9.4 Clout income mix — DOM-81 decision record (ratified 2026-09-11, Jake)
 
@@ -810,3 +812,33 @@ deleted.
 - Save state: `G.quests = { questId: { p: [count per step], claimed } }` — additive, no schema bump. Item steps are never counted; ownership is checked live. Counters stop at the step target and nothing counts before the quest's level gate.
 - Ledger: `quest_reward` reason on the cash credit and the Clout grant.
 - Guard: every quest's `hours` sits below the DOM-79 break-even anchor (8h), pinned in tests and re-derived by the sim (`questReport()` throws on drift).
+
+### 9.12 Rarity & drops — DOM-18 decision record (ratified 2026-09-14, Jake)
+
+**Rarity is the axis Cash can't buy.** Five ratified decisions:
+
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | The ladder | **Five tiers an order of magnitude apart** — grey → green → blue → purple → orange. A **sixth tier, mythic, is plumbed but reserved**: tokens, labels and zeroed odds ship; no v1 item may carry it (the generator throws). |
+| 2 | Drop trigger | **Per drop event, not per action.** Jobs and fight wins share one proc gate (`drops.procChance`, 18%); on a proc the ladder is checked **rarest-first** at the literal ratified odds: purple 0.099% → blue 0.99% → green 9.9% → grey 99% (`drops.rarityChance`). Net: greens ~1/day committed, a blue every ~8 days, a purple every ~80. |
+| 3 | Catalog shape | **Variants per gate.** The buyable ladder is authored grey (sub-L10 starters) / green (main ladder); the generator adds 3 blues (one per type) + 1 purple (type rotating) per main gate, and 5 oranges across bands — 87 items total. |
+| 4 | Acquisition | **Blue+ is drop-only.** Never rendered in a store, `buyItem` refuses, no vendor in data. Grey/green stay purchasable. Oranges never drop in v1 (odds 0) — the DOM-92 premium/event supply shelf. |
+| 5 | Stat premium | **+15% per rarity step** over the gate's green baseline (blue ×1.15, purple ×1.32, orange ×1.52) — under one 10-level climb (×1.40), so a lucky drop never outruns progression. The **enemy p0 solve and every sim cash sink read the buyable floor only** (`loadoutAt` skips `dropOnly`; sim uses `BUYABLE`). |
+
+**Shapes:**
+
+- `store.json` items gain `rarity: 'grey'|'green'|'blue'|'purple'|'orange'` (authored in
+  `GEAR_CONTENT`, validated on write) and drop-only items carry `dropOnly: true` and **no
+  `plug`**. Drop-only gear keeps a rule price (× the premium) because the DOM-88 upgrade cost
+  curve scales by it — it is never a purchase sink (the sim's `dropReport()` prices the
+  lottery separately; E/M/K and all pacing verified unchanged).
+- `tuning.json`: `drops: { procChance, rarityChance: {mythic, orange, purple, blue, green, grey} }`.
+- Client: `js/drops.js` (`rollDrop`, `RARITY_ORDER` rarest-first, `RARITY_LABELS`
+  COMMON/UNCOMMON/RARE/EPIC/LEGENDARY/MYTHIC). UI: rarity colours the item **name ink + a 1px
+  border tint** only (CLAUDE.md "Rarity" tokens) — `pfTierLabel` now reads the authored field,
+  the old ladder-position quartile is gone.
+- The DOM-18 **naming pass** landed in the same change (real gun/vehicle models in
+  `GEAR_CONTENT`; ids untouched, zero balance impact). The **utility ladder is explicitly
+  deferred**: utility stays the two legacy greys (burner, bando) with no generated ladder and
+  no drop-tier variants — its stat identity is undecided; reopen under a content ticket when
+  it is.
