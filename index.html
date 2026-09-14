@@ -279,14 +279,27 @@
           <div class="hp-bar"><div class="hp-fill enemy-hp" id="c-enemy-hp" style="width:100%"></div></div>
         </div>
       </div>
+      <!-- The sparkline well (DOM-103): round-by-round HP traces per the
+           contract's selector table — chrome line = you, --red = opp. The
+           DOM-72 rebuild dropped it; restored, fed by the turn-based round
+           history. Lines are stroked from CSS tokens (.you / .opp).
+           Renderer: js/combat.js. -->
+      <div class="combat-log" id="combat-log">
+        <svg class="combat-spark" id="combat-spark" aria-hidden="true">
+          <line class="combat-spark-mid" id="spark-mid"></line>
+          <path class="opp" id="spark-opp"></path>
+          <path class="you" id="spark-you"></path>
+          <circle class="combat-spark-dot opp" id="spark-dot-opp" r="3"></circle>
+          <circle class="combat-spark-dot you" id="spark-dot-you" r="3"></circle>
+        </svg>
+        <div class="combat-spark-result" id="spark-result"></div>
+      </div>
       <div id="combat-info-wrap">
         <div class="combat-odds">
           <span class="combat-odds-k">WIN ODDS</span>
           <span id="c-odds"></span>
         </div>
-        <!-- Turn-based rounds (DOM-72): both sides deal damage each round.
-             The auto-playing spark well is retired with the one-roll Sim;
-             the two HP bars above are the fight visual now. -->
+        <!-- Turn-based rounds (DOM-72): both sides deal damage each round. -->
         <button class="attack-btn wide" id="hit-btn" onclick="hitEm()">HIT 'EM</button>
         <button class="run-btn" id="run-btn" onclick="runAway()">RUN</button>
       </div>
