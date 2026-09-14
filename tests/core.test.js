@@ -1201,6 +1201,30 @@ test('drop tiers surface as aspirational, and the primary slot keeps its rarity 
   });
 });
 
+test('rarity name ink survives .pf-inv-name (code shape)', () => {
+  // DOM-102, third strike of the same specificity disease: .pf-inv-name
+  // declares color at (0,1,0) after the bare .tier-* block, so without the
+  // explicit pairs the stash/picker/teaser names render plain --text.
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC'].forEach(t => {
+    assert.ok(css.includes('.pf-inv-name.tier-' + t),
+      'inventory names lose the ' + t + ' rarity ink to .pf-inv-name');
+  });
+});
+
+test('the combat sparkline well is emitted, not just styled (code shape)', () => {
+  // DOM-103: the DOM-72 rebuild dropped the well but kept its CSS. The
+  // contract's selector table requires it, so the markup and the renderer
+  // must both reference it or it silently orphans again.
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.ok(html.includes('id="combat-log"'), 'combat modal lost the .combat-log well');
+  assert.ok(html.includes('id="combat-spark"'), 'well lost its spark SVG');
+  const combatSrc = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+  assert.ok(/_pushSparkPoint\(\)/.test(combatSrc), 'rounds no longer feed the spark');
+  assert.ok(/spark-you/.test(combatSrc) && /spark-opp/.test(combatSrc),
+    'spark renderer no longer strokes both traces');
+});
+
 // Real state.js + drops.js in a vm, Math.random scripted per call. Call order
 // inside one roll: proc gate, then ONE random per ladder tier (rarest first)
 // until a tier hits, then the pool pick.
