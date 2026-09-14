@@ -222,8 +222,9 @@ function enemyStatMult(gear, e) {
 // statted at +15% per rarity step over the gate baseline (blue ×1.15,
 // purple ×1.32, orange ×1.52) — deliberately under one 10-level climb
 // (×1.40) so a lucky drop never outruns progression. Oranges never drop in
-// v1 (rate 0 in tuning): they are the supply shelf for DOM-92 premium /
-// event items, visible but unreachable. The enemy p0 solve reads ONLY the
+// v1 (rate 0 in tuning): the DOM-92 premium/event supply shelf, surfaced as
+// aspirational in the Profile gear tab's ON THE STREETS list (VAULTED chip)
+// once level-gated into view. The enemy p0 solve reads ONLY the
 // buyable baseline (loadoutAt skips dropOnly), so rarity shifts no balance.
 const RARITY_STEP = 1.15;
 // mythic is plumbed (tokens, labels, odds authored 0) but RESERVED — no v1

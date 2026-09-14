@@ -360,6 +360,37 @@ function pfRenderGear() {
         <div class="pf-empty-hint">No gear yet. Hit the Plug to pick something up.</div>
       </div>`;
 
+  // The aspirational surface (DOM-18 ratified: drop tiers are "visible in the
+  // catalog"): unowned drop-only gear at the player's top two unlocked gates —
+  // a teaser, not a spreadsheet. Full contrast per the locked-state rule; the
+  // chip names the gate: DROP ONLY (it drops or it doesn't) and VAULTED for
+  // oranges, which never circulate in v1 (the DOM-92 shelf).
+  const streetPool = STORE_ITEMS.filter(i =>
+    i.dropOnly && !ownsGear(i.id) && i.levelReq <= G.level);
+  const streetGates = [...new Set(streetPool.map(i => i.levelReq))]
+    .sort((a, b) => b - a).slice(0, 2);
+  const streetRows = streetPool
+    .filter(i => streetGates.indexOf(i.levelReq) !== -1)
+    .sort((a, b) => b.levelReq - a.levelReq || a.name.localeCompare(b.name))
+    .map(it => `
+      <div class="pf-inv-row static rar-${pfTierLabel(it)}">
+        <div class="pf-inv-main">
+          <div class="pf-inv-name tier-${pfTierLabel(it)}">${pfEsc(it.name)}</div>
+          <div class="pf-inv-meta">${it.type.toUpperCase()} · ${pfEsc(it.desc)} · L${it.levelReq}</div>
+        </div>
+        <span class="pf-inv-tier tier-${pfTierLabel(it)}">${pfTierLabel(it)}</span>
+        <span class="pf-inv-status locked">${it.rarity === 'orange' ? 'VAULTED' : 'DROP ONLY'}</span>
+      </div>`).join('');
+  const streetsSection = streetRows ? `
+      <div>
+        <div class="pf-sec-head">
+          <h4>ON THE STREETS</h4>
+          <div class="pf-sec-rule"></div>
+          <span class="pf-sec-count">OUT THERE</span>
+        </div>
+        <div class="pf-inv">${streetRows}</div>
+      </div>` : '';
+
   return `
     <div class="pf-gear">
       <div class="pf-ledger">
@@ -387,6 +418,7 @@ function pfRenderGear() {
         </div>
         <div class="pf-inv">${invRows}</div>
       </div>
+      ${streetsSection}
     </div>`;
 }
 

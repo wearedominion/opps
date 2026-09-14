@@ -1187,6 +1187,20 @@ test('both faucets roll: doJob and the fight-win branch call rollDrop (code shap
   assert.ok(/rollDrop\(enemy\.name\)/.test(fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8')));
 });
 
+test('drop tiers surface as aspirational, and the primary slot keeps its rarity edge', () => {
+  // review bounce, PR #27: "visible as aspirational" must actually render,
+  // and .pf-slot.primary (0,2,0) must not bury the single-class .rar-* tint
+  const pfSrc = fs.readFileSync(path.join(ROOT, 'js/profile.js'), 'utf8');
+  assert.ok(/i\.dropOnly && !ownsGear\(i\.id\)/.test(pfSrc), 'no aspirational drop surface');
+  assert.ok(/VAULTED/.test(pfSrc), 'oranges need the VAULTED chip');
+  assert.ok(/DROP ONLY/.test(pfSrc), 'blue/purple need the DROP ONLY chip');
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC'].forEach(t => {
+    assert.ok(css.includes('.pf-slot.primary.rar-' + t),
+      'primary slot loses the ' + t + ' rarity edge to the gold border');
+  });
+});
+
 // Real state.js + drops.js in a vm, Math.random scripted per call. Call order
 // inside one roll: proc gate, then ONE random per ladder tier (rarest first)
 // until a tier hits, then the pool pick.

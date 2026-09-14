@@ -836,7 +836,10 @@ deleted.
 - Client: `js/drops.js` (`rollDrop`, `RARITY_ORDER` rarest-first, `RARITY_LABELS`
   COMMON/UNCOMMON/RARE/EPIC/LEGENDARY/MYTHIC). UI: rarity colours the item **name ink + a 1px
   border tint** only (CLAUDE.md "Rarity" tokens) — `pfTierLabel` now reads the authored field,
-  the old ladder-position quartile is gone.
+  the old ladder-position quartile is gone. The "visible as aspirational" half of the
+  ratification is the Profile gear tab's **ON THE STREETS** list: unowned drop-tier items at
+  the player's top two unlocked gates, full contrast, inert, chip naming the gate — `DROP
+  ONLY` for blue/purple, `VAULTED` for oranges (which never circulate in v1).
 - The DOM-18 **naming pass** landed in the same change (real gun/vehicle models in
   `GEAR_CONTENT`; ids untouched, zero balance impact). The **utility ladder is explicitly
   deferred**: utility stays the two legacy greys (burner, bando) with no generated ladder and

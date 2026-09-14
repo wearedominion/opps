@@ -1942,11 +1942,28 @@ img.plug-portrait {
 /* ── Rarity edges (DOM-18) ──
    The 1px border tint half of the CLAUDE.md Rarity rule — the name ink is
    the tier-* classes above. Last in the file on purpose: it wins the
-   same-specificity tie against .pf-slot.primary / .store-item borders.
-   Never a fill, never a glow. Mythic reserved. */
+   same-specificity TIE against .store-item / .pf-inv-row / .pf-pick-row
+   borders. .pf-slot.primary is (0,2,0) and needs the explicit overrides
+   below. Never a fill, never a glow. Mythic reserved. */
 .rar-COMMON    { border-color: var(--rarity-common-edge); }
 .rar-UNCOMMON  { border-color: var(--rarity-uncommon-edge); }
 .rar-RARE      { border-color: var(--rarity-rare-edge); }
 .rar-EPIC      { border-color: var(--rarity-epic-edge); }
 .rar-LEGENDARY { border-color: var(--rarity-legendary-edge); }
 .rar-MYTHIC    { border-color: var(--rarity-mythic-edge); }
+/* the primary slot: the PRIMARY label marks the slot, the fielded item's
+   rarity owns the edge — autoFieldGear lands fresh drops exactly here */
+.pf-slot.primary.rar-COMMON    { border-color: var(--rarity-common-edge); }
+.pf-slot.primary.rar-UNCOMMON  { border-color: var(--rarity-uncommon-edge); }
+.pf-slot.primary.rar-RARE      { border-color: var(--rarity-rare-edge); }
+.pf-slot.primary.rar-EPIC      { border-color: var(--rarity-epic-edge); }
+.pf-slot.primary.rar-LEGENDARY { border-color: var(--rarity-legendary-edge); }
+.pf-slot.primary.rar-MYTHIC    { border-color: var(--rarity-mythic-edge); }
+
+/* ── The drop teaser (DOM-18 "visible as aspirational") ──
+   Unowned drop-tier rows in the Profile gear tab: full contrast per the
+   locked-state rule, inert (no hover affordance), chip names the gate. */
+.pf-inv-row.static { pointer-events: none; }
+.pf-inv-status.locked {
+  background: #141419; border-color: #22222a; color: var(--disabled);
+}
