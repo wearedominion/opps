@@ -68,6 +68,19 @@ const PLUGS_DATA = [
 // Per-plug dialog progress (in-session only)
 const _plugState = {};
 
+// Quest status chip for a plug card (DOM-90). Locked states name the gate
+// (contract: state the gate, not the refusal); a claimable quest is the one
+// state worth shouting about.
+function _plugQuestChip(plug) {
+  const q = questFor(plug.id);
+  if (!q) return '';
+  if (questClaimed(q)) return '<span class="plug-quest-chip done">JOB DONE</span>';
+  if (!questUnlocked(q)) return '<span class="plug-quest-chip locked">JOB · LV ' + q.levelReq + '</span>';
+  if (questComplete(q)) return '<span class="plug-quest-chip claim">COLLECT REWARD</span>';
+  const p = questProgress(q);
+  return '<span class="plug-quest-chip">JOB · ' + p.done + '/' + p.total + '</span>';
+}
+
 function renderPlugs() {
   var container = $('plugs-grid');
   if (!container) return;
@@ -87,6 +100,7 @@ function renderPlugs() {
           '<div class="plug-name">' + plug.name + '</div>' +
           '<div class="plug-moniker">' + plug.moniker + '</div>' +
           '<div class="plug-line">' + plug.line + '</div>' +
+          _plugQuestChip(plug) +
         '</div>' +
         '<div class="plug-action">' +
           '<button class="plug-go-btn">LETS GO</button>' +
@@ -130,7 +144,64 @@ function _renderPlugDialog(idx) {
   // primary; every other line advances the dialogue and stays secondary.
   // These were three inline hex assignments (#bfce1c / #15120e / #e9e4db plus a
   // translucent-white border) that no stylesheet could reach.
-  btn.classList.toggle('is-final', isLast);
+  // When the plug's quest is claimable, COLLECT is the region's one primary
+  // instead (contract: one primary per region) — GO stays secondary then.
+  const q = questFor(plug.id);
+  const claimable = q && questUnlocked(q) && !questClaimed(q) && questComplete(q);
+  btn.classList.toggle('is-final', isLast && !claimable);
+  _renderQuestPanel(plug);
+}
+
+// The quest panel under the dialog (DOM-90): steps with live progress, the
+// rule-priced bonus, and COLLECT when the work is done.
+function _renderQuestPanel(plug) {
+  const host = $('plug-quest-panel');
+  if (!host) return;
+  const q = questFor(plug.id);
+  if (!q) { host.innerHTML = ''; host.hidden = true; return; }
+  host.hidden = false;
+
+  const stepName = s =>
+    s.type === 'job' ? ((JOBS.find(j => j.id === s.id) || {}).name || s.id)
+    : s.type === 'fight' ? ((ENEMIES.find(e => e.id === s.id) || {}).name || s.id)
+    : 'Carry a ' + ((STORE_ITEMS.find(i => i.id === s.id) || {}).name || s.id);
+
+  const locked = !questUnlocked(q);
+  const claimed = questClaimed(q);
+  const complete = !locked && questComplete(q);
+
+  const steps = q.steps.map((s, i) => {
+    const got = locked ? 0 : questStepProgress(q, i);
+    const need = questStepTarget(s);
+    const on = got >= need;
+    return '<div class="plug-quest-step' + (on ? ' on' : '') + '">' +
+      '<span class="pq-dot"></span>' +
+      '<span class="pq-label">' + stepName(s) + '</span>' +
+      '<span class="pq-count">' + got + '/' + need + '</span>' +
+    '</div>';
+  }).join('');
+
+  const item = q.reward.item ? STORE_ITEMS.find(i => i.id === q.reward.item) : null;
+  const reward = '<span class="pq-cash">$' + q.reward.cash.toLocaleString() + '</span>'
+    + ' + ' + q.reward.clout.toLocaleString() + ' CLOUT'
+    + (item ? ' + ' + item.name : '');
+
+  host.innerHTML =
+    '<div class="plug-quest-head">' +
+      '<span class="plug-quest-title">' + q.name + '</span>' +
+      (locked ? '<span class="plug-quest-chip locked">LV ' + q.levelReq + '</span>' : '') +
+    '</div>' +
+    '<div class="plug-quest-desc">' + q.desc + '</div>' +
+    steps +
+    '<div class="plug-quest-foot">' +
+      '<span class="pq-reward">' + reward + '</span>' +
+      (claimed
+        ? '<span class="plug-quest-chip done">JOB DONE</span>'
+        : '<button class="pq-claim' + (complete ? ' ready' : '') + '"' +
+            (complete ? ' onclick="claimQuest(\'' + q.id + '\')"' : ' disabled') + '>' +
+            (complete ? 'COLLECT' : locked ? 'LV ' + q.levelReq : 'IN PROGRESS') +
+          '</button>') +
+    '</div>';
 }
 
 function advancePlug() {

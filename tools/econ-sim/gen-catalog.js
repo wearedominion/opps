@@ -257,6 +257,42 @@ const GEAR_CONTENT = [
   { id: 'yacht',    name: 'Armored Yacht',    type: 'vehicle', gate: 110, plug: 'plug-dex' },
 ];
 
+// ── Plug quests (DOM-90) ──────────────────────────────────────────────────────
+// Same identity/derivation split: QUEST_CONTENT is names, steps and flavour;
+// the completion bonus is priced by rule. Ratified 2026-09-14 (Jake):
+//   · steps route through the EXISTING faucets — the jobs and fights a quest
+//     requires pay their normal rates while you grind them, so the 60:35
+//     Clout mix is untouched by construction;
+//   · completion pays a one-time bonus = `hours` of best-job income at the
+//     quest's gate (cash + the same hours' worth of best-job Clout);
+//   · one-shot per player (finite faucet — the sim checks the totals);
+//   · a quest may grant one own-once gear item (counted at catalog price).
+// Step ids must exist in the generated catalogs; writeCatalogs validates.
+const QUEST_CONTENT = [
+  { id: 'fence_run', plug: 'plug-tommy', gate: 1, hours: 1,
+    name: 'Move the Merchandise',
+    desc: 'Tommy has a buyer out back of the pawn shop. Keep the packages moving until the order is filled.',
+    steps: [{ type: 'job', id: 'runner', count: 5 }, { type: 'job', id: 'lookout', count: 3 }] },
+  { id: 'snitch_problem', plug: 'plug-theresa', gate: 2, hours: 1.5,
+    name: 'The Snitch Problem',
+    desc: 'A snitch downtown is running his mouth about Theresa’s shipments. Make the problem disappear.',
+    steps: [{ type: 'fight', id: 'snitch', count: 3 }] },
+  { id: 'while_they_sleep', plug: 'plug-kylie', gate: 3, hours: 1.5,
+    name: 'While They Sleep',
+    desc: 'Kylie’s intel: the crew rotates spots every few days. Hit them before it goes stale.',
+    steps: [{ type: 'fight', id: 'oppcrew', count: 3 }] },
+  { id: 'parts_run', plug: 'plug-marco', gate: 5, hours: 2,
+    name: 'Liberate the Inventory',
+    desc: 'Marco’s shop is dry. The Auto Theft Ring’s warehouse isn’t — run it, then move the weight.',
+    steps: [{ type: 'fight', id: 'jackers', count: 3 }, { type: 'job', id: 'move', count: 4 }] },
+  { id: 'the_big_one', plug: 'plug-dex', gate: 7, hours: 3,
+    name: 'The Big One',
+    desc: 'Six minutes behind the bank, every Thursday. Come strapped, run the block first, then take the truck.',
+    steps: [{ type: 'item', id: 'glock' }, { type: 'job', id: 'takeover', count: 5 },
+            { type: 'fight', id: 'rival', count: 2 }],
+    rewardItem: 'bando' },
+];
+
 // ── Spots (DOM-74) ────────────────────────────────────────────────────────────
 // Same identity/derivation split as gear: SPOT_CONTENT is names and flavour
 // only; rates and prices are derived. Ratified 2026-09-11 (Jake): own-once
@@ -429,15 +465,49 @@ function buildCatalogs(E, M, K) {
     };
   });
 
-  return { jobsOut, enemies, gear, spots };
+  // Plug quests (DOM-90): completion bonus by rule — `hours` of best-job
+  // income (cash) and best-job Clout at the gate. Steps pay through the
+  // normal faucets while ground, so this bonus is the only new money.
+  const quests = QUEST_CONTENT.map(q => {
+    const reward = {
+      cash: nice(q.hours * jobCashPerHour(q.gate)),
+      clout: Math.max(1, Math.round(q.hours * jobCpm(q.gate) * MOVES_PER_HOUR)),
+    };
+    if (q.rewardItem) reward.item = q.rewardItem;
+    return {
+      id: q.id, plug: q.plug, name: q.name, desc: q.desc,
+      levelReq: q.gate, hours: q.hours,
+      steps: q.steps,
+      reward,
+    };
+  }).sort((a, b) => a.levelReq - b.levelReq || a.id.localeCompare(b.id));
+
+  return { jobsOut, enemies, gear, spots, quests };
 }
 
 function writeCatalogs(E, M, K) {
-  const { jobsOut, enemies, gear, spots } = buildCatalogs(E, M, K);
+  const { jobsOut, enemies, gear, spots, quests } = buildCatalogs(E, M, K);
+  // Quest steps and rewards must reference rows the same write produces —
+  // a dangling id would strand a quest permanently incompletable in the client.
+  for (const q of quests) {
+    for (const s of q.steps) {
+      const pool = s.type === 'job' ? jobsOut : s.type === 'fight' ? enemies : gear;
+      const row = pool.find(r => r.id === s.id);
+      if (!row) throw new Error('quest ' + q.id + ' step references unknown ' + s.type + ' "' + s.id + '"');
+      if (row.levelReq > q.levelReq) {
+        throw new Error('quest ' + q.id + ' (L' + q.levelReq + ') requires ' + s.id
+          + ' gated at L' + row.levelReq + ' — uncompletable at its own gate');
+      }
+    }
+    if (q.reward.item && !gear.find(g => g.id === q.reward.item)) {
+      throw new Error('quest ' + q.id + ' rewards unknown item "' + q.reward.item + '"');
+    }
+  }
   fs.writeFileSync(path.join(ROOT, 'data/jobs.json'), JSON.stringify(jobsOut, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/enemies.json'), JSON.stringify(enemies, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/store.json'), JSON.stringify(gear, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/properties.json'), JSON.stringify(spots, null, 2) + '\n');
+  fs.writeFileSync(path.join(ROOT, 'data/quests.json'), JSON.stringify(quests, null, 2) + '\n');
 }
 
 function runSim() {
@@ -485,7 +555,7 @@ function main() {
   const r = runSim();
 
   // Committed Clout mix at the checkpoint levels, from the written catalogs.
-  const { jobsOut, enemies, gear, spots } = buildCatalogs(E, M, K);
+  const { jobsOut, enemies, gear, spots, quests } = buildCatalogs(E, M, K);
   const mixAt = L => {
     const best = m => Math.max(...jobsOut.filter(j => j.levelReq <= L).map(m));
     const cpm = best(j => j.clout / j.moves);
@@ -528,6 +598,12 @@ function main() {
       + `${spotCapHoursAt(s.levelReq).toFixed(1)}h · $${s.price.toLocaleString()} `
       + `(payback ${(s.price / daily).toFixed(1)}d)`);
   }
+  console.log('Plug quests (DOM-90): bonus = hours of best-job income at the gate; steps pay through the normal faucets:');
+  for (const q of quests) {
+    console.log('  L' + q.levelReq + ': ' + q.id + ' — $' + q.reward.cash.toLocaleString()
+      + ' + ' + q.reward.clout + ' Clout (' + q.hours + 'h)'
+      + (q.reward.item ? ' + ' + q.reward.item : ''));
+  }
   console.log('Enemy stats solved per band against the round model (DOM-72/75; multiplier × the '
     + 'band loadout, best item per type). Matchup check (p(win) at band):');
   console.log('  ' + [1, 10, 50, 110].map(b => {
@@ -538,8 +614,8 @@ function main() {
       + (st.pWin * 100).toFixed(1) + '%';
   }).join(' · '));
   console.log('Wrote data/jobs.json (' + jobsOut.length + ' jobs), data/enemies.json ('
-    + enemies.length + ' enemies), data/store.json (' + gear.length + ' gear items) and '
-    + 'data/properties.json (' + spots.length + ' spots).');
+    + enemies.length + ' enemies), data/store.json (' + gear.length + ' gear items), '
+    + 'data/properties.json (' + spots.length + ' spots) and data/quests.json (' + quests.length + ' quests).');
 }
 
 main();

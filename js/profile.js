@@ -344,7 +344,8 @@ function pfRenderGear() {
     const isEq = fielded.some(f => f.item.id === it.id);
     const inst = gearInstance(it.id);
     const lv = inst && inst.level > 0 ? ` · LV ${inst.level}` : '';
-    const src = inst && inst.src === 'dropped' ? ' · FOUND' : '';
+    const src = inst && inst.src === 'dropped' ? ' · FOUND'
+      : inst && inst.src === 'quest' ? ' · EARNED' : '';
     return `
       <button class="pf-inv-row${isEq ? ' equipped' : ''}" onclick="pfToggleField('${it.id}')">
         <div class="pf-inv-main">

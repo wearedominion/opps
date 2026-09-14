@@ -43,6 +43,7 @@ function doJob(jobId) {
   credit('cash', earned, REASON.MOVE_PAYOUT, { ref: { jobId: job.id } });
   G.jobProgress[job.id] = Math.min(prog + 1, job.times);
   addClout(job.clout, REASON.MOVE_PAYOUT, { jobId: job.id });
+  Quests.onJob(job.id);
 
   log(`${job.name} — earned $${earned} + ${job.clout} Clout`, 'win');
   toast(`+$${earned} | +${job.clout} CLOUT`);

@@ -41,6 +41,7 @@ const REASON = Object.freeze({
   LEVEL_UP_GRANT:    'level_up_grant',
   RECRUIT_BONUS:     'recruit_bonus',
   IAP_GRANT:         'iap_grant',
+  QUEST_REWARD:      'quest_reward',
   GEAR_BUY:          'gear_buy',
   GEAR_UPGRADE:      'gear_upgrade',
   REROLL_FEE:        'reroll_fee',

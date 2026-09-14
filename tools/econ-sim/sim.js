@@ -255,6 +255,38 @@ const MAX_LEVEL_BAND = Math.max(...STORE.map(i => i.levelReq || 1));
 // flips from faucet to drain (the DOM-79 break-even). Every faucet and drain
 // is a ledger reason; the money supply is Σ credits − Σ debits by contract
 // (no netting, no transfer rows — snapshot combat mints and destroys only).
+// ── Plug quests (DOM-90) ─────────────────────────────────────────────────────
+// One-shot completion bonuses; the steps themselves pay through the normal
+// faucets, so this table is the ENTIRE quest faucet. The report re-derives
+// each bonus from the rule (hours × best-job income at the gate) so a
+// hand-edited quests.json that drifts from the rule fails loudly here.
+function questReport() {
+  const QUESTS = readJSON('data/quests.json');
+  const rows = QUESTS.map(q => {
+    const r = ratesAtLevel(q.levelReq, 0);
+    const ruleCash = q.hours * r.jobCashPerHour;
+    if (Math.abs(q.reward.cash - ruleCash) / ruleCash > 0.05) {
+      throw new Error('quest ' + q.id + ' bonus $' + q.reward.cash
+        + ' drifted from the rule (' + q.hours + 'h × $' + Math.round(r.jobCashPerHour)
+        + '/h = $' + Math.round(ruleCash) + ') — regenerate data/quests.json');
+    }
+    return {
+      id: q.id, plug: q.plug, levelReq: q.levelReq, hours: q.hours,
+      cash: q.reward.cash, clout: q.reward.clout, item: q.reward.item || null,
+      evUSD: evUSD(q.reward.cash, q.levelReq),
+    };
+  });
+  const totalClout = rows.reduce((s, r) => s + r.clout, 0);
+  return {
+    rows,
+    totalCash: rows.reduce((s, r) => s + r.cash, 0),
+    totalClout,
+    cloutShareOfCurve: totalClout / cumClout[MAX_LEVEL],
+    maxHours: Math.max(...rows.map(r => r.hours)),
+    totalEvUSD: rows.reduce((s, r) => s + r.evUSD, 0),
+  };
+}
+
 function moneyCircuit() {
   const committed = TARGETS.playerProfiles.committed;
   const curve = T('gear.upgradeCost');
@@ -745,6 +777,17 @@ function run() {
       + fmt(r.freeDaysAtCap) + ' free days');
   });
 
+  say('\n■ Q. Plug quests (DOM-90) — one-shot bonuses; steps pay through the normal faucets.');
+  const qr = questReport();
+  qr.rows.forEach(r => {
+    say('    L' + pad(String(r.levelReq), 3) + ' ' + pad(r.id, 18) + ' $' + fmt(r.cash)
+      + ' + ' + r.clout + ' Clout (' + r.hours + 'h)' + (r.item ? ' + ' + r.item : '')
+      + ' — EV $' + (Math.round(r.evUSD * 100) / 100));
+  });
+  say('    Catalog total: $' + fmt(qr.totalCash) + ' + ' + fmt(qr.totalClout) + ' Clout ('
+    + (qr.cloutShareOfCurve * 100).toFixed(4) + '% of the lifetime curve) — max bonus '
+    + qr.maxHours + 'h vs the ' + TARGETS.breakEven.hoursOfJobIncome + 'h break-even anchor.');
+
   // ── outputs ────────────────────────────────────────────────────────────────
   const outDir = path.join(__dirname, 'out');
   fs.mkdirSync(outDir, { recursive: true });
@@ -773,6 +816,7 @@ function run() {
     launder: launder(), spots: spotModel(),
     upgradeSink: upgradeSink(),
     moneyCircuit: moneyCircuit(),
+    quests: questReport(),
     ev,
     targets: TARGETS,
   };
@@ -915,6 +959,10 @@ function buildHtml(json, outDir) {
     F4_JOB_CEIL: String(jobCeiling),
     F4_ENEMY_CEIL: String(enemyCeiling),
     F5_HOURS: String(Math.max(...gearAffordability(jobCeiling).map(g => Math.round(g.hoursOfJobs * 10) / 10))),
+    F7_QUESTS: String(json.quests.rows.length),
+    F7_MAX_HOURS: String(json.quests.maxHours),
+    F7_BE_HOURS: String(t.breakEven.hoursOfJobIncome),
+    F7_CLOUT_SHARE: (json.quests.cloutShareOfCurve * 100).toFixed(4) + '%',
     F6_PER_SLOT: String(T('crew.lieutenantsPerSlot')),
     F6_ROTATION: T('crew.slotRotation').join(' → '),
     F6_CAP: String(T('crew.maxBonusSlotsPerType')),

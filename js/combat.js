@@ -213,6 +213,7 @@ function _endFight(enemyDead) {
     $('combat-result').textContent = 'YOU SMOKED HIM! +$' + cashWon.toLocaleString();
     $('combat-result').style.color = 'var(--green)';
     log('Smoked ' + enemy.name + ' -- won $' + cashWon.toLocaleString() + ' + ' + enemy.reward.clout + ' Clout', 'win');
+    Quests.onFightWin(enemy.id);
     Sound.win();
   } else {
     // The loss is a share of the CURRENT balance at resolution, never a

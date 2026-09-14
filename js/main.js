@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 
 let JOBS = [];
+let QUESTS = [];   // data/quests.json — Plug quests (DOM-90)
 let ENEMIES = [];
 let STORE_ITEMS = [];
 let PROPERTIES = [];
@@ -128,12 +129,12 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 11) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 12) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks, platform, portraits] = await Promise.all([
+    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks, quests, platform, portraits] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/store.json').then(r => r.json())),
@@ -143,6 +144,8 @@ async function loadGameData() {
       track(fetch('data/progression.json').then(r => r.json())),
       track(fetch('data/monetization.json').then(r => r.json())),
       track(fetch('data/unlocks.json').then(r => r.json())),
+      // Quest content — a miss degrades to plugs-without-quests, not a dead app.
+      track(fetch('data/quests.json').then(r => r.json()).catch(() => [])),
       // Optional config — a miss must not block core data or the loader (T5).
       track(fetch('data/platform.json').then(r => r.json()).catch(() => ({}))),
       // Optional art map — a miss degrades to placeholder circles, not a dead app.
@@ -158,6 +161,7 @@ async function loadGameData() {
     PROGRESSION = (progression && progression.levels) || [];
     IAP_PRODUCTS = monetization;
     UNLOCKS      = unlocks;
+    QUESTS       = quests || [];
     PLATFORM    = platform || {};
     PORTRAITS   = {
       enemies: (portraits && portraits.enemies) || {},

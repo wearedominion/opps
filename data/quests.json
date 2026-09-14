@@ -1,0 +1,117 @@
+[
+  {
+    "id": "fence_run",
+    "plug": "plug-tommy",
+    "name": "Move the Merchandise",
+    "desc": "Tommy has a buyer out back of the pawn shop. Keep the packages moving until the order is filled.",
+    "levelReq": 1,
+    "hours": 1,
+    "steps": [
+      {
+        "type": "job",
+        "id": "runner",
+        "count": 5
+      },
+      {
+        "type": "job",
+        "id": "lookout",
+        "count": 3
+      }
+    ],
+    "reward": {
+      "cash": 420,
+      "clout": 84
+    }
+  },
+  {
+    "id": "snitch_problem",
+    "plug": "plug-theresa",
+    "name": "The Snitch Problem",
+    "desc": "A snitch downtown is running his mouth about Theresa’s shipments. Make the problem disappear.",
+    "levelReq": 2,
+    "hours": 1.5,
+    "steps": [
+      {
+        "type": "fight",
+        "id": "snitch",
+        "count": 3
+      }
+    ],
+    "reward": {
+      "cash": 945,
+      "clout": 135
+    }
+  },
+  {
+    "id": "while_they_sleep",
+    "plug": "plug-kylie",
+    "name": "While They Sleep",
+    "desc": "Kylie’s intel: the crew rotates spots every few days. Hit them before it goes stale.",
+    "levelReq": 3,
+    "hours": 1.5,
+    "steps": [
+      {
+        "type": "fight",
+        "id": "oppcrew",
+        "count": 3
+      }
+    ],
+    "reward": {
+      "cash": 1350,
+      "clout": 149
+    }
+  },
+  {
+    "id": "parts_run",
+    "plug": "plug-marco",
+    "name": "Liberate the Inventory",
+    "desc": "Marco’s shop is dry. The Auto Theft Ring’s warehouse isn’t — run it, then move the weight.",
+    "levelReq": 5,
+    "hours": 2,
+    "steps": [
+      {
+        "type": "fight",
+        "id": "jackers",
+        "count": 3
+      },
+      {
+        "type": "job",
+        "id": "move",
+        "count": 4
+      }
+    ],
+    "reward": {
+      "cash": 2640,
+      "clout": 216
+    }
+  },
+  {
+    "id": "the_big_one",
+    "plug": "plug-dex",
+    "name": "The Big One",
+    "desc": "Six minutes behind the bank, every Thursday. Come strapped, run the block first, then take the truck.",
+    "levelReq": 7,
+    "hours": 3,
+    "steps": [
+      {
+        "type": "item",
+        "id": "glock"
+      },
+      {
+        "type": "job",
+        "id": "takeover",
+        "count": 5
+      },
+      {
+        "type": "fight",
+        "id": "rival",
+        "count": 2
+      }
+    ],
+    "reward": {
+      "cash": 4800,
+      "clout": 348,
+      "item": "bando"
+    }
+  }
+]
