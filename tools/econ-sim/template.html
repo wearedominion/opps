@@ -131,7 +131,7 @@
   <section>
     <div class="card">
       <h2>DAYS TO REACH LEVEL — ALL %%MAX_LEVEL%% LEVELS</h2>
-      <p class="sub">Log-scale days. Gold diamonds are the pacing targets (L%%T_D1%% day 1 · L%%T_D7%% day 7 · L%%T_D30%% day 30). The DOM-71/DOM-81 ladder carries the climb all the way: committed lands L%%MAX_LEVEL%% in %%CAP_DAYS%% days against the %%T_CAP%% target.</p>
+      <p class="sub">Log-scale days. Gold diamonds are the pacing targets (L%%T_D1%% day 1 · L%%T_D7%% day 7 · L%%T_D30%% day 30). The DOM-71/DOM-81 ladder carries the climb all the way: committed lands L%%MAX_LEVEL%% in %%CAP_DAYS%% days against the %%T_CAP%% target. <b style="color:var(--text)">Spender headroom</b> (dashed gold: committed usage + a weekly budget on the best Clout-per-dollar boost path, heals included where fights need them): %%TTL_SPEND%% — boosts buy back wait, they don't buy the curve.</p>
       <div class="chart-well" id="ttl-well">
         <svg id="ttl" viewBox="0 0 900 380" role="img" aria-label="Days to reach each level, three player profiles, log scale"></svg>
         <div class="tip" id="ttl-tip" hidden></div>
@@ -140,6 +140,9 @@
         <span><i class="swatch" style="background:#3987e5"></i>Casual (%%P_CASUAL%%)</span>
         <span><i class="swatch" style="background:#d95926"></i>Committed (%%P_COMMITTED%%)</span>
         <span><i class="swatch" style="background:#199e70"></i>Grinder (%%P_GRINDER%%)</span>
+        <span><i class="swatch" style="background:repeating-linear-gradient(90deg,#8f7a4e,#8f7a4e 6px,transparent 6px,transparent 9px)"></i>Committed + $3/wk</span>
+        <span><i class="swatch" style="background:repeating-linear-gradient(90deg,#c9a55c,#c9a55c 6px,transparent 6px,transparent 9px)"></i>+ $10/wk</span>
+        <span><i class="swatch" style="background:repeating-linear-gradient(90deg,#f3e0b4,#f3e0b4 6px,transparent 6px,transparent 9px)"></i>+ $50/wk</span>
         <span><i class="swatch" style="background:#e8c98a;border-radius:50%"></i>Pacing target</span>
       </div>
     </div>
@@ -261,21 +264,28 @@ const fmtD = d => d >= 365 ? (d / 365).toFixed(1) + 'y' : d + 'd';
     const t = el('text', { x: x(l), y: H - m.b + 16, 'text-anchor': 'middle' }); t.textContent = 'L' + l; svg.appendChild(t);
   });
 
+  // series meta comes from the sim (DATA.profiles, ttl column order): free
+  // profiles keep the categorical trio, spend tiers ride a dashed chrome ramp.
   const terminal = [];
-  [1, 2, 3].forEach((col, i) => {
+  DATA.profiles.forEach((p, i) => {
+    const col = i + 1;
     let d = '';
     DATA.ttl.forEach(r => { if (r[col] !== null) d += (d ? 'L' : 'M') + x(r[0]).toFixed(1) + ' ' + y(Math.max(r[col], 1)).toFixed(1); });
-    svg.appendChild(el('path', { d, fill: 'none', stroke: SERIES[i], 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+    const attrs = { d, fill: 'none', stroke: p.color, 'stroke-width': 2, 'stroke-linejoin': 'round' };
+    if (p.dash) attrs['stroke-dasharray'] = p.dash;
+    svg.appendChild(el('path', attrs));
     const last = [...DATA.ttl].reverse().find(r => r[col] !== null);
-    svg.appendChild(el('circle', { cx: x(last[0]), cy: y(Math.max(last[col], 1)), r: 3.5, fill: SERIES[i], stroke: '#0d0d11', 'stroke-width': 2 }));
+    svg.appendChild(el('circle', { cx: x(last[0]), cy: y(Math.max(last[col], 1)), r: 3.5, fill: p.color, stroke: '#0d0d11', 'stroke-width': 2 }));
     terminal.push(last);
   });
-  // the three lines converge at top right — label them as a stacked block in the
+  // the lines converge at top right — label them as a stacked block in the
   // empty lower-right region instead of at the (colliding) endpoints
-  [['casual ' + (terminal[0][0] < LMAX ? 'stalls at L' + terminal[0][0] : 'reaches L' + LMAX) + ' — ' + fmtD(terminal[0][1]), 0],
-   ['committed ' + (terminal[1][0] < LMAX ? 'L' + terminal[1][0] : 'reaches L' + LMAX) + ' — ' + fmtD(terminal[1][2]), 1],
-   ['grinder ' + (terminal[2][0] < LMAX ? 'L' + terminal[2][0] : 'reaches L' + LMAX) + ' — ' + fmtD(terminal[2][3]), 2]].forEach(([txt, i]) => {
-    const t = el('text', { x: W - m.r - 8, y: H - m.b - 52 + i * 16, 'text-anchor': 'end', fill: SERIES[i], class: 'dlabel' });
+  DATA.profiles.forEach((p, i) => {
+    const last = terminal[i];
+    const txt = p.label + ' ' + (last[0] < LMAX ? 'stalls at L' + last[0] : 'reaches L' + LMAX)
+      + ' — ' + fmtD(last[i + 1]);
+    const t = el('text', { x: W - m.r - 8, y: H - m.b - 20 - (DATA.profiles.length - 1 - i) * 15,
+      'text-anchor': 'end', fill: p.color, class: 'dlabel' });
     t.textContent = txt; svg.appendChild(t);
   });
 
@@ -294,10 +304,10 @@ const fmtD = d => d >= 365 ? (d / 365).toFixed(1) + 'y' : d + 'd';
     const row = DATA.ttl[lvl - 1]; if (!row) return;
     cross.setAttribute('x1', x(lvl)); cross.setAttribute('x2', x(lvl)); cross.style.display = '';
     tip.hidden = false;
-    tip.innerHTML = '<b>Level ' + lvl + '</b><br>casual ' + (row[1] === null ? 'unreached' : fmtD(row[1]))
-      + ' · committed ' + (row[2] === null ? 'unreached' : fmtD(row[2]))
-      + ' · grinder ' + (row[3] === null ? 'unreached' : fmtD(row[3]));
-    tip.style.left = Math.min(ev.clientX - r.left + 14, r.width - 240) + 'px';
+    tip.innerHTML = '<b>Level ' + lvl + '</b><br>' + DATA.profiles.map((p, i) =>
+      p.label + ' ' + (row[i + 1] === null ? 'unreached' : fmtD(row[i + 1]))
+    ).join(' · ');
+    tip.style.left = Math.min(ev.clientX - r.left + 14, r.width - 340) + 'px';
     tip.style.top = (ev.clientY - r.top - 40) + 'px';
   });
   well.addEventListener('mouseleave', () => { tip.hidden = true; cross.style.display = 'none'; });

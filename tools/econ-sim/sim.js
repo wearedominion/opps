@@ -145,9 +145,34 @@ function ratesAtLevel(L, balance) {
 // ── B. Time-to-level, day-by-day integration per profile ─────────────────────
 // Clout/day at level L for a profile: moves regen share into the best Clout job,
 // stamina regen share into fights (health-capped), plus level-up is free.
+// Paid Clout per dollar at the band (spender headroom): the best boost path a
+// rational PROGRESSION spender takes, mirroring §E's Cash anchors but scored
+// in Clout. Two paths, best wins, all read live from data/monetization.json:
+//  · moves boost — amount × best-job Clout/move.
+//  · stamina boost + heals — each extra fight hospitalizes with probability
+//    (1 − p0), so a marginal paid fight carries (1 − p0) Full Heals on top of
+//    its stamina-point cost; without the heals the extra stamina is wasted
+//    against the Hospital cycle cap.
+function paidCloutPerUSD(L) {
+  const jc = bestJob(L, cloutPerMove);
+  const e = bestEnemy(L);
+  const mv = IAP.find(x => x.effect && x.effect.type === 'grantPool' && x.effect.pool === 'moves');
+  const st = IAP.find(x => x.effect && x.effect.type === 'grantPool' && x.effect.pool === 'stamina');
+  const heal = IAP.find(x => x.effect && x.effect.type === 'refillPool' && x.effect.pool === 'health');
+  const paths = [];
+  if (mv) paths.push(mv.effect.amount * cloutPerMove(jc) / skuPriceUSD(mv.sku));
+  if (st && heal) {
+    const usdPerFight = skuPriceUSD(st.sku) / st.effect.amount
+      + (1 - p0) * skuPriceUSD(heal.sku);
+    paths.push(fightCloutEV(e, p0) / usdPerFight);
+  }
+  return paths.length ? Math.max(...paths) : 0;
+}
+
 function simulateProgression(profile, horizonDays) {
   const movesPerDay   = MOVES_PER_HOUR * 24 * profile.movesUse;
   const staminaPerDay = STAMINA_PER_HOUR * 24 * profile.staminaUse;
+  const usdPerDay     = (profile.usdPerWeek || 0) / 7;
   let clout = 0;
   const levelAtDay = [levelForClout(0)];
   const cloutAtDay = [0];
@@ -159,7 +184,8 @@ function simulateProgression(profile, horizonDays) {
     const e  = bestEnemy(L);
     const fr = sustainableFightsPerHour(p0);
     const fightsPerDay = Math.min(staminaPerDay, fr.byHospital * 24 * profile.staminaUse);
-    clout += movesPerDay * cloutPerMove(jc) + fightsPerDay * fightCloutEV(e, p0);
+    clout += movesPerDay * cloutPerMove(jc) + fightsPerDay * fightCloutEV(e, p0)
+      + (usdPerDay ? usdPerDay * paidCloutPerUSD(L) : 0);
     const newL = levelForClout(clout);
     levelAtDay[day] = newL;
     cloutAtDay[day] = clout;
@@ -558,6 +584,20 @@ function run() {
   const marks = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 119, 120];
   say('    ' + marks.map(l => 'L' + l + ':' + (committedSim.daysToLevel[l] === null ? '>' + horizon : committedSim.daysToLevel[l])).join('  '));
 
+  // Spender headroom: paid pacing relief vs the committed baseline. The boosts
+  // are consumables priced as pacing (DOM-76), so spend should BUY BACK WAIT,
+  // not shortcut the curve — the days-to-cap compression is the headroom.
+  const commitCap = committedSim.daysToLevel[MAX_LEVEL];
+  say('\n  Spender headroom (committed usage + weekly budget on the best Clout/$ path):');
+  sims.filter(([, s], i) => profiles[i][1].usdPerWeek).forEach(([name, s], _, __) => {
+    const prof = TARGETS.playerProfiles[name];
+    const cap = s.daysToLevel[MAX_LEVEL];
+    say('    $' + pad(String(prof.usdPerWeek), 3) + '/wk  L' + s.levelAtDay[1] + ' / L' + s.levelAtDay[7]
+      + ' / L' + s.levelAtDay[30] + ' at d1/7/30 · L' + MAX_LEVEL + ' in '
+      + (cap === null ? '>' + horizon : cap) + ' days ('
+      + (cap === null ? '—' : Math.round((1 - cap / commitCap) * 100) + '% faster than committed') + ')');
+  });
+
   say('\n  Full 120-level curve written to tools/econ-sim/out/time-to-level.csv');
 
   say('\n■ C. Gear affordability (hours of best-job income at each item\'s own gate)');
@@ -708,12 +748,11 @@ function run() {
   // ── outputs ────────────────────────────────────────────────────────────────
   const outDir = path.join(__dirname, 'out');
   fs.mkdirSync(outDir, { recursive: true });
-  const csv = ['level,cumClout,daysCasual,daysCommitted,daysGrinder'];
+  const profileNames = profiles.map(([n]) => n);
   const byName = Object.fromEntries(sims);
+  const csv = ['level,cumClout,' + profileNames.map(n => 'days_' + n).join(',')];
   for (let l = 1; l <= MAX_LEVEL; l++) {
-    csv.push([l, cumClout[l],
-      byName.casual.daysToLevel[l] ?? '', byName.committed.daysToLevel[l] ?? '',
-      byName.grinder.daysToLevel[l] ?? ''].join(','));
+    csv.push([l, cumClout[l], ...profileNames.map(n => byName[n].daysToLevel[l] ?? '')].join(','));
   }
   fs.writeFileSync(path.join(outDir, 'time-to-level.csv'), csv.join('\n') + '\n');
 
@@ -725,8 +764,9 @@ function run() {
     levelByDay: Object.fromEntries(sims.map(([n, s]) => [n, { d1: s.levelAtDay[1], d7: s.levelAtDay[7], d30: s.levelAtDay[30] }])),
     daysToCap: Object.fromEntries(sims.map(([n, s]) => [n, s.daysToLevel[MAX_LEVEL]])),
     capTarget: { ...capTarget, impliedCloutPerDay, currentCloutPerDay },
+    ttlProfiles: profileNames,
     ttl: Array.from({ length: MAX_LEVEL }, (_, i) => [i + 1,
-      byName.casual.daysToLevel[i + 1], byName.committed.daysToLevel[i + 1], byName.grinder.daysToLevel[i + 1]]),
+      ...profileNames.map(n => byName[n].daysToLevel[i + 1])]),
     fightRate: sustainableFightsPerHour(p0),
     q1: q1(), q2: q2(), q3: q3(), q4: q4(),
     breakEvenPlan: breakEvenPlan(),
@@ -884,9 +924,34 @@ function buildHtml(json, outDir) {
     UPG_NEXT_LV: String(json.upgradeSink.statCapLevel + 1),
     UPG_NEXT_DAYS: fmt(json.upgradeSink.prestige[0].daysOfMaxedIncome),
 
+    TTL_SPEND: (() => {
+      // Headroom line under the chart: days-to-cap compression per spend tier.
+      const cap = n => json.daysToCap[n];
+      const base = cap('committed');
+      const tier = n => {
+        const d = cap(n), w = t.playerProfiles[n].usdPerWeek;
+        return '$' + w + '/wk → ' + (d === null ? '&gt;' + json.horizonDays : d) + 'd'
+          + (d === null ? '' : ' (−' + Math.round((1 - d / base) * 100) + '%)');
+      };
+      return json.ttlProfiles.filter(n => t.playerProfiles[n].usdPerWeek)
+        .map(tier).join(' · ') + ' vs committed ' + base + 'd';
+    })(),
     DATA: JSON.stringify({
       maxLevel: MAX_LEVEL,
       horizonDays: json.horizonDays,
+      // Chart series meta, in ttl column order: free profiles keep the
+      // categorical trio; spend tiers are ordinal, so they take a single-hue
+      // chrome ramp (dim → bright with budget) and a dashed stroke to mark
+      // the paid family.
+      profiles: json.ttlProfiles.map((n, i) => {
+        const p = t.playerProfiles[n];
+        const free = ['#3987e5', '#d95926', '#199e70'];
+        const gold = ['#8f7a4e', '#c9a55c', '#f3e0b4'];
+        const spendIdx = json.ttlProfiles.filter((m, j) => j < i && t.playerProfiles[m].usdPerWeek).length;
+        return p.usdPerWeek
+          ? { label: '+$' + p.usdPerWeek + '/wk', color: gold[spendIdx % 3], dash: '6 4' }
+          : { label: n, color: free[i % 3], dash: null };
+      }),
       ttl: json.ttl,
       bands: chartBands,
       flatFromIndex,
