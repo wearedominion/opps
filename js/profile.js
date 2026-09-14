@@ -277,7 +277,6 @@ function pfRenderSkills() {
         </div>` : ''}
       ${rows}
       <div class="pf-warn">
-        <span class="pf-warn-mark">▲</span>
         <span class="pf-warn-text">Allocation is permanent — no respec. Spend like you mean it.</span>
       </div>
       <div class="pf-actions">
@@ -517,7 +516,6 @@ function pfRenderConfirm() {
         <div class="pf-panel-body">
           ${lines}
           <div class="pf-warn spaced">
-            <span class="pf-warn-mark">▲</span>
             <span class="pf-warn-text">This is permanent. There is no respec — you cannot take these points back.</span>
           </div>
         </div>

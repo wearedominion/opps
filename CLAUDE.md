@@ -209,6 +209,11 @@ glow, never chrome-clipped text.
   --rarity-mythic:    #cf6f9e;  --rarity-mythic-edge:    #48293a;
 ```
 
+**Reserved hues stay reserved** (restored 2026-09-14, DOM-101): rarity never uses `--chrome`
+(money), `--red` (combat), `--green` (income) or `--xp`. Legendary is a burnt amber deliberately
+browner than chrome; Mythic is the only rose in the app. Future tiers must keep clear of all
+four reserved hues.
+
 Data mapping (DOM-18): catalog `rarity` ids are the colour words — `grey` → COMMON, `green` →
 UNCOMMON, `blue` → RARE, `purple` → EPIC, `orange` → LEGENDARY. Mythic is **reserved**: the
 tokens ship, but no v1 item and no drop odds carry it. These are the only sanctioned uses of
@@ -231,6 +236,12 @@ blue/purple/orange/pink ink outside the XP meter.
 5. **Map palette.** `.map-outer` base `#494741` → `#17171c`; blocks `#0b0b0c`, buildings `#1f1f28`,
    lane markings `#a8873f`, water `#0e2430`, parks `#141a17`. Pins: chrome = your turf,
    `--red` = opps, `--green` = drops. Controls become 36px radius-12 buttons on `rgba(17,17,22,.9)`.
+
+   **Sanctioned 3D variants** (recorded 2026-09-14, DOM-97): `js/map3d.js` uses Lambert materials
+   that multiply with the night lighting, so its material hexes sit brighter than the flat 2D
+   values on purpose: blocks `0x16161a`, parks `0x1d2419`, water `0x073245`/`0x0e3a50`, lane gold
+   `0xd1b55d`. These are the 3D equivalents of the palette above, not drift — do not "fix" them to
+   the 2D hexes without re-tuning the lights. The ground is `0x17171c` exactly, matching 2D.
 
 ## Selector-level changes
 
