@@ -47,6 +47,9 @@ const G = {
   // for an owned spot anchors at first read (no retro-accrual).
   spots: {},
   jobProgress: {},
+  // { questId: { p: [count per step], claimed } } — Plug quest progress
+  // (DOM-90). Additive field with a default — no SCHEMA_VERSION bump.
+  quests: {},
   playerId: null,
   lastSeen: 0,
   crewMemberCount: 0,

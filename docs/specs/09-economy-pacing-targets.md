@@ -1,6 +1,6 @@
 # 09 — Economy Pacing Targets & Simulator Findings
 
-**Status:** v1.10 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
+**Status:** v1.11 · **Targets ratified 2026-09-11 (Jake)**, with one amendment: level 120 in
 one year of committed play · Simulator delivered (DOM-67) · **Faucet catalogs solved against
 the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets (DOM-73, §7)** ·
 **Upgrade sink live, ratio confirmed (DOM-88, §8)** · **Spots accrual live, tap-farm closed
@@ -373,3 +373,16 @@ Pacing consequences, from the re-solve:
   not now.
 - The Lieutenant qualification test ("installed and played", self-invite-farm resistance) stays
   open with DOM-77/DOM-80 — the client counts JestSDK referrals and can do no better alone.
+
+---
+
+## 15. DOM-90 decision record — Plug quests (ratified 2026-09-14, Jake)
+
+**Quests are flavour-led direction, not a faucet.** Full record: 08 §9.11. The pacing-relevant
+construction: quest steps route through the normal job/fight faucets (grinding a quest IS
+playing the ladder, so the 60:35 mix holds by construction), and the one-shot completion bonus
+is priced at `hours` of best-job income at the quest's gate — the five-quest v1 catalog tops
+out at 3h (vs the 8h break-even anchor) and adds **$10,155 Cash + 932 Clout lifetime
+(0.001% of the Clout curve)**. EV of the whole catalog ≈ $8 — quests point the player at
+content; they cannot shortcut it. The simulator re-derives every bonus from the rule and
+throws on drift, so a hand-edited quests.json cannot silently out-pay a band.
