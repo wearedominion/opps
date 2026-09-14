@@ -875,6 +875,11 @@ function buildHtml(json, outDir) {
     F4_JOB_CEIL: String(jobCeiling),
     F4_ENEMY_CEIL: String(enemyCeiling),
     F5_HOURS: String(Math.max(...gearAffordability(jobCeiling).map(g => Math.round(g.hoursOfJobs * 10) / 10))),
+    F6_PER_SLOT: String(T('crew.lieutenantsPerSlot')),
+    F6_ROTATION: T('crew.slotRotation').join(' → '),
+    F6_CAP: String(T('crew.maxBonusSlotsPerType')),
+    F6_MAX_LT: String(T('crew.lieutenantsPerSlot') * T('crew.slotRotation').length
+      * T('crew.maxBonusSlotsPerType')),
     UPG_RATIO: String(json.upgradeSink.ratio),
     UPG_NEXT_LV: String(json.upgradeSink.statCapLevel + 1),
     UPG_NEXT_DAYS: fmt(json.upgradeSink.prestige[0].daysOfMaxedIncome),
