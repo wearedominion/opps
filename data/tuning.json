@@ -56,6 +56,18 @@
     "rewardScalesWithOpponent": true
   },
 
+  "drops": {
+    "procChance": 0.18,
+    "rarityChance": {
+      "mythic": 0,
+      "orange": 0,
+      "purple": 0.00099,
+      "blue": 0.0099,
+      "green": 0.099,
+      "grey": 0.99
+    }
+  },
+
   "hospital": {
     "fullHealSeconds": 1800,
     "shieldedWhileHospitalized": true,

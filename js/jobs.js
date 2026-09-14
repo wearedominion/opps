@@ -48,17 +48,9 @@ function doJob(jobId) {
   log(`${job.name} — earned $${earned} + ${job.clout} Clout`, 'win');
   toast(`+$${earned} | +${job.clout} CLOUT`);
 
-  // Drop tables (DOM-71). Rolled here only because ALL resolution is
-  // client-side in the prototype; this moves server-side with the rest of it.
-  for (const d of (job.drops || [])) {
-    if (ownsGear(d.item) || Math.random() >= d.rate) continue;
-    grantGear(d.item, 'dropped');
-    autoFieldGear(d.item);
-    const item = STORE_ITEMS.find(i => i.id === d.item);
-    const label = item ? item.name : d.item;
-    log(`${job.name} — found ${label}`, 'win');
-    toast(`FOUND: ${label}`);
-  }
+  // Per-job drop tables retired (DOM-18): every completion makes one global
+  // rarity roll instead — js/drops.js owns the proc gate and the ladder.
+  rollDrop(job.name);
   updateHUD();
   renderJobs();
   GameState.save();

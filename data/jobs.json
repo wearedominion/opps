@@ -10,8 +10,7 @@
     ],
     "clout": 7,
     "levelReq": 1,
-    "times": 10,
-    "drops": []
+    "times": 10
   },
   {
     "id": "runner",
@@ -24,8 +23,7 @@
     ],
     "clout": 14,
     "levelReq": 1,
-    "times": 8,
-    "drops": []
+    "times": 8
   },
   {
     "id": "boost",
@@ -38,13 +36,7 @@
     ],
     "clout": 22,
     "levelReq": 2,
-    "times": 6,
-    "drops": [
-      {
-        "item": "knife",
-        "rate": 0.05
-      }
-    ]
+    "times": 6
   },
   {
     "id": "stash",
@@ -57,8 +49,7 @@
     ],
     "clout": 15,
     "levelReq": 2,
-    "times": 8,
-    "drops": []
+    "times": 8
   },
   {
     "id": "shake",
@@ -71,8 +62,7 @@
     ],
     "clout": 24,
     "levelReq": 3,
-    "times": 5,
-    "drops": []
+    "times": 5
   },
   {
     "id": "hit",
@@ -85,13 +75,7 @@
     ],
     "clout": 33,
     "levelReq": 3,
-    "times": 4,
-    "drops": [
-      {
-        "item": "burner",
-        "rate": 0.04
-      }
-    ]
+    "times": 4
   },
   {
     "id": "move",
@@ -104,13 +88,7 @@
     ],
     "clout": 45,
     "levelReq": 5,
-    "times": 3,
-    "drops": [
-      {
-        "item": "vest",
-        "rate": 0.04
-      }
-    ]
+    "times": 3
   },
   {
     "id": "takeover",
@@ -123,13 +101,7 @@
     ],
     "clout": 58,
     "levelReq": 7,
-    "times": 2,
-    "drops": [
-      {
-        "item": "glock",
-        "rate": 0.03
-      }
-    ]
+    "times": 2
   },
   {
     "id": "traphouse",
@@ -142,17 +114,7 @@
     ],
     "clout": 59,
     "levelReq": 10,
-    "times": 3,
-    "drops": [
-      {
-        "item": "bando",
-        "rate": 0.03
-      },
-      {
-        "item": "mac11",
-        "rate": 0.025
-      }
-    ]
+    "times": 3
   },
   {
     "id": "fixfight",
@@ -165,13 +127,7 @@
     ],
     "clout": 60,
     "levelReq": 20,
-    "times": 3,
-    "drops": [
-      {
-        "item": "ak",
-        "rate": 0.025
-      }
-    ]
+    "times": 3
   },
   {
     "id": "hijack",
@@ -184,13 +140,7 @@
     ],
     "clout": 71,
     "levelReq": 30,
-    "times": 3,
-    "drops": [
-      {
-        "item": "pump",
-        "rate": 0.025
-      }
-    ]
+    "times": 3
   },
   {
     "id": "precinct",
@@ -203,13 +153,7 @@
     ],
     "clout": 73,
     "levelReq": 40,
-    "times": 2,
-    "drops": [
-      {
-        "item": "switchie",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   },
   {
     "id": "docks",
@@ -222,13 +166,7 @@
     ],
     "clout": 74,
     "levelReq": 50,
-    "times": 2,
-    "drops": [
-      {
-        "item": "drummy",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   },
   {
     "id": "club",
@@ -241,13 +179,7 @@
     ],
     "clout": 196,
     "levelReq": 60,
-    "times": 2,
-    "drops": [
-      {
-        "item": "carbine",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   },
   {
     "id": "contract",
@@ -260,13 +192,7 @@
     ],
     "clout": 507,
     "levelReq": 70,
-    "times": 2,
-    "drops": [
-      {
-        "item": "sniper",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   },
   {
     "id": "interstate",
@@ -279,13 +205,7 @@
     ],
     "clout": 1315,
     "levelReq": 80,
-    "times": 2,
-    "drops": [
-      {
-        "item": "beltfed",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   },
   {
     "id": "judge",
@@ -298,13 +218,7 @@
     ],
     "clout": 3411,
     "levelReq": 90,
-    "times": 2,
-    "drops": [
-      {
-        "item": "fiftycal",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   },
   {
     "id": "commission",
@@ -317,13 +231,7 @@
     ],
     "clout": 8848,
     "levelReq": 100,
-    "times": 2,
-    "drops": [
-      {
-        "item": "minigun",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   },
   {
     "id": "runcity",
@@ -336,12 +244,6 @@
     ],
     "clout": 22950,
     "levelReq": 110,
-    "times": 2,
-    "drops": [
-      {
-        "item": "arsenal",
-        "rate": 0.025
-      }
-    ]
+    "times": 2
   }
 ]

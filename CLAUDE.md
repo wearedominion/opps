@@ -195,6 +195,25 @@ older lines drop to `--ghost`. The dot carries the colour, the text never does.
 **Overlays** — backdrop `rgba(6,6,8,.72)` with the screen behind at `blur(3px)` / opacity .3.
 Combat centres; the plug dialog rises from the bottom edge. Border `--border-gold`, `--modal-shadow`.
 
+## Rarity
+
+Six item tiers. Rarity colours the item NAME and a 1px border tint — never a card fill, never a
+glow, never chrome-clipped text.
+
+```css
+  --rarity-common:    #a6a6b2;  --rarity-common-edge:    #33333d;
+  --rarity-uncommon:  #8fbf78;  --rarity-uncommon-edge:  #33412f;
+  --rarity-rare:      #56b3c9;  --rarity-rare-edge:      #24404a;
+  --rarity-epic:      #a08ae6;  --rarity-epic-edge:      #3a3354;
+  --rarity-legendary: #d99a4e;  --rarity-legendary-edge: #4a3823;
+  --rarity-mythic:    #cf6f9e;  --rarity-mythic-edge:    #48293a;
+```
+
+Data mapping (DOM-18): catalog `rarity` ids are the colour words — `grey` → COMMON, `green` →
+UNCOMMON, `blue` → RARE, `purple` → EPIC, `orange` → LEGENDARY. Mythic is **reserved**: the
+tokens ship, but no v1 item and no drop odds carry it. These are the only sanctioned uses of
+blue/purple/orange/pink ink outside the XP meter.
+
 ## Structural changes to the build
 
 1. **Navigation.** Nine sidebar items → five bottom tabs: Hood, Map, Moves, Opps, Empire.
