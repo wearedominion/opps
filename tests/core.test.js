@@ -2,7 +2,7 @@
 // derivation. Required by docs/specs/04-game-data-spec.md §7.4.
 //
 // No test runner in this repo yet, so this is a plain Node script:
-//   node tests/migration.test.js
+//   node tests/core.test.js
 // Exits non-zero on the first failure. Move it into a runner when one is adopted.
 
 const fs = require('fs');
