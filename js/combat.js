@@ -111,7 +111,12 @@ function startCombat(enemyId) {
   };
 
   combatEnemy = Object.assign({}, e);
-  _fight = { eHp: e.hp, round: 0, over: false };
+  _fight = {
+    eHp: e.hp, round: 0, over: false,
+    // Round-history for the sparkline well (DOM-103), as HP percentages.
+    // You may walk in hurt; the opp always starts full.
+    hist: [{ you: Math.max(0, G.health.current / G.health.max * 100), opp: 100 }],
+  };
 
   var portraitEl = $('c-enemy-portrait');
   if (portraitEl) {
@@ -138,6 +143,8 @@ function startCombat(enemyId) {
   }
 
   $('combat-overlay').classList.add('open');
+  _clearSpark();
+  _drawSpark(); // just the midline until the first round lands
   GameState.save();
 }
 
@@ -145,6 +152,67 @@ function _drawBars() {
   if (!combatEnemy || !_fight) return;
   $('c-player-hp').style.width = Math.max(0, G.health.current / G.health.max * 100) + '%';
   $('c-enemy-hp').style.width = Math.max(0, _fight.eHp / combatEnemy.hp * 100) + '%';
+}
+
+// ── Sparkline well (DOM-103) ──────────────────
+// The contract's .combat-log well: both HP traces round by round. SVG, not
+// canvas — the lines are stroked by .combat-spark .you / .opp so the palette
+// lives in the stylesheet tokens (chrome = you, --red = opp), exactly as the
+// DOM-42 well worked before the DOM-72 rebuild dropped it.
+
+function _pushSparkPoint() {
+  if (!_fight || !combatEnemy) return;
+  _fight.hist.push({
+    you: Math.max(0, G.health.current / G.health.max * 100),
+    opp: Math.max(0, _fight.eHp / combatEnemy.hp * 100),
+  });
+  _drawSpark();
+}
+
+function _drawSpark() {
+  var well = $('combat-log'), svg = $('combat-spark');
+  if (!well || !svg || !_fight) return;
+  var w = well.clientWidth, h = well.clientHeight;
+  if (!w || !h) return;
+  // 1 user unit = 1 px, so strokes never distort.
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+  var padX = 4, padY = 6;
+  function py(v) { return h - padY - (h - padY * 2) * (v / 100); }
+  var mid = $('spark-mid');
+  if (mid) {
+    mid.setAttribute('x1', padX); mid.setAttribute('x2', w - padX);
+    mid.setAttribute('y1', py(50)); mid.setAttribute('y2', py(50));
+  }
+  var pts = _fight.hist;
+  if (pts.length < 2) return;
+  function px(i) { return padX + (w - padX * 2) * (i / (pts.length - 1)); }
+  function trace(id, dotId, key) {
+    var d = '';
+    for (var i = 0; i < pts.length; i++) {
+      d += (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(pts[i][key]).toFixed(1);
+    }
+    var el = $(id);
+    if (el) el.setAttribute('d', d);
+    var dot = $(dotId);
+    if (dot) {
+      dot.setAttribute('cx', px(pts.length - 1).toFixed(1));
+      dot.setAttribute('cy', py(pts[pts.length - 1][key]).toFixed(1));
+    }
+  }
+  trace('spark-opp', 'spark-dot-opp', 'opp');
+  trace('spark-you', 'spark-dot-you', 'you');
+}
+
+function _clearSpark() {
+  ['spark-you', 'spark-opp'].forEach(function(id) {
+    var el = $(id); if (el) el.removeAttribute('d');
+  });
+  ['spark-dot-you', 'spark-dot-opp'].forEach(function(id) {
+    var el = $(id);
+    if (el) { el.removeAttribute('cx'); el.removeAttribute('cy'); }
+  });
+  var res = $('spark-result');
+  if (res) { res.textContent = ''; res.className = 'combat-spark-result'; }
 }
 
 function _setActionButtons(enabled) {
@@ -164,11 +232,13 @@ function hitEm() {
   _fight.eHp -= r.toEnemy;
   if (_fight.eHp <= 0) {
     _drawBars();
+    _pushSparkPoint();
     _endFight(true);
     return;
   }
   debit('health', r.toPlayer, REASON.COMBAT_DAMAGE, { ref: { enemyId: combatEnemy.id, round: _fight.round } });
   _drawBars();
+  _pushSparkPoint();
   if (G.health.current <= 0) {
     _endFight(false);
     return;
@@ -195,6 +265,7 @@ function runAway() {
   var r = fmRound(_playerFighter(), _enemyFighter(combatEnemy), _fightCfg(), Math.random, false);
   debit('health', r.toPlayer, REASON.COMBAT_DAMAGE, { ref: { enemyId: combatEnemy.id, ran: true } });
   _drawBars();
+  _pushSparkPoint();
   if (G.health.current <= 0) { _endFight(false); return; }
   $('combat-result').textContent = 'Couldn\'t get away — took ' + r.toPlayer;
   $('combat-result').style.color = 'var(--red)';
@@ -205,6 +276,13 @@ function _endFight(enemyDead) {
   var enemy = combatEnemy;
   _fight.over = true;
   _setActionButtons(false);
+
+  // Stamp the well; the traces stay on screen — the player just watched them.
+  var res = $('spark-result');
+  if (res) {
+    res.textContent = enemyDead ? 'W' : 'L';
+    res.className = 'combat-spark-result show ' + (enemyDead ? 'win' : 'loss');
+  }
 
   if (enemyDead) {
     var cashWon = rand(enemy.reward.cash[0], enemy.reward.cash[1]);

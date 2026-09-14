@@ -1583,6 +1583,16 @@ img.plug-portrait {
 .pf-slot-name.tier-EPIC      { color: var(--rarity-epic); }
 .pf-slot-name.tier-LEGENDARY { color: var(--rarity-legendary); }
 .pf-slot-name.tier-MYTHIC    { color: var(--rarity-mythic); }
+/* .pf-inv-name declares its own color later in the file, which ties the bare
+   .tier-* ink at (0,1,0) and wins on order — the same specificity trap as the
+   primary slot's edge. Explicit (0,2,0) pairs so stash/picker/teaser names
+   actually carry their rarity ink (DOM-102). */
+.pf-inv-name.tier-COMMON    { color: var(--rarity-common); }
+.pf-inv-name.tier-UNCOMMON  { color: var(--rarity-uncommon); }
+.pf-inv-name.tier-RARE      { color: var(--rarity-rare); }
+.pf-inv-name.tier-EPIC      { color: var(--rarity-epic); }
+.pf-inv-name.tier-LEGENDARY { color: var(--rarity-legendary); }
+.pf-inv-name.tier-MYTHIC    { color: var(--rarity-mythic); }
 .pf-slot-buff {
   margin-top: 2px; font-family: var(--ui); font-size: 10px;
   color: var(--faint); line-height: 1.3;
