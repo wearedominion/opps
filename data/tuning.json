@@ -79,9 +79,8 @@
   "crew": {
     "lieutenantsPerSlot": 5,
     "slotRotation": ["weapon", "armor", "vehicle"],
-    "cloutPerRecruit": 250,
-    "attackPerLieutenant": 2,
-    "defensePerLieutenant": 1
+    "maxBonusSlotsPerType": 3,
+    "cloutPerRecruit": 250
   },
 
   "hoodActions": {

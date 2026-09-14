@@ -11,8 +11,9 @@
 //     R = BE·(1−p)·L/p with BE = hoursOfJobIncome × job$/h at the band
 //   · mastery (`times`) is cosmetic; drop tables live on tier-top jobs and
 //     run the full ladder now that the gear catalog does (DOM-73)
-//   · gear (DOM-73, 2026-09-11): per-Plug inventory as data, own-once
-//     additive stats, prices = hours of best-job income at the gating level
+//   · gear (DOM-73, 2026-09-11; DOM-75, 2026-09-13): per-Plug inventory as
+//     data, own-once; only the FIELDED loadout (best per type, zero-crew
+//     baseline) counts in combat; prices = hours of best-job income at the gating level
 //     (weapon 8h / armor 8h / vehicle 12h / utility 4h; sub-L5 starters keep
 //     authored prices). Names and plug assignments are pure content in
 //     GEAR_CONTENT — swap them freely, the solve never reads them.
@@ -144,7 +145,10 @@ const NEW_ENEMIES = [
 // band-appropriate opponent sits at the pricing nominal p0. One multiplier
 // serves every band because the round model is scale-invariant in the ratios.
 const STAT_ANCHOR = { hp: 200, gate: 5 };
-const STAT_RATIO_PER_10 = { hp: 1.45 };
+// atk/def were MISSING here until DOM-75 (undefined ** x → NaN → 0), which
+// silently shipped a zero-stat gear ladder above L7. 1.40 per 10 levels is
+// what the gear stat-curve comment below always promised.
+const STAT_RATIO_PER_10 = { hp: 1.45, atk: 1.40, def: 1.40 };
 
 const FIGHT_CFG = {
   roundDamageShare: T('combat.roundDamageShare'),
@@ -153,34 +157,46 @@ const FIGHT_CFG = {
   baseHp: T('start.health'),
 };
 
-// Expected loadout at a band: starting stats plus every generated item at or
-// below the gate, at upgrade level 0 — the conservative kit-owner baseline.
+// Expected loadout at a band (DOM-75): the best item per gear type at or
+// below the gate, at upgrade level 0 — one slot per type, the zero-crew
+// baseline. Owning is no longer fielding: only the capacity-limited loadout
+// counts in combat, so the solve prices the floor; Crew-unlocked secondary
+// slots lift a player above band nominal, which is the recruiting reward.
 function loadoutAt(gear, band) {
-  const owned = gear.filter(i => i.levelReq <= band);
+  const best = {};
+  for (const i of gear) {
+    if (i.levelReq > band) continue;
+    if (!best[i.type] || i.atk + i.def > best[i.type].atk + best[i.type].def) best[i.type] = i;
+  }
+  const picks = Object.keys(best).map(t => best[t]);
   return {
-    atk: T('start.attack') + owned.reduce((s, i) => s + i.atk, 0),
-    def: T('start.defense') + owned.reduce((s, i) => s + i.def, 0),
+    atk: T('start.attack') + picks.reduce((s, i) => s + i.atk, 0),
+    def: T('start.defense') + picks.reduce((s, i) => s + i.def, 0),
     hp: T('start.health'),
   };
 }
 
-// Solve the enemy-stat multiplier m so pWin(loadout vs m×loadout) ≈ p0.
-// Deterministic (seeded rng) so regenerated catalogs are reproducible; solved
-// once — the ratios are band-invariant and gear is knob-independent.
-let _enemyStatMult = null;
-function enemyStatMult(gear) {
-  if (_enemyStatMult !== null) return _enemyStatMult;
-  const L = loadoutAt(gear, 50);
+// Solve each enemy's ATK/DEF multiplier m so pWin(band loadout vs m×loadout,
+// at the enemy's real HP) ≈ p0. Solved PER ENEMY since DOM-75: player and
+// enemy HP are absolute while gear stats climb ×1.40 per 10 levels, so round
+// counts — and with them the p0 stat ratio — shift by band; the old single
+// band-invariant multiplier only ever held because the stat-ratio bug kept
+// every band's loadout flat. Deterministic (seeded rng) so regenerated
+// catalogs are reproducible; memoized per enemy — gear and enemy HP are
+// knob-independent, so the solve is stable across the E/M/K search.
+const _enemyMult = {};
+function enemyStatMult(gear, e) {
+  if (_enemyMult[e.id] !== undefined) return _enemyMult[e.id];
+  const L = loadoutAt(gear, e.band);
   const pWinAt = m => fmStats(L,
-    { atk: m * L.atk, def: m * L.def, maxHp: 1000 },
-    FIGHT_CFG, 4000, fmSeededRng(0xD0A472)).pWin;
-  let lo = 0.5, hi = 3;
+    { atk: m * L.atk, def: m * L.def, maxHp: e.hp },
+    FIGHT_CFG, 4000, fmSeededRng(0xD0A472 + 31 * e.band)).pWin;
+  let lo = 0.2, hi = 8;
   for (let i = 0; i < 14; i++) {
     const mid = (lo + hi) / 2;
     if (pWinAt(mid) > p0) lo = mid; else hi = mid;
   }
-  _enemyStatMult = (lo + hi) / 2;
-  return _enemyStatMult;
+  return (_enemyMult[e.id] = (lo + hi) / 2);
 }
 
 // ── Gear (DOM-73) ─────────────────────────────────────────────────────────────
@@ -202,7 +218,9 @@ const GEAR_CONTENT = [
   { id: 'burner',   name: 'Burner Phone',     type: 'utility', gate: 2,   price: 600, stats: { atk: 5, def: 5 } },
   { id: 'vest',     name: 'Bulletproof Vest', type: 'armor',   gate: 3,   price: 500, stats: { def: 10 } },
   { id: 'glock',    name: 'Glock 19',         type: 'weapon',  gate: 5,   stats: { atk: 15 } },
-  { id: 'bando',    name: 'Safe House',       type: 'utility', gate: 7,   stats: { def: 20, hp: 10 } },
+  // bando's legacy +10 HP folded into DEF (DOM-75): fielded-gear HP would need
+  // pool plumbing regen/hospital don't have, and this was the only hp item.
+  { id: 'bando',    name: 'Safe House',       type: 'utility', gate: 7,   stats: { def: 25 } },
   { id: 'ak',       name: 'Draco',            type: 'weapon',  gate: 20 },
   // the ladder
   { id: 'mac11',    name: 'MAC-11',           type: 'weapon',  gate: 10 },
@@ -369,7 +387,6 @@ function buildCatalogs(E, M, K) {
   // Enemies. Rewards priced from the band's job income (DOM-79/71/81);
   // ATK/DEF solved so the band matchup sits at p0 against the expected
   // loadout (DOM-72); HP keeps the legacy display trend.
-  const m = enemyStatMult(gear);
   const enemies = [
     ...EARLY_ENEMIES.map(e => ({ ...e, band: e.levelReq })),
     ...NEW_ENEMIES.map(e => {
@@ -382,6 +399,7 @@ function buildCatalogs(E, M, K) {
   ].map(e => {
     const R = rewardCash(e.band) * e.weight;
     const L = loadoutAt(gear, e.band);
+    const m = enemyStatMult(gear, e);
     return {
       id: e.id, name: e.name, role: e.role,
       hp: e.hp,
@@ -510,13 +528,14 @@ function main() {
       + `${spotCapHoursAt(s.levelReq).toFixed(1)}h · $${s.price.toLocaleString()} `
       + `(payback ${(s.price / daily).toFixed(1)}d)`);
   }
-  console.log('Enemy stats solved against the round model (DOM-72): multiplier ×'
-    + enemyStatMult(gear).toFixed(3) + ' of the band loadout. Matchup check (p(win) at band):');
+  console.log('Enemy stats solved per band against the round model (DOM-72/75; multiplier × the '
+    + 'band loadout, best item per type). Matchup check (p(win) at band):');
   console.log('  ' + [1, 10, 50, 110].map(b => {
     const e = enemies.filter(x => x.levelReq <= b).slice(-1)[0];
     const st = fmStats(loadoutAt(gear, b), { atk: e.atk, def: e.def, maxHp: e.hp },
                        FIGHT_CFG, 4000, fmSeededRng(0xBEEF + b));
-    return 'L' + b + ' vs ' + e.id + ': ' + (st.pWin * 100).toFixed(1) + '%';
+    return 'L' + b + ' vs ' + e.id + ' (×' + (_enemyMult[e.id] || 0).toFixed(2) + '): '
+      + (st.pWin * 100).toFixed(1) + '%';
   }).join(' · '));
   console.log('Wrote data/jobs.json (' + jobsOut.length + ' jobs), data/enemies.json ('
     + enemies.length + ' enemies), data/store.json (' + gear.length + ' gear items) and '

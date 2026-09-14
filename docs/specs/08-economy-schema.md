@@ -103,12 +103,19 @@ The authoritative shape of a player's economy state. Cash is a live balance **ot
 mutate** (fight loot), so it cannot live only on the client — the client copy is a cache of the
 server's number, not the source of truth.
 
-**Implemented (save `SCHEMA_VERSION` 3):** `clout`, `level`, `levelGranted`, `cash`, and all three
+**Implemented (save `SCHEMA_VERSION` 5):** `clout`, `level`, `levelGranted`, `cash`, and all three
 pools in the `{current, max, lastTick}` shape below. `gems` is gone — no hard currency in v1.
+Since DOM-75 (2026-09-13) `attack`/`defense` really are **base-only** as this shape always
+specified: the v4→v5 migration un-banked every owned item's stats, and combat reads
+`effAttack()`/`effDefense()` = base + the fielded loadout. New v5 fields: `loadout`
+(`{ type: [itemId, …] }`, index 0 = primary) and, additively, `combatSnapshot` (frozen
+`{atk, def, hp, loadout, cp, at}` at fight entry; `cp = atk × (hp + def)`).
 
-Still divergent from the target: `skillPts` (target name `skillPoints`). `hospitalizedUntil`
-**exists as specified since DOM-72 (2026-09-12)** — one nullable timestamp on `G`, additive, no
-schema bump. Cash is still client-authoritative — see §8.
+Still divergent from the target: `skillPts` (target name `skillPoints`), and the Lieutenant count
+lives as `crewMemberCount` (the target's `lieutenantCount`) — it now really does drive gear-slot
+capacity via `slotCapacity()`. `hospitalizedUntil` **exists as specified since DOM-72
+(2026-09-12)** — one nullable timestamp on `G`, additive, no schema bump. Cash is still
+client-authoritative — see §8.
 
 ```jsonc
 {
@@ -357,7 +364,7 @@ by the item's own `price`) — an item's upgrade cost is a property of the syste
 `G.inventory` is a per-instance map:
 
 ```jsonc
-"inventory": { "knife": { "level": 3, "duplicates": 1 } }
+"inventory": { "knife": { "level": 3, "duplicates": 1, "src": "bought" } }
 ```
 
 The array → object migration shipped as `SCHEMA_VERSION` 3 → 4 with golden-file tests
@@ -406,7 +413,8 @@ do, set `duplicatesRequired: false` rather than blocking upgrades on an unreacha
 Game logic no longer holds any balance number; everything reads `tune()`. What moved:
 `SKILL_POINTS_PER_LEVEL`, `ENERGY_REGEN_SECONDS`, the per-level stat grants, new-player starting
 balances, the fight-defeat Cash loss and health floor, the Hood rest/launder values, the Crew
-per-Lieutenant bonus, and the skill point costs and per-rank grants.
+slot rule (the flat per-Lieutenant ATK/DEF bonus was retired by DOM-75 — see §9.10), and the
+skill point costs and per-rank grants.
 
 **Two values changed behaviour**, because the data and the code disagreed and the data is the
 source of truth:
@@ -745,3 +753,41 @@ throttled per pool by `monetization.offerCooldownSeconds` so a hammered empty bu
 plain toast); the Hospital's offer is a persistent SKIP THE WAIT button on the Hospital card for
 the whole stay. Grants land through the ledger as `iap_grant` after server receipt verification;
 the server-side SKU → grant mirror (never trust the client's effect table) remains **DOM-80**.
+
+### 9.10 Crew, capacity & loadout — DOM-75 decision record (ratified 2026-09-13, Jake)
+
+**Cash buys items; only Crew buys the right to equip them.** Four decisions, all ratified
+2026-09-13:
+
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Gear power model | **Derived loadout.** Only fielded gear counts in combat; stats are never banked. v4→v5 migration un-banks (frozen shipped-stat table in `js/state.js`); catalog re-solved. |
+| 2 | Slot growth curve | **1 slot per type base; +1 per 5 Lieutenants, round-robin `weapon → armor → vehicle`, hard cap +3 per type** (max 4 fielded per type at 45 Lieutenants). Clout per recruit stays unbounded. Utility sits outside the rotation at 1 slot. |
+| 3 | Flat per-Lieutenant ATK/DEF | **Retired.** Slots ARE the crew power; the unbounded stat faucet double-dipped and broke the power ceiling. |
+| 4 | Profile gear tab | **Real catalog.** The prototype body-doll placeholder (`GEAR_SLOTS`/`GEAR_ITEMS`) is deleted; the loadout runs on `store.json` types. Closes the profile TDD §7 open decision: gear lives in `store.json`, no separate `gear.json`. |
+
+Knobs: `crew.lieutenantsPerSlot` (5) · `crew.slotRotation` · `crew.maxBonusSlotsPerType` (3) ·
+`crew.cloutPerRecruit` (unchanged, 250). `crew.attackPerLieutenant` / `defensePerLieutenant`
+deleted.
+
+**Mechanics shipped with it:**
+
+- `slotCapacity(type)`, `fieldedGear()`, `effAttack()`/`effDefense()` in `js/state.js`; combat's
+  `_playerFighter()` reads the derived pair. Capacity can shrink (referrals re-read every boot):
+  over-capacity loadout entries stay assigned but inert.
+- **Combat snapshot** at fight entry: `G.combatSnapshot = {atk, def, hp, loadout, cp, at}` with
+  `cp = atk × (hp + def)` stored at write time, separate from live Cash. Capture trigger and
+  staleness rules remain **open (owner: Bill)** — entry-capture is the v1 placeholder.
+- **Acquisition source** on every instance: `src: 'bought' | 'dropped'` (economy telemetry).
+- **Public profile** (`pfPublicProjection`): fielded loadout with name/tier/level per slot; raw
+  stats, pools, cash, capacity and the snapshot/CP stay private.
+- **Generator re-solve**: expected loadout = best item per type at the band (zero-crew baseline),
+  and enemy ATK/DEF are now solved **per enemy** against its real HP (the old single multiplier
+  only held because of the stat-ratio bug). Fixed in the same pass: `STAT_RATIO_PER_10` was
+  missing `atk`/`def` (1.40), which had shipped a zero-stat gear ladder above L7; bando's legacy
+  +10 HP folded into DEF (`def: 25`) — fielded-gear HP has no pool plumbing and it was the only
+  hp item. E/M/K knobs and jobs/spots/prices unchanged; only `enemies.json` stats and
+  `store.json` stats/descs moved.
+- **Fraud risk stands**: the Lieutenant qualification test is JestSDK referrals
+  (`listReferrals`) — installed-and-played qualification and self-invite-farm controls remain
+  with DOM-77/DOM-80 (server side).
