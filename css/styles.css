@@ -880,9 +880,10 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   text-align: center;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-/* refusals keep the gold frame — red is combat-only (DOM-98); the plainer
-   --text ink is what separates a refusal from the chrome of a good toast */
-.toast.bad { color: var(--text); }
+/* No .toast.bad override: the contract defines exactly one toast style
+   (--panel-fill + --border-gold + chrome text), and red is combat-only.
+   Refusals read from the copy; the .bad class stays as a semantic marker
+   only (DOM-98). */
 
 /* ── IN-APP PURCHASES ── */
 .iap-grid {
@@ -1529,7 +1530,7 @@ img.plug-portrait {
 .pf-seg.staged { background: var(--chrome-fill); }
 
 .pf-warn { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
-.pf-warn-text { font-size: 11px; color: var(--muted); line-height: 1.4; text-wrap: pretty; }
+.pf-warn-text { font-size: 11px; color: var(--faint); line-height: 1.4; text-wrap: pretty; }
 .pf-actions { display: flex; gap: 10px; }
 .pf-btn-reset {
   flex: 1; font-family: var(--display);

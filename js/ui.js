@@ -66,6 +66,8 @@ function log(msg, cls = '') {
   while (feed.children.length > 30) feed.removeChild(feed.lastChild);
 }
 
+// `bad` is a semantic marker only — refusal toasts render the contract's one
+// toast style; no stylesheet targets .bad (red is combat-only, DOM-98).
 function toast(msg, bad = false) {
   const t = $('toast');
   t.textContent = msg;
