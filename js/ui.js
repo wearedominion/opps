@@ -32,6 +32,7 @@ function showTab(name) {
   if (name === 'crew')   renderCrew();
   if (name === 'map')    GameMap.init();
   if (name === 'plugs')  renderPlugs();
+  if (name === 'jobs')   renderJobs();   // daily tally, mastery and the log are all live
   if (name === 'profile' && typeof renderProfile === 'function') renderProfile();
 }
 

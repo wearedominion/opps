@@ -278,8 +278,10 @@ blue/purple/orange/pink ink outside the XP meter.
 | `.logo` | Anton 27 / +4, chrome-clipped. Drop the glow `text-shadow` and the gold `span`. |
 | `.hud-stat` | Replaced by the HUD panel. Rank + gems become header pills; money, rep, XP, energy, health go in the panel. |
 | `.card` / `.card-title` | radius 4 → 16, flat → `--panel-fill`. Title loses its bottom rule and accent colour. |
-| `.job-card` | Grid → single-column rows, radius 14, padding 11/13. Remove the `::before` stripe. |
-| `.do-job-btn` | Full-width orange → right-aligned chrome pill. |
+| `.job-card` | **Replaced in v0.2 (DOM-115)** by `.mv-hus`: border `--border`, radius 16, padding 15. Title Anton 15 uppercased, sub naming Moves cost + Clout, a derived status chip (NEW / ACTIVE / DONE / TIMED / LOCKED) and a gold `DO IT` pill. Mastery is the progress row. |
+| `.do-job-btn` | Retired with `.job-card`; the hustle CTA is `.mv-go`. |
+| `.mv-cta`, `.mv-go` | The only two pills carrying `.sheen` — a single slow highlight every 4.5s. Sheen is money-only: never put it on a secondary or a non-gold control. |
+| `.clout-log` | Bottom sheet, max-height 82%, radius `--r-sheet` top only, `--border-gold` with no bottom edge, translateY .26s. Rows come off the **transaction ledger**, not a second store. |
 | `.attack-btn` | Solid red → `--control` + `--border-red` + `--red` label. |
 | `.enemy-avatar`, `.enemy-portrait` | 48px square → 58px circle, no `saturate(.7)`. |
 | `.plug-card` | **Rebuilt again in v0.2 (DOM-113):** horizontal card, 12px column gap, radius 16, 1px `--border-gold` — plugs are the one list gold-bordered at rest. 146px portrait column; 206px-tall info column padded 17/15/13. Name Anton 22, gold moniker, `.plug-line` 13px/1.6 `--text-mid`. LETS GO is a gold pill (11px/22px, no sheen) floated to the bottom by `margin-top:auto`, and is the only click target on the card. |

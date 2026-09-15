@@ -121,13 +121,8 @@
       </div>
     </div>
 
-    <!-- JOBS TAB -->
-    <div class="tab" id="tab-jobs">
-      <div class="card">
-        <div class="card-title">MOVES — EARN YOUR BREAD</div>
-        <div class="job-grid" id="job-list"></div>
-      </div>
-    </div>
+    <!-- MAKE MOVES TAB (S6, DOM-115) — renderJobs() writes all six sections. -->
+    <div class="tab mv" id="tab-jobs"></div>
 
     <!-- FIGHT TAB -->
     <div class="tab" id="tab-fight">
@@ -324,6 +319,20 @@
       <button class="close-combat" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
     </div>
   </div>
+  <!-- Clout log modal (DOM-115). OVERLAYS.md: bottom sheet, z 60, max-height
+       82%, radius 24 24 0 0, translateY .26s, --border-gold with no bottom.
+       Rows come off the transaction ledger, newest first. -->
+  <div class="overlay" id="clout-log-overlay" onclick="cloutLogScrim(event)">
+    <div class="clout-log">
+      <div class="clout-log-head">
+        <span class="clout-log-title">CLOUT LOG</span>
+        <span class="clout-log-count" id="clout-log-count">0 EVENTS</span>
+        <button class="clout-log-close" onclick="closeCloutLog()" aria-label="Close">&#10005;</button>
+      </div>
+      <div class="clout-log-body" id="clout-log-body"></div>
+    </div>
+  </div>
+
   <!-- Plug dialogue popup (DOM-113). OVERLAYS.md: z 70, centered, max-w 330px,
        scrim .8, border --border-gold, scale .22s. The name rides in a pill over
        the portrait; LATER is the dismiss, so there is no separate close X. -->
