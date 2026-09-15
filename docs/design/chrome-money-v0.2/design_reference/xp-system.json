@@ -1,0 +1,846 @@
+{
+  "meta": {
+    "name": "OPPS — XP & Leveling System",
+    "version": "1.0.0",
+    "updated": "2026-06-17",
+    "summary": "Single source of truth for experience (XP) awards and the level-1→100 progression curve. Read by gameplay systems to award XP and resolve level-ups.",
+    "currencies": {
+      "xp": "Experience — drives player LEVEL and rank title. Permanent, never spent.",
+      "clout": "Street respect shown on leaderboards/log — separate from XP (tracked elsewhere)."
+    },
+    "howToUse": "On any qualifying action, add the matching value from actionXp to the player total, then advance level while total >= levels[next].totalXpToReach. Ranges (lo/hi) should roll uniformly unless a system specifies otherwise.",
+    "curve": {
+      "anchors": {
+        "1->2": 5,
+        "2->3": 20,
+        "3->4": 40,
+        "4->5": 100
+      },
+      "formula": "xpToNext(L) = round_nice( 100 * (L/4)^2 ) for L>=5; anchors hard-set for L1-4.",
+      "walls": "Step into every 10th level x1.5 (extra grind). Major milestone walls (25/50/75/100) x2.0.",
+      "milestones": [
+        10,
+        25,
+        50,
+        75,
+        100
+      ],
+      "totalXpToMax": 2245525
+    }
+  },
+  "actionXp": {
+    "missions": {
+      "mainStory": {
+        "note": "Featured / main-job beats in MAKE MOVES. Largest single XP sources; pace the core climb.",
+        "perObjective": 60,
+        "completion": {
+          "base": 250,
+          "range": [
+            200,
+            320
+          ]
+        },
+        "examples": [
+          {
+            "id": "take_the_block",
+            "title": "TAKE THE BLOCK",
+            "xp": 250,
+            "bonus": "+ territory (see territory.claimTurf)"
+          }
+        ]
+      },
+      "sideHustles": {
+        "note": "Side hustles in MAKE MOVES. Repeatable, mid-size awards.",
+        "base": 45,
+        "byKind": {
+          "standard": 45,
+          "timed": 60,
+          "multiTarget": 65
+        },
+        "examples": [
+          {
+            "id": "quick_flip",
+            "title": "QUICK FLIP",
+            "kind": "timed",
+            "xp": 60,
+            "note": "Bonus for beating the timer."
+          },
+          {
+            "id": "clean_house",
+            "title": "CLEAN HOUSE",
+            "kind": "multiTarget",
+            "xp": 65,
+            "note": "Take out 5 Street Enforcers."
+          },
+          {
+            "id": "run_the_plug",
+            "title": "RUN THE PLUG",
+            "kind": "standard",
+            "xp": 35,
+            "note": "Recruit a new supplier (see plugs.recruit)."
+          }
+        ]
+      },
+      "daily": {
+        "note": "Daily objectives + login. Small, steady drip to reward showing up.",
+        "dailyGrind": 30,
+        "login": 10,
+        "streakBonusPerDay": 5,
+        "streakBonusCap": 50
+      }
+    },
+    "plugs": {
+      "note": "NPC suppliers in PLUGS. Recruiting a plug, then completing the job they offer.",
+      "recruit": 35,
+      "jobBase": 50,
+      "byPlug": [
+        {
+          "slotId": "plug-tommy",
+          "name": "TOMMY",
+          "moniker": "THE FENCE",
+          "recruitXp": 35,
+          "jobXp": 45,
+          "job": "Move merchandise, no questions asked."
+        },
+        {
+          "slotId": "plug-theresa",
+          "name": "THERESA",
+          "moniker": "THE CONNECT",
+          "recruitXp": 35,
+          "jobXp": 55,
+          "job": "Handle a favor to unlock the re-up discount."
+        },
+        {
+          "slotId": "plug-kylie",
+          "name": "KYLIE",
+          "moniker": "THE LOOKOUT",
+          "recruitXp": 35,
+          "jobXp": 50,
+          "job": "Act on intel — raid the Rival Crew."
+        },
+        {
+          "slotId": "plug-marco",
+          "name": "BIG HOMIE MARCO",
+          "moniker": "THE MECHANIC",
+          "recruitXp": 35,
+          "jobXp": 45,
+          "job": "Boost parts off the Auto Theft Ring."
+        },
+        {
+          "slotId": "plug-dex",
+          "name": "DEX",
+          "moniker": "THE TWEAKER",
+          "recruitXp": 35,
+          "jobXp": 70,
+          "job": "Set up a bigger play downtown."
+        }
+      ]
+    },
+    "opps": {
+      "note": "Eliminating Opps (OPPS LIST). XP scales with risk tier and threat rating.",
+      "formula": "xp = base[risk] + perThreat[risk] * threat",
+      "base": {
+        "Low": 8,
+        "Medium": 15,
+        "High": 25
+      },
+      "perThreat": {
+        "Low": 2,
+        "Medium": 3,
+        "High": 5
+      },
+      "cleanKillBonus": 5,
+      "targets": [
+        {
+          "code": "S-01",
+          "name": "LOCAL SNITCH",
+          "role": "Informant",
+          "risk": "Low",
+          "threat": 2,
+          "xp": 12
+        },
+        {
+          "code": "E-04",
+          "name": "STREET ENFORCER",
+          "role": "Street Muscle",
+          "risk": "Low",
+          "threat": 4,
+          "xp": 16
+        },
+        {
+          "code": "C-07",
+          "name": "RIVAL CREW",
+          "role": "Gang",
+          "risk": "Medium",
+          "threat": 3,
+          "xp": 24
+        },
+        {
+          "code": "A-02",
+          "name": "AUTO THEFT RING",
+          "role": "Car Thieves",
+          "risk": "Medium",
+          "threat": 6,
+          "xp": 33
+        },
+        {
+          "code": "B-01",
+          "name": "RIVAL BOSS",
+          "role": "Gang Leader",
+          "risk": "High",
+          "threat": 6,
+          "xp": 55
+        },
+        {
+          "code": "F-09",
+          "name": "UNDERCOVER AGENT",
+          "role": "Federal Agent",
+          "risk": "High",
+          "threat": 8,
+          "xp": 65
+        }
+      ]
+    },
+    "territory": {
+      "note": "THE HOOD map. Claiming/holding buildings & turf. Building XP scales with the size tier from city-data.js.",
+      "claimBuildingByTier": {
+        "1": 5,
+        "2": 10,
+        "3": 20,
+        "4": 35,
+        "5": 60
+      },
+      "claimObjectiveBuilding": 75,
+      "claimTurf": 100,
+      "defendRaid": 75,
+      "hold24h": 50
+    },
+    "misc": {
+      "note": "Minor street actions (surface in the activity LOG).",
+      "robbery": 35,
+      "shakedownDealer": 25,
+      "flipProduct": 50,
+      "escapeHeat": 15,
+      "firstTimeBonus": "x2 on the first completion of any uniquely-IDed action"
+    }
+  },
+  "levels": [
+    {
+      "level": 1,
+      "title": "NOBODY",
+      "xpToNext": 5,
+      "totalXpToReach": 0
+    },
+    {
+      "level": 2,
+      "title": "TAGALONG",
+      "xpToNext": 20,
+      "totalXpToReach": 5
+    },
+    {
+      "level": 3,
+      "title": "CORNER WATCHER",
+      "xpToNext": 40,
+      "totalXpToReach": 25
+    },
+    {
+      "level": 4,
+      "title": "LOOKOUT",
+      "xpToNext": 100,
+      "totalXpToReach": 65
+    },
+    {
+      "level": 5,
+      "title": "RUNNER",
+      "xpToNext": 160,
+      "totalXpToReach": 165
+    },
+    {
+      "level": 6,
+      "title": "BAG BOY",
+      "xpToNext": 230,
+      "totalXpToReach": 325
+    },
+    {
+      "level": 7,
+      "title": "SHORTY",
+      "xpToNext": 310,
+      "totalXpToReach": 555
+    },
+    {
+      "level": 8,
+      "title": "YOUNG GUN",
+      "xpToNext": 400,
+      "totalXpToReach": 865
+    },
+    {
+      "level": 9,
+      "title": "LIL HOMIE",
+      "xpToNext": 770,
+      "totalXpToReach": 1265,
+      "wall": "decade"
+    },
+    {
+      "level": 10,
+      "title": "CORNER BOY",
+      "xpToNext": 630,
+      "totalXpToReach": 2035,
+      "milestone": true
+    },
+    {
+      "level": 11,
+      "title": "HUSTLER",
+      "xpToNext": 760,
+      "totalXpToReach": 2665
+    },
+    {
+      "level": 12,
+      "title": "SLANGER",
+      "xpToNext": 900,
+      "totalXpToReach": 3425
+    },
+    {
+      "level": 13,
+      "title": "PACK RUNNER",
+      "xpToNext": 1050,
+      "totalXpToReach": 4325
+    },
+    {
+      "level": 14,
+      "title": "TRAPPER",
+      "xpToNext": 1250,
+      "totalXpToReach": 5375
+    },
+    {
+      "level": 15,
+      "title": "GRINDER",
+      "xpToNext": 1400,
+      "totalXpToReach": 6625
+    },
+    {
+      "level": 16,
+      "title": "GO GETTA",
+      "xpToNext": 1600,
+      "totalXpToReach": 8025
+    },
+    {
+      "level": 17,
+      "title": "STICKUP KID",
+      "xpToNext": 1800,
+      "totalXpToReach": 9625
+    },
+    {
+      "level": 18,
+      "title": "JUGG MAN",
+      "xpToNext": 2050,
+      "totalXpToReach": 11425
+    },
+    {
+      "level": 19,
+      "title": "BLOCK RAT",
+      "xpToNext": 3400,
+      "totalXpToReach": 13475,
+      "wall": "decade"
+    },
+    {
+      "level": 20,
+      "title": "STREET SOLDIER",
+      "xpToNext": 2500,
+      "totalXpToReach": 16875
+    },
+    {
+      "level": 21,
+      "title": "TRIGGERMAN",
+      "xpToNext": 2750,
+      "totalXpToReach": 19375
+    },
+    {
+      "level": 22,
+      "title": "GETAWAY DRIVER",
+      "xpToNext": 3050,
+      "totalXpToReach": 22125
+    },
+    {
+      "level": 23,
+      "title": "WHEELMAN",
+      "xpToNext": 3300,
+      "totalXpToReach": 25175
+    },
+    {
+      "level": 24,
+      "title": "BAGMAN",
+      "xpToNext": 7200,
+      "totalXpToReach": 28475,
+      "wall": "major"
+    },
+    {
+      "level": 25,
+      "title": "BLOCK BULLY",
+      "xpToNext": 3900,
+      "totalXpToReach": 35675,
+      "milestone": true
+    },
+    {
+      "level": 26,
+      "title": "MUSCLE",
+      "xpToNext": 4250,
+      "totalXpToReach": 39575
+    },
+    {
+      "level": 27,
+      "title": "ENFORCER",
+      "xpToNext": 4550,
+      "totalXpToReach": 43825
+    },
+    {
+      "level": 28,
+      "title": "COLLECTOR",
+      "xpToNext": 4900,
+      "totalXpToReach": 48375
+    },
+    {
+      "level": 29,
+      "title": "REPO MAN",
+      "xpToNext": 7900,
+      "totalXpToReach": 53275,
+      "wall": "decade"
+    },
+    {
+      "level": 30,
+      "title": "CORNER CAPTAIN",
+      "xpToNext": 5650,
+      "totalXpToReach": 61175
+    },
+    {
+      "level": 31,
+      "title": "TRAP STAR",
+      "xpToNext": 6000,
+      "totalXpToReach": 66825
+    },
+    {
+      "level": 32,
+      "title": "DOPE BOY FRESH",
+      "xpToNext": 6400,
+      "totalXpToReach": 72825
+    },
+    {
+      "level": 33,
+      "title": "BIG SPENDER",
+      "xpToNext": 6800,
+      "totalXpToReach": 79225
+    },
+    {
+      "level": 34,
+      "title": "FLASHY",
+      "xpToNext": 7250,
+      "totalXpToReach": 86025
+    },
+    {
+      "level": 35,
+      "title": "HEAVY HITTER",
+      "xpToNext": 7650,
+      "totalXpToReach": 93275
+    },
+    {
+      "level": 36,
+      "title": "HOT BOY",
+      "xpToNext": 8100,
+      "totalXpToReach": 100925
+    },
+    {
+      "level": 37,
+      "title": "SMOOTH OPERATOR",
+      "xpToNext": 8550,
+      "totalXpToReach": 109025
+    },
+    {
+      "level": 38,
+      "title": "GHOST",
+      "xpToNext": 9050,
+      "totalXpToReach": 117575
+    },
+    {
+      "level": 39,
+      "title": "PHANTOM",
+      "xpToNext": 14300,
+      "totalXpToReach": 126625,
+      "wall": "decade"
+    },
+    {
+      "level": 40,
+      "title": "BLOCK BOSS",
+      "xpToNext": 10000,
+      "totalXpToReach": 140925
+    },
+    {
+      "level": 41,
+      "title": "TRAP LORD",
+      "xpToNext": 10500,
+      "totalXpToReach": 150925
+    },
+    {
+      "level": 42,
+      "title": "JUGG KING",
+      "xpToNext": 11000,
+      "totalXpToReach": 161425
+    },
+    {
+      "level": 43,
+      "title": "STACK CHASER",
+      "xpToNext": 11600,
+      "totalXpToReach": 172425
+    },
+    {
+      "level": 44,
+      "title": "PAPER CHASER",
+      "xpToNext": 12100,
+      "totalXpToReach": 184025
+    },
+    {
+      "level": 45,
+      "title": "CERTIFIED",
+      "xpToNext": 12700,
+      "totalXpToReach": 196125
+    },
+    {
+      "level": 46,
+      "title": "STAMPED",
+      "xpToNext": 13200,
+      "totalXpToReach": 208825
+    },
+    {
+      "level": 47,
+      "title": "RESPECTED",
+      "xpToNext": 13800,
+      "totalXpToReach": 222025
+    },
+    {
+      "level": 48,
+      "title": "FEARED",
+      "xpToNext": 14400,
+      "totalXpToReach": 235825
+    },
+    {
+      "level": 49,
+      "title": "CONNECTED",
+      "xpToNext": 30000,
+      "totalXpToReach": 250225,
+      "wall": "major"
+    },
+    {
+      "level": 50,
+      "title": "MADE MAN",
+      "xpToNext": 15600,
+      "totalXpToReach": 280225,
+      "milestone": true
+    },
+    {
+      "level": 51,
+      "title": "LIEUTENANT",
+      "xpToNext": 16300,
+      "totalXpToReach": 295825
+    },
+    {
+      "level": 52,
+      "title": "LEFT HAND",
+      "xpToNext": 16900,
+      "totalXpToReach": 312125
+    },
+    {
+      "level": 53,
+      "title": "RIGHT HAND",
+      "xpToNext": 17600,
+      "totalXpToReach": 329025
+    },
+    {
+      "level": 54,
+      "title": "TABLE SEAT",
+      "xpToNext": 18200,
+      "totalXpToReach": 346625
+    },
+    {
+      "level": 55,
+      "title": "CREW CHIEF",
+      "xpToNext": 18900,
+      "totalXpToReach": 364825
+    },
+    {
+      "level": 56,
+      "title": "BLOCK GENERAL",
+      "xpToNext": 19600,
+      "totalXpToReach": 383725
+    },
+    {
+      "level": 57,
+      "title": "WAR DOG",
+      "xpToNext": 20300,
+      "totalXpToReach": 403325
+    },
+    {
+      "level": 58,
+      "title": "HITTER",
+      "xpToNext": 21000,
+      "totalXpToReach": 423625
+    },
+    {
+      "level": 59,
+      "title": "CLEANER",
+      "xpToNext": 32700,
+      "totalXpToReach": 444625,
+      "wall": "decade"
+    },
+    {
+      "level": 60,
+      "title": "SHOT CALLER",
+      "xpToNext": 22500,
+      "totalXpToReach": 477325
+    },
+    {
+      "level": 61,
+      "title": "HALF PLUG",
+      "xpToNext": 23300,
+      "totalXpToReach": 499825
+    },
+    {
+      "level": 62,
+      "title": "THE PLUG",
+      "xpToNext": 24000,
+      "totalXpToReach": 523125
+    },
+    {
+      "level": 63,
+      "title": "SUPPLIER",
+      "xpToNext": 24800,
+      "totalXpToReach": 547125
+    },
+    {
+      "level": 64,
+      "title": "DISTRIBUTOR",
+      "xpToNext": 25600,
+      "totalXpToReach": 571925
+    },
+    {
+      "level": 65,
+      "title": "WHOLESALE",
+      "xpToNext": 26400,
+      "totalXpToReach": 597525
+    },
+    {
+      "level": 66,
+      "title": "WEIGHT MOVER",
+      "xpToNext": 27200,
+      "totalXpToReach": 623925
+    },
+    {
+      "level": 67,
+      "title": "BRICK TALK",
+      "xpToNext": 28100,
+      "totalXpToReach": 651125
+    },
+    {
+      "level": 68,
+      "title": "FREIGHT KING",
+      "xpToNext": 28900,
+      "totalXpToReach": 679225
+    },
+    {
+      "level": 69,
+      "title": "PORT RUNNER",
+      "xpToNext": 44700,
+      "totalXpToReach": 708125,
+      "wall": "decade"
+    },
+    {
+      "level": 70,
+      "title": "HOOD RICH",
+      "xpToNext": 30600,
+      "totalXpToReach": 752825
+    },
+    {
+      "level": 71,
+      "title": "NEIGHBORHOOD HERO",
+      "xpToNext": 31500,
+      "totalXpToReach": 783425
+    },
+    {
+      "level": 72,
+      "title": "STREET PROFESSOR",
+      "xpToNext": 32400,
+      "totalXpToReach": 814925
+    },
+    {
+      "level": 73,
+      "title": "BLOCK ELDER",
+      "xpToNext": 33300,
+      "totalXpToReach": 847325
+    },
+    {
+      "level": 74,
+      "title": "BIG HOMIE",
+      "xpToNext": 68400,
+      "totalXpToReach": 880625,
+      "wall": "major"
+    },
+    {
+      "level": 75,
+      "title": "OG",
+      "xpToNext": 35200,
+      "totalXpToReach": 949025,
+      "milestone": true
+    },
+    {
+      "level": 76,
+      "title": "DOUBLE OG",
+      "xpToNext": 36100,
+      "totalXpToReach": 984225
+    },
+    {
+      "level": 77,
+      "title": "TRIPLE OG",
+      "xpToNext": 37100,
+      "totalXpToReach": 1020325
+    },
+    {
+      "level": 78,
+      "title": "THE COUNCIL",
+      "xpToNext": 38000,
+      "totalXpToReach": 1057425
+    },
+    {
+      "level": 79,
+      "title": "ADVISOR",
+      "xpToNext": 58500,
+      "totalXpToReach": 1095425,
+      "wall": "decade"
+    },
+    {
+      "level": 80,
+      "title": "CONSIGLIERE",
+      "xpToNext": 40000,
+      "totalXpToReach": 1153925
+    },
+    {
+      "level": 81,
+      "title": "UNDERBOSS",
+      "xpToNext": 41000,
+      "totalXpToReach": 1193925
+    },
+    {
+      "level": 82,
+      "title": "CAPO",
+      "xpToNext": 42000,
+      "totalXpToReach": 1234925
+    },
+    {
+      "level": 83,
+      "title": "BOSS",
+      "xpToNext": 43100,
+      "totalXpToReach": 1276925
+    },
+    {
+      "level": 84,
+      "title": "BIG BOSS",
+      "xpToNext": 44100,
+      "totalXpToReach": 1320025
+    },
+    {
+      "level": 85,
+      "title": "KINGMAKER",
+      "xpToNext": 45200,
+      "totalXpToReach": 1364125
+    },
+    {
+      "level": 86,
+      "title": "CITY TAKER",
+      "xpToNext": 46200,
+      "totalXpToReach": 1409325
+    },
+    {
+      "level": 87,
+      "title": "EMPIRE BUILDER",
+      "xpToNext": 47300,
+      "totalXpToReach": 1455525
+    },
+    {
+      "level": 88,
+      "title": "UNTOUCHABLE",
+      "xpToNext": 48400,
+      "totalXpToReach": 1502825
+    },
+    {
+      "level": 89,
+      "title": "INVISIBLE HAND",
+      "xpToNext": 74300,
+      "totalXpToReach": 1551225,
+      "wall": "decade"
+    },
+    {
+      "level": 90,
+      "title": "KINGPIN",
+      "xpToNext": 50600,
+      "totalXpToReach": 1625525
+    },
+    {
+      "level": 91,
+      "title": "CARTEL TIES",
+      "xpToNext": 51800,
+      "totalXpToReach": 1676125
+    },
+    {
+      "level": 92,
+      "title": "INTERNATIONAL",
+      "xpToNext": 52900,
+      "totalXpToReach": 1727925
+    },
+    {
+      "level": 93,
+      "title": "OFFSHORE",
+      "xpToNext": 54100,
+      "totalXpToReach": 1780825
+    },
+    {
+      "level": 94,
+      "title": "CLEAN MONEY",
+      "xpToNext": 55200,
+      "totalXpToReach": 1834925
+    },
+    {
+      "level": 95,
+      "title": "GHOST CEO",
+      "xpToNext": 56400,
+      "totalXpToReach": 1890125
+    },
+    {
+      "level": 96,
+      "title": "SHADOW MAYOR",
+      "xpToNext": 57600,
+      "totalXpToReach": 1946525
+    },
+    {
+      "level": 97,
+      "title": "CITY FATHER",
+      "xpToNext": 58800,
+      "totalXpToReach": 2004125
+    },
+    {
+      "level": 98,
+      "title": "LIVING LEGEND",
+      "xpToNext": 60000,
+      "totalXpToReach": 2062925
+    },
+    {
+      "level": 99,
+      "title": "IMMORTAL",
+      "xpToNext": 122600,
+      "totalXpToReach": 2122925,
+      "wall": "major"
+    },
+    {
+      "level": 100,
+      "title": "STREET DON",
+      "xpToNext": null,
+      "totalXpToReach": 2245525,
+      "milestone": true
+    }
+  ]
+}
