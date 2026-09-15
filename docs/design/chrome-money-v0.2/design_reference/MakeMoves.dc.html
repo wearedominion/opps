@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex;flex-direction:column;gap:18px;">
+
+            <!-- Featured main job -->
+            <div style="border:1px solid #3d3627;border-radius:16px;background:linear-gradient(180deg,#181820,#111116);overflow:hidden;">
+              <div style="position:relative;height:118px;background:#0d0d11;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.014),rgba(255,255,255,0.014) 1px,transparent 1px,transparent 7px);border-bottom:1px solid #26262e;">
+                <div style="position:absolute;inset:0;background:linear-gradient(0deg,#111116,rgba(17,17,22,0.1));"></div>
+                <span style="position:absolute;top:13px;left:15px;background:linear-gradient(135deg,#f3e0b4,#e8c98a 40%,#c9a55c);color:#161208;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;letter-spacing:0.5px;padding:5px 11px;border-radius:999px;">{{ quests.featured.tag }}</span>
+                <div style="position:absolute;left:15px;right:15px;bottom:13px;">
+                  <div style="font-family:'Anton',sans-serif;font-size:30px;letter-spacing:2px;color:#f2f0ec;line-height:1;white-space:nowrap;">{{ quests.featured.title }}</div>
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;color:#8e8e9a;margin-top:6px;">{{ quests.featured.sub }}</div>
+                </div>
+              </div>
+              <div style="padding:16px;">
+                <div style="display:flex;align-items:center;gap:11px;margin-bottom:15px;">
+                  <span style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#7a7a86;">OBJECTIVES</span>
+                  <div style="flex:1;height:4px;border-radius:999px;background:#1f1f27;overflow:hidden;"><div style="height:100%;width:{{ quests.featured.progPct }};background:linear-gradient(90deg,#e8c98a,#a8873f);border-radius:999px;transition:width .4s;"></div></div>
+                  <span style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:11px;color:#f2f0ec;">{{ quests.featured.prog }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <sc-for list="{{ quests.featured.objs }}" as="ob" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;gap:11px;">
+                      <span style="flex:none;width:14px;height:14px;border-radius:999px;background:{{ ob.dot }};"></span>
+                      <span style="font-family:'Space Grotesk',sans-serif;font-size:13px;color:{{ ob.tcolor }};flex:1;line-height:1.5;">{{ ob.text }}</span>
+                      <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:#f2f0ec;">{{ ob.count }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px;padding-top:15px;border-top:1px solid #1f1f27;">
+                  <div style="min-width:0;">
+                    <div style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#7a7a86;">REWARD</div>
+                    <div style="font-family:'Anton',sans-serif;font-size:17px;letter-spacing:0.5px;color:#e8c98a;line-height:1.1;margin-top:2px;">{{ quests.featured.reward }}</div>
+                  </div>
+                  <sc-if value="{{ quests.featured.ctaLive }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ quests.featured.onCta }}" style="position:relative;overflow:hidden;flex:none;font-family:'Anton',sans-serif;font-size:13px;letter-spacing:1px;color:#161208;background:linear-gradient(135deg,#f3e0b4,#e8c98a 40%,#c9a55c);border:none;border-radius:999px;padding:11px 22px;cursor:pointer;transition:all .16s;" style-hover="filter:brightness(1.08);" style-after="content:'';position:absolute;top:0;bottom:0;left:0;width:34%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);animation:sheen 4.2s linear infinite;pointer-events:none;">{{ quests.featured.ctaLabel }}</button>
+                  </sc-if>
+                  <sc-if value="{{ quests.featured.ctaDone }}" hint-placeholder-val="{{ false }}">
+                    <span style="flex:none;font-family:'Anton',sans-serif;font-size:13px;letter-spacing:1px;color:#4f4f59;background:#141419;border:1px solid #22222a;border-radius:999px;padding:11px 22px;">{{ quests.featured.ctaLabel }}</span>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+
+            <!-- Side hustles -->
+            <div style="display:flex;align-items:center;gap:10px;"><h4 style="margin:0;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:2px;color:#f2f0ec;">SIDE HUSTLES</h4><div style="flex:1;height:1px;background:#1f1f27;"></div></div>
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <sc-for list="{{ quests.side }}" as="q" hint-placeholder-count="3">
+                <div style="border:1px solid #26262e;border-radius:16px;background:linear-gradient(180deg,#181820,#111116);padding:15px;">
+                  <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <div style="flex:1;min-width:0;">
+                      <div style="font-family:'Anton',sans-serif;font-size:15px;letter-spacing:1px;color:#f2f0ec;line-height:1.15;">{{ q.title }}</div>
+                      <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:#7a7a86;margin-top:5px;line-height:1.5;">{{ q.sub }}</div>
+                    </div>
+                    <span style="flex:none;background:{{ q.badge.bg }};color:{{ q.badge.c }};font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;letter-spacing:0.5px;padding:5px 10px;border-radius:999px;">{{ q.badge.label }}</span>
+                  </div>
+                  <sc-if value="{{ q.prog }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:11px;margin-top:13px;"><div style="flex:1;height:4px;border-radius:999px;background:#1f1f27;overflow:hidden;"><div style="height:100%;width:{{ q.progPct }};background:linear-gradient(90deg,#e8c98a,#a8873f);border-radius:999px;transition:width .4s;"></div></div><span style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:11px;color:#8e8e9a;">{{ q.prog }}</span></div>
+                  </sc-if>
+                  <sc-if value="{{ q.timed }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:13px;font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:12px;color:#e0523f;"><span style="width:6px;height:6px;border-radius:999px;background:#e0523f;animation:blink 1.4s infinite;"></span>TIME LEFT&nbsp;<span style="color:#f2f0ec;">{{ q.timer }}</span></div>
+                  </sc-if>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;">
+                    <div style="min-width:0;">
+                      <span style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#7a7a86;">REWARD&nbsp;</span>
+                      <span style="font-family:'Anton',sans-serif;font-size:15px;letter-spacing:0.5px;color:#e8c98a;">{{ q.reward }}</span>
+                    </div>
+                    <sc-if value="{{ q.done }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;letter-spacing:0.5px;color:#4fd39a;border:1px solid rgba(79,211,154,0.4);border-radius:999px;padding:6px 12px;">✓ COMPLETED</span>
+                    </sc-if>
+                    <sc-if value="{{ q.notDone }}" hint-placeholder-val="{{ true }}">
+                      <button onClick="{{ q.onComplete }}" style="position:relative;overflow:hidden;font-family:'Anton',sans-serif;font-size:12px;letter-spacing:1px;color:#161208;background:linear-gradient(135deg,#f3e0b4,#e8c98a 40%,#c9a55c);border:none;border-radius:999px;padding:9px 18px;cursor:pointer;transition:all .16s;" style-hover="filter:brightness(1.08);" style-after="content:'';position:absolute;top:0;bottom:0;left:0;width:34%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);animation:sheen 4.2s linear infinite;pointer-events:none;">COMPLETE</button>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <!-- Daily -->
+            <div style="display:flex;align-items:center;gap:10px;"><h4 style="margin:0;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:2px;color:#f2f0ec;">DAILY</h4><div style="flex:1;height:1px;background:#1f1f27;"></div></div>
+            <div style="border:1px solid #26262e;border-radius:16px;background:linear-gradient(180deg,#181820,#111116);padding:15px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                <div style="min-width:0;">
+                  <div style="font-family:'Anton',sans-serif;font-size:15px;letter-spacing:1px;color:#f2f0ec;line-height:1.15;">DAILY GRIND</div>
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:#7a7a86;margin-top:5px;">Earn $1,000 today</div>
+                </div>
+                <div style="font-family:'Anton',sans-serif;font-size:17px;letter-spacing:0.5px;color:#e8c98a;line-height:1.1;white-space:nowrap;">$720 <span style="color:#4f4f59;">/ $1,000</span></div>
+              </div>
+              <div style="height:7px;border-radius:999px;background:#1f1f27;margin-top:13px;overflow:hidden;"><div style="height:100%;width:{{ dailyPct }};background:linear-gradient(90deg,#e8c98a,#a8873f);border-radius:999px;transition:width .4s;"></div></div>
+              <div style="margin-top:12px;">
+                <span style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#7a7a86;">REWARD&nbsp;</span>
+                <span style="font-family:'Anton',sans-serif;font-size:15px;letter-spacing:0.5px;color:#6f8cff;">XP +20</span>
+              </div>
+            </div>
+
+            <!-- The Hood : territory status -->
+            <div style="display:flex;align-items:center;gap:10px;"><h4 style="margin:0;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:2px;color:#f2f0ec;">THE HOOD</h4><div style="flex:1;height:1px;background:#1f1f27;"></div></div>
+
+            <div style="border:1px solid #3d3627;border-radius:16px;background:linear-gradient(110deg,#1d1b16,#111116);padding:17px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                <div style="min-width:0;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#e8c98a;">YOUR TURF</div>
+                  <div style="font-family:'Anton',sans-serif;font-size:30px;letter-spacing:2px;color:#f2f0ec;line-height:1;margin-top:7px;">DOWNTOWN</div>
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:#8e8e9a;margin-top:6px;">Plus 2 blocks of Old Town</div>
+                </div>
+                <div style="text-align:right;flex:none;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#7a7a86;">TERRITORY</div>
+                  <div style="display:flex;align-items:baseline;gap:6px;justify-content:flex-end;margin-top:7px;"><span style="font-family:'Anton',sans-serif;font-size:28px;letter-spacing:0.5px;color:#f2f0ec;line-height:1;">2.4</span><span style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:#8e8e9a;">SQ MI</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+              <sc-for list="{{ hoodOps }}" as="op" hint-placeholder-count="4">
+                <div style="border:1px solid #26262e;border-radius:14px;background:linear-gradient(180deg,#181820,#111116);padding:15px;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#7a7a86;">{{ op.label }}</div>
+                  <div style="font-family:'Anton',sans-serif;font-size:26px;letter-spacing:0.5px;color:{{ op.color }};margin-top:8px;line-height:1;">{{ op.value }}</div>
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:#8e8e9a;margin-top:6px;">{{ op.sub }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="border:1px solid #5a2b24;border-radius:16px;background:linear-gradient(180deg,#181820,#111116);overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:9px;padding:14px 15px;border-bottom:1px solid #1f1f27;">
+                <span style="width:7px;height:7px;border-radius:999px;background:#e0523f;animation:blink 1.4s infinite;"></span>
+                <span style="font-family:'Anton',sans-serif;font-size:15px;letter-spacing:2px;color:#f2f0ec;">OPPS SPOTTED</span>
+                <span style="margin-left:auto;background:rgba(224,82,63,0.14);color:#e0523f;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;letter-spacing:0.5px;padding:5px 10px;border-radius:999px;">3 IN AREA</span>
+              </div>
+              <sc-for list="{{ sightings }}" as="sg" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid #1d1c22;">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-family:'Anton',sans-serif;font-size:14px;letter-spacing:1px;color:#f2f0ec;line-height:1.15;">{{ sg.name }}</div>
+                    <div style="display:flex;align-items:center;gap:7px;margin-top:5px;font-family:'Space Grotesk',sans-serif;font-size:11px;color:#8e8e9a;"><span style="width:6px;height:6px;border-radius:999px;border:2px solid #4f4f59;"></span>{{ sg.corner }}</div>
+                  </div>
+                  <span style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:1px;color:#7a7a86;">{{ sg.ago }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <!-- Log -->
+            <div style="display:flex;align-items:center;gap:10px;"><h4 style="margin:0;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:2px;color:#f2f0ec;">LOG</h4><div style="flex:1;height:1px;background:#1f1f27;"></div></div>
+            <div onClick="{{ openLog }}" style="border:1px solid #26262e;border-radius:16px;background:#0d0d11;overflow:hidden;cursor:pointer;transition:border-color .16s;" style-hover="border-color:#3d3627;">
+              <sc-for list="{{ logPreview }}" as="ev" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid #1d1c22;">
+                  <span style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:11px;color:#7a7a86;flex:none;">{{ ev.time }}</span>
+                  <span style="flex:1;min-width:0;font-family:'Space Grotesk',sans-serif;font-size:13px;color:#d8d6d0;line-height:1.5;text-wrap:pretty;">{{ ev.text }}</span>
+                  <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;color:#f2f0ec;flex:none;white-space:nowrap;">{{ ev.clout }}</span>
+                </div>
+              </sc-for>
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:10px;letter-spacing:2px;color:#e8c98a;">VIEW FULL LOG ›</div>
+            </div>
+          </div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:900},&quot;quests&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;dailyPct&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;72%&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;hoodOps&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object[]&quot;},&quot;sightings&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object[]&quot;},&quot;logPreview&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object[]&quot;},&quot;openModal&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;},&quot;openLog&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}"></script>
+</body>
+</html>
