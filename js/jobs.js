@@ -207,7 +207,7 @@ function mvDaily() {
       '<span class="mv-bar lg"><span class="mv-bar-fill" style="width:' + pct + '%"></span></span>' +
       '<div class="mv-daily-foot">' +
         '<span class="mv-label">REWARD</span>' +
-        '<span class="mv-xp-reward">' + mvDailyRewardLabel() + '</span>' +
+        '<span class="mv-clout-reward">' + mvDailyRewardLabel() + '</span>' +
       '</div>' +
     '</div>';
 }

@@ -181,9 +181,14 @@ test('make moves — the screen is built to the 02-moves.md geometry', () => {
   assert.ok(/\.clout-log\s*\{[^}]*border-bottom:\s*none/.test(css), 'the sheet has no bottom edge');
 });
 
-test('make moves — XP rewards are blue and cash rewards are gold', () => {
+test('make moves — every reward is gold, because they are all values now', () => {
+  // This asserted the daily's reward was --xp blue until DOM-124, which
+  // established there is no XP: the card pays Clout and says so. The contract
+  // reserves that blue for the XP/level meters, so a Clout figure wearing it
+  // would be the one place in the app where a value is not gold.
   const css = readAllCss();
-  assert.ok(/\.mv-xp-reward\s*\{[^}]*color:\s*var\(--xp\)/.test(css), 'XP reward is --xp');
+  assert.ok(!/mv-xp-reward/.test(css), 'the XP-named reward class is gone');
+  assert.ok(/\.mv-clout-reward\s*\{[^}]*color:\s*var\(--gold\)/.test(css), 'daily reward is --gold');
   assert.ok(/\.mv-reward\s*\{[^}]*color:\s*var\(--gold\)/.test(css), 'cash reward is --gold');
   assert.ok(/\.mv-hus-reward\s*\{[^}]*color:\s*var\(--gold\)/.test(css));
 });
