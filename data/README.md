@@ -254,3 +254,19 @@ after the server verifies the receipt. `sku` must match the Jest Developer Conso
 
 `portraits.json` is loaded in `loadGameData()` alongside the rest and read by `js/combat.js` and
 `js/plugs.js` (DOM-60). A fetch miss degrades to placeholder circles, not a dead app.
+
+### moves.json — what DOM-115 actually rendered
+
+The screen shipped in DOM-115 uses `featured`, `daily`, `turf`, `hoodOps` and
+`sightings` from this file. **`side` is deliberately unused.**
+
+Those three placeholder hustles (QUICK FLIP / CLEAN HOUSE / RUN THE PLUG) are
+prototype copy. The SIDE HUSTLES section renders `data/jobs.json` instead — the
+19 jobs that actually pay. Rendering the placeholders would have stranded
+`doJob()`, and with it the only Moves sink outside the Hood, the only caller of
+`Quests.onJob()` (4 of the 9 plug-quest steps are `job` steps), one of the two
+`rollDrop()` sites, and the Moves Boost offer trigger.
+
+`side` is kept rather than deleted because it is the design's statement of what
+a hustle card can show — the TIMED countdown state in particular has no v1 job
+behind it. A job gains that state by carrying an `expiresAt`; none do yet.

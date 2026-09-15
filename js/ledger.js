@@ -57,6 +57,14 @@ const REASON_CODES = Object.freeze(Object.keys(REASON).map(k => REASON[k]));
 const LEDGER_POOLS = ['moves', 'stamina', 'health'];
 const LEDGER_FLAT  = ['cash', 'clout', 'skillPts'];
 
+// Cash you worked for, as opposed to cash you were handed. Drives the Daily
+// Grind meter on MAKE MOVES; deliberately excludes STARTING_GRANT and
+// IAP_GRANT so neither a fresh save nor a purchase completes the daily.
+const EARNED_CASH_REASONS = Object.freeze([
+  REASON.MOVE_PAYOUT, REASON.FIGHT_REWARD, REASON.QUEST_REWARD,
+  REASON.SPOT_COLLECT, REASON.LAUNDER_PAYOUT,
+]);
+
 const LEDGER_MAX_ROWS = 500;   // ring buffer; oldest dropped first
 let _ledger = [];
 let _seenKeys = Object.create(null);
@@ -126,6 +134,15 @@ function applyDelta(resource, delta, reason, ref) {
     idem: opts.idem || null,
   });
   if (_ledger.length > LEDGER_MAX_ROWS) _ledger.shift();
+
+  // The Daily Grind counts money you EARNED today (DOM-115). The ledger is the
+  // only place that sees every payout, so the tally is taken here rather than
+  // at seven separate credit sites where one would inevitably be missed. The
+  // starting grant and IAP top-ups are excluded: they are not earnings.
+  if (resource === 'cash' && applied > 0 && EARNED_CASH_REASONS.indexOf(reason) !== -1
+      && typeof mvNoteDailyCash === 'function') {
+    mvNoteDailyCash(applied);
+  }
   return applied;
 }
 
