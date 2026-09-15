@@ -154,17 +154,27 @@ Every row carries a **`slot`**, one of the seven permanent paper-doll keys ratif
 head · torso · handR · handL · legs · ride · stash
 ```
 
-**Slot ids and item ids are save keys — permanent, lowercase, never reused.** `G.equipped` is
-keyed by slot id (DOM-120), so renaming one silently unequips every player who had it filled.
+**Slot ids and item ids are save keys — permanent, lowercase, never reused.** Renaming one
+would silently unequip every player who had it filled.
 
 The catalog was authored against the older four-`type` model, so slots are derived from it:
 vehicles take `ride`, utilities `stash`, body armour `torso`, long guns `handR`, and sidearms,
 melee and the one shield take `handL`. The rule lives in `gen-catalog.js` (`SLOT_BY_TYPE` +
 `GEAR_OFFHAND`) and a unit test asserts the checked-in file still matches it.
 
-**`type` is transitional.** It is still what `slotCapacity()` and the pre-v0.2 Profile read;
-DOM-120/DOM-121 retire it once equipping moves to `G.equipped`. While both exist a test keeps
-them consistent.
+**`type` is transitional — but nothing has moved off it yet.** Corrected on DOM-121
+(2026-09-15): an earlier draft of this section said `G.equipped` is keyed by slot id and that
+DOM-120 introduced it. Neither is true. **`G.equipped` does not exist** — the v4→v5 migration
+deletes it as a prototype placeholder. The live field is **`G.loadout`, keyed by `type`**
+(`weapon`/`armor`/`vehicle`/`utility`) holding **arrays** of item ids, with `[0]` the primary
+and `slotCapacity()` deciding how many count.
+
+So the catalog carries the v0.2 seven-slot model while the runtime still carries the superseded
+multi-slot one, and **nothing reads `slot` yet**. Reconciling them is a real migration — it
+changes `G.loadout`'s shape (SCHEMA_VERSION bump), makes `slotCapacity()` dead, and retires the
+Crew gear-slot reward with it. That work belongs to **DOM-117** (Profile GEAR); see the DOM-121
+comment thread for the consequences. While both models exist a test keeps `slot` and `type`
+consistent.
 
 > **Known content gap:** `head` and `legs` have **no v1 items** — the catalog has no hats, masks
 > or kicks. The two slots ship real and render empty. Filling them is content work (the DOM-18
