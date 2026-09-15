@@ -140,7 +140,12 @@ main::-webkit-scrollbar { width: 0; height: 0; }
 }
 
 /* ── TABS ── */
-.tab { display: none; }
+/* Visibility is the tab's own business. `:not(.active)` is what makes that
+   stick: at (0,2,0) it outranks any single-class rule a screen declares for
+   itself, so a screen cannot accidentally leave its tab on top of every other
+   one — which is exactly what `.mv { display: flex }` did (DOM-129). A screen
+   that needs a display other than block says so with `.tab.<screen>.active`. */
+.tab:not(.active) { display: none; }
 .tab.active { display: block; }
 
 /* ═══════════════════════════════════════════════════════════

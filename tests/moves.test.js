@@ -150,7 +150,13 @@ test('make moves — doJob still spends Moves and feeds quests and drops', () =>
 
 test('make moves — the screen is built to the 02-moves.md geometry', () => {
   const css = readAllCss();
-  assert.ok(/\.mv\s*\{[^}]*gap:\s*18px/.test(css), 'the screen column is an 18px gap');
+  // The column now hangs off .tab.mv.active rather than a bare .mv: the bare
+  // rule tied with .tab and left the screen on top of every other one
+  // (DOM-129). Same 18px column, scoped to the state it belongs to.
+  // tests/tabs.test.js is what stops a bare .mv coming back — it parses the
+  // cascade rather than grepping, which a rule quoted inside a comment fools.
+  assert.ok(/\.tab\.mv\.active\s*\{[^}]*gap:\s*18px/.test(css),
+    'the screen column is an 18px gap');
   assert.ok(/\.mv-feat\s*\{[^}]*border:\s*1px solid var\(--border-gold\)/.test(css));
   assert.ok(/\.mv-feat-band\s*\{[^}]*height:\s*118px/.test(css), 'the header band is 118px');
   assert.ok(/\.mv-feat-title\s*\{[^}]*font-size:\s*30px/.test(css));

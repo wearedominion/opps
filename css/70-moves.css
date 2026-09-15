@@ -7,7 +7,10 @@
 /* ── MAKE MOVES (S6, DOM-115) ──
    screens/02-moves.md. Six sections in an 18px column: featured main job,
    side hustles, daily, turf status, opp sightings, log preview. */
-.mv { display: flex; flex-direction: column; gap: 18px; }
+/* Scoped to .tab.mv.active (0,3,0) so it beats .tab.active without reopening
+   DOM-129: a bare `.mv { display: flex }` applies to the tab whether or not it
+   is the one on screen, and nothing ever hides it again. */
+.tab.mv.active { display: flex; flex-direction: column; gap: 18px; }
 
 /* Shared section header: Anton 15 + a hairline rule that eats the slack. */
 .mv-sec { display: flex; align-items: center; gap: 10px; }
