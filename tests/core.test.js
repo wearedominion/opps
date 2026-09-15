@@ -1894,7 +1894,7 @@ function loadMoves(over) {
     + ' MV_XP_DAILY_FALLBACK, G };';
   const ctx = Object.assign({
     console, JSON, Object, Math, Array, Date, Number, String,
-    G: { jobProgress: {}, moveObjective: 0, sideDone: [], dailyCash: 0, dailyCashDate: null },
+    G: { jobProgress: {}, moveObjective: 0, dailyCash: 0, dailyCashDate: null },
     JOBS: [], ENEMIES: [], QUESTS: [], MOVES: null,
     document: { querySelector: () => null, querySelectorAll: () => [] },
     setInterval: () => 0, clearInterval: () => {},
@@ -1987,6 +1987,19 @@ test('make moves — the daily XP label falls back to the figure 02-moves.md pri
   // once DOM-124 ships xp-system.json, the file wins
   const M2 = loadMoves({ XP_SYSTEM: { actionXp: { dailyGrind: 30 } } });
   assert.strictEqual(M2.mvDailyRewardLabel(), 'XP +30');
+});
+
+test('make moves — the DONE state derives from jobProgress, with no second list', () => {
+  // The AC asks for `sideDone` to persist. It is deliberately not a save field:
+  // mvJobStatus() derives DONE from G.jobProgress[job.id], so a parallel list
+  // would be duplicate bookkeeping able to disagree with the mastery meter.
+  const stateSrc = fs.readFileSync(path.join(ROOT, 'js/state.js'), 'utf8');
+  assert.ok(!/^\s*sideDone\s*:/m.test(stateSrc),
+    'sideDone is back on G — the DONE state already derives from jobProgress');
+  const M = loadMoves();
+  const job = { id: 'runner', times: 3 };
+  M.G.jobProgress.runner = 3;
+  assert.strictEqual(M.mvJobStatus(job), 'DONE', 'mastery is what makes a hustle DONE');
 });
 
 test('make moves — side hustles render the real jobs, not the placeholders', () => {

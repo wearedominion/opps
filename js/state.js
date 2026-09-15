@@ -55,11 +55,15 @@ const G = {
   // they offer. Additive field with a default — no SCHEMA_VERSION bump.
   plugsRecruited: [],
 
-  // MAKE MOVES (DOM-115). Objective index reached on the featured main job,
-  // and the side hustles finished at least once. Both additive with defaults —
-  // no SCHEMA_VERSION bump.
+  // MAKE MOVES (DOM-115). Objective index reached on the featured main job.
+  // Additive with a default — no SCHEMA_VERSION bump.
+  //
+  // There is deliberately no `sideDone` companion: a side hustle's DONE state
+  // derives from G.jobProgress[job.id] via mvJobStatus(), so a second list
+  // would be duplicate bookkeeping that could disagree with the first. Save
+  // fields are close to permanent — every migration carries them forward and
+  // every reader has to wonder what they mean — so the unused one is not here.
   moveObjective: 0,
-  sideDone: [],
   // Daily Grind: cash earned so far today, and the local date it counts for.
   // Stored as YYYY-MM-DD so the reset is the player's midnight, not UTC's.
   dailyCash: 0,
