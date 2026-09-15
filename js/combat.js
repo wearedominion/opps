@@ -45,7 +45,47 @@ function enemyThreat(e) {
   return Math.max(1, Math.min(8, Math.round((1 - st.pWin) * 8)));
 }
 
-// ── Render enemies list ───────────────────────
+// ── Opps List (DOM-112 — screens/03-opps.md) ──
+//
+//  One card per opp: portrait with its dossier code, identity, ENGAGE + the
+//  reward capsule, then the HP and THREAT gauges. Deliberately four rows and
+//  no more — the doc's ~144px card height is what the layout buys.
+
+// The gold map pin, filled (the one filled icon in the set — OVERLAYS.md).
+const OPP_PIN_SVG =
+  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+  + '<path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+
+// HP as a 1–8 rating, the same scale THREAT uses.
+//
+// The prototype's opps carry hp 2–5 — an 8-point RATING, not hit points — and
+// the doc's "width = hp/8" reads against that. Repo enemies carry real HP, so
+// the rating is derived from it.
+//
+// The scale is LOGARITHMIC across the roster because the roster is: the Local
+// Snitch has 40 HP and The Don has six figures. Linear against the roster max
+// rounds every early opp to the same single block, which is a gauge that tells
+// a new player nothing. Log spreads all 17 across the full eight.
+function oppHpRating(e) {
+  let lo = Infinity, hi = 0;
+  for (const x of ENEMIES) {
+    const v = x.hp || 0;
+    if (v > 0) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  }
+  const v = e.hp || 0;
+  if (!(v > 0) || !(hi > lo)) return 1;                  // single-row roster
+  const t = (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo));
+  return Math.max(1, Math.min(8, Math.round(1 + t * 7)));
+}
+
+// Severity by position (03-opps.md): 1–2 grey, 3–5 chrome, 6–8 red. The
+// gauge is the ONLY severity signal on the card — there is no risk chip.
+function oppThreatTone(i) { return i < 2 ? 'lo' : i < 5 ? 'mid' : 'hi'; }
+
+function _oppGauge(label, inner) {
+  return '<div class="opp-gauge"><span class="opp-gauge-k">' + label + '</span>' + inner + '</div>';
+}
+
 function renderEnemies() {
   var container = $('enemy-list');
   if (!container) return;
@@ -53,29 +93,58 @@ function renderEnemies() {
   ENEMIES.forEach(function(e) {
     var locked = !isUnlocked(e);
     var portrait = PORTRAITS.enemies[e.id];
-    var threat = locked ? 8 : enemyThreat(e);
-    // Contract: --red on --ghost. Split the run so the empty blocks are not
-    // also red — a rating should read as "4 of 8", not "8, some dimmer".
-    var bars = '<span class="threat-on">' + '█'.repeat(threat) + '</span>' +
-               '<span class="threat-off">' + '░'.repeat(8 - threat) + '</span>';
+    // A locked opp still shows a real reading, not a scare number: threat is
+    // what it would be, and the card stays at full contrast (contract:
+    // "state the gate, not the refusal").
+    var threat = enemyThreat(e);
+    var hp = oppHpRating(e);
+
+    var segs = '';
+    for (var i = 0; i < 8; i++) {
+      segs += '<i class="opp-seg ' + oppThreatTone(i) + (i < threat ? ' on' : '') + '"></i>';
+    }
+
+    var cash = '$' + e.reward.cash[0].toLocaleString() + '–' + e.reward.cash[1].toLocaleString();
+
     var div = document.createElement('div');
-    div.className = 'enemy-card';
+    div.className = 'opp-card';
     div.innerHTML =
-      '<div class="enemy-portrait-wrap">' +
-        (portrait ? '<img class="enemy-portrait" src="' + portrait + '" alt="' + e.name + '" loading="lazy">'
-                  : '<div class="enemy-avatar"></div>') +
+      '<div class="opp-top">' +
+        '<div class="opp-portrait">' +
+          (portrait ? '<img src="' + portrait + '" alt="' + e.name + '" loading="lazy">' : '') +
+          '<span class="opp-scrim"></span>' +
+          '<span class="opp-code">' + (e.code || '') + '</span>' +
+          '<button class="opp-pin" onclick="oppLocate(\'' + e.id + '\')" ' +
+            'aria-label="Find ' + e.name + ' on The Hood">' + OPP_PIN_SVG + '</button>' +
+        '</div>' +
+        '<div class="opp-id">' +
+          '<div class="opp-name">' + e.name + '</div>' +
+          '<div class="opp-role">' + (e.role || '') + '</div>' +
+        '</div>' +
+        '<div class="opp-actions">' +
+          (locked
+            ? '<span class="opp-engage locked">LEVEL ' + requiredLevel(e) + '</span>'
+            : '<button class="opp-engage" onclick="startCombat(\'' + e.id + '\')">ENGAGE</button>') +
+          // One capsule, one segment: the optional bonus-drop segment has no
+          // per-enemy source in this repo (drops.js rolls a global rarity
+          // ladder, not a named drop per opp), so it is left off rather than
+          // invented. See the PR.
+          '<div class="opp-reward"><span class="opp-cash">' + cash + '</span></div>' +
+        '</div>' +
       '</div>' +
-      '<div class="enemy-info">' +
-        '<div class="enemy-name">' + e.name + '</div>' +
-        '<div class="enemy-role">' + (e.role || '') + '</div>' +
-        '<div class="enemy-stats"><span class="threat-bar">' + bars + '<span class="threat-label">THREAT</span></span></div>' +
-        '<div class="enemy-reward">Reward: $' + e.reward.cash[0].toLocaleString() + '–$' + e.reward.cash[1].toLocaleString() + '</div>' +
-      '</div>' +
-      (locked
-        ? '<div class="enemy-locked">' + lockLabel(e) + '</div>'
-        : '<button class="attack-btn" onclick="startCombat(\'' + e.id + '\')">SLIDE ON \'EM</button>');
+      '<div class="opp-gauges">' +
+        _oppGauge('HP', '<div class="opp-hp"><div class="opp-hp-fill" style="width:' + (hp / 8 * 100) + '%"></div></div>') +
+        _oppGauge('THREAT', '<div class="opp-threat">' + segs + '</div>') +
+      '</div>';
     container.appendChild(div);
   });
+}
+
+// The pin jumps to The Hood. Centring the map on THIS opp needs per-opp
+// positions, which arrive with the city data in DOM-118 — until then it opens
+// the map rather than pretending to a precision it does not have.
+function oppLocate(enemyId) {
+  showTab('map');
 }
 
 // ── Start combat ──────────────────────────────
@@ -124,12 +193,12 @@ function startCombat(enemyId) {
     portraitEl.src = src || '';
     portraitEl.style.display = src ? 'block' : 'none';
   }
-  var iconEl = $('c-enemy-icon');
-  if (iconEl) iconEl.textContent = '';
-
   $('c-enemy-name').textContent = e.name;
+  var roleEl = $('c-enemy-role');
+  if (roleEl) roleEl.textContent = (e.code ? e.code + ' · ' : '') + (e.role || '');
   $('combat-result').textContent = '';
   $('close-combat').style.display = 'none';
+  _simState('idle');
   _setActionButtons(true);
   _drawBars();
 
@@ -137,9 +206,12 @@ function startCombat(enemyId) {
   var pct = Math.round(st.pWin * 100);
   var oddsEl = $('c-odds');
   if (oddsEl) {
-    oddsEl.textContent = '~' + pct + '% WIN';
-    // Red here is combat semantics, which is where the contract allows it.
-    oddsEl.style.color = pct >= 60 ? 'var(--green)' : pct >= 45 ? 'var(--chrome)' : 'var(--red)';
+    // The real number, not the prototype's threat-derived placeholder
+    // (`90 − threat × 7.5`): this repo has an actual fight model, so the
+    // figure is a Monte Carlo of the matchup. Thresholds and type are the
+    // doc's — success >= 60, gold >= 45, danger below.
+    oddsEl.textContent = pct + '%';
+    oddsEl.className = 'eng-odds ' + (pct >= 60 ? 'good' : pct >= 45 ? 'even' : 'bad');
   }
 
   $('combat-overlay').classList.add('open');
@@ -148,11 +220,17 @@ function startCombat(enemyId) {
   GameState.save();
 }
 
-function _drawBars() {
-  if (!combatEnemy || !_fight) return;
-  $('c-player-hp').style.width = Math.max(0, G.health.current / G.health.max * 100) + '%';
-  $('c-enemy-hp').style.width = Math.max(0, _fight.eHp / combatEnemy.hp * 100) + '%';
+// The engage modal's sim window has three states (OVERLAYS.md): idle shows the
+// odds, running swaps in the fight trace, done stamps the W/L over a wash.
+function _simState(state) {
+  var sim = $('eng-sim');
+  if (sim) sim.className = 'eng-sim is-' + state;
 }
+
+// The VS row's two HP bars are gone in v0.2 — the trace carries both sides'
+// health, one point per round. Kept as the single place that knows that, so
+// the round handlers read the same as before.
+function _drawBars() { /* HP now reads off the trace; see _pushSparkPoint */ }
 
 // ── Sparkline well (DOM-103) ──────────────────
 // The contract's .combat-log well: both HP traces round by round. SVG, not
@@ -162,6 +240,7 @@ function _drawBars() {
 
 function _pushSparkPoint() {
   if (!_fight || !combatEnemy) return;
+  _simState('running');   // the trace replaces the odds once a round lands
   _fight.hist.push({
     you: Math.max(0, G.health.current / G.health.max * 100),
     opp: Math.max(0, _fight.eHp / combatEnemy.hp * 100),
@@ -212,7 +291,7 @@ function _clearSpark() {
     if (el) { el.removeAttribute('cx'); el.removeAttribute('cy'); }
   });
   var res = $('spark-result');
-  if (res) { res.textContent = ''; res.className = 'combat-spark-result'; }
+  if (res) { res.textContent = ''; res.className = 'eng-stamp'; }
 }
 
 function _setActionButtons(enabled) {
@@ -243,8 +322,8 @@ function hitEm() {
     _endFight(false);
     return;
   }
-  $('combat-result').textContent = 'Round ' + _fight.round + ': dealt ' + r.toEnemy + ' — took ' + r.toPlayer;
-  $('combat-result').style.color = 'var(--body)';
+  $('combat-result').textContent = 'ROUND ' + _fight.round + ' · DEALT ' + r.toEnemy + ' · TOOK ' + r.toPlayer;
+  $('combat-result').className = 'eng-caption';
   GameState.save();
 }
 
@@ -255,8 +334,9 @@ function runAway() {
   if (Math.random() < tune('combat.runAwayChance')) {
     _fight.over = true;
     _setActionButtons(false);
+    _simState('done');
     $('combat-result').textContent = 'YOU GOT AWAY.';
-    $('combat-result').style.color = 'var(--body)';
+    $('combat-result').className = 'eng-caption';
     log('Ran from ' + combatEnemy.name + ' — no harm, no reward', 'info');
     $('close-combat').style.display = 'inline-block';
     GameState.save();
@@ -267,8 +347,8 @@ function runAway() {
   _drawBars();
   _pushSparkPoint();
   if (G.health.current <= 0) { _endFight(false); return; }
-  $('combat-result').textContent = 'Couldn\'t get away — took ' + r.toPlayer;
-  $('combat-result').style.color = 'var(--red)';
+  $('combat-result').textContent = "COULDN'T GET AWAY · TOOK " + r.toPlayer;
+  $('combat-result').className = 'eng-caption bad';
   GameState.save();
 }
 
@@ -278,18 +358,19 @@ function _endFight(enemyDead) {
   _setActionButtons(false);
 
   // Stamp the well; the traces stay on screen — the player just watched them.
+  _simState('done');
   var res = $('spark-result');
   if (res) {
     res.textContent = enemyDead ? 'W' : 'L';
-    res.className = 'combat-spark-result show ' + (enemyDead ? 'win' : 'loss');
+    res.className = 'eng-stamp show ' + (enemyDead ? 'win' : 'loss');
   }
 
   if (enemyDead) {
     var cashWon = rand(enemy.reward.cash[0], enemy.reward.cash[1]);
     credit('cash', cashWon, REASON.FIGHT_REWARD, { ref: { enemyId: enemy.id } });
     addClout(enemy.reward.clout, REASON.FIGHT_REWARD, { enemyId: enemy.id });
-    $('combat-result').textContent = 'YOU SMOKED HIM! +$' + cashWon.toLocaleString();
-    $('combat-result').style.color = 'var(--green)';
+    $('combat-result').textContent = '+$' + cashWon.toLocaleString() + ' · +' + enemy.reward.clout + ' CLOUT';
+    $('combat-result').className = 'eng-caption good';
     log('Smoked ' + enemy.name + ' -- won $' + cashWon.toLocaleString() + ' + ' + enemy.reward.clout + ' Clout', 'win');
     Quests.onFightWin(enemy.id);
     rollDrop(enemy.name); // fight wins roll the rarity ladder too (DOM-18)
@@ -309,8 +390,8 @@ function _endFight(enemyDead) {
     addClout(cloutLost, REASON.FIGHT_REWARD, { enemyId: enemy.id, outcome: 'loss' });
     // 0 Health = hospitalized, in the same transaction that resolves the fight.
     hospitalize();
-    $('combat-result').textContent = 'YOU CAUGHT AN L! Lost $' + cashLost.toLocaleString() + ' — HOSPITALIZED';
-    $('combat-result').style.color = 'var(--red)';
+    $('combat-result').textContent = '-$' + cashLost.toLocaleString() + ' · HOSPITALIZED';
+    $('combat-result').className = 'eng-caption bad';
     log('Got beat by ' + enemy.name + ' -- lost $' + cashLost.toLocaleString() + ', kept ' + cloutLost + ' Clout. Hospitalized.', 'loss');
     Sound.loss();
   }
@@ -321,9 +402,14 @@ function _endFight(enemyDead) {
 }
 
 function closeCombat() {
+  _simState('idle');
   combatEnemy = null;
   _fight = null;
   $('combat-overlay').classList.remove('open');
   // Landing in the Hospital is a consequence of losing — surface it.
   if (isHospitalized()) { showTab('hood'); renderHospital(); }
 }
+
+// This screen claims its tab (DOM-127). Threat is derived from live stats, so
+// the list is rebuilt on entry rather than cached.
+registerScreen('fight', renderEnemies);

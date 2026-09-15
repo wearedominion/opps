@@ -1,0 +1,264 @@
+/* ═══════════════════════════════════════════════════════════
+   S3 — OPPS LIST + ENGAGE MODAL (DOM-112)
+   Red lives here legitimately: this is combat.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   OPPS LIST + ENGAGE MODAL (DOM-112 — screens/03-opps.md,
+   OVERLAYS.md §Engage modal). Canonical v0.2 tokens only.
+   Red lives here legitimately: this is combat.
+   ═══════════════════════════════════════════════════════════ */
+.enemy-list { display: flex; flex-direction: column; gap: 12px; }
+
+.opp-card {
+  background: var(--card-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 14px;
+}
+.opp-top { display: flex; gap: 12px; align-items: stretch; }
+
+/* ── portrait, code label, pin ── */
+.opp-portrait {
+  position: relative;
+  flex: none;
+  width: 68px; height: 68px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  overflow: visible;          /* the pin straddles the corner */
+}
+.opp-portrait img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top center;
+  border-radius: var(--r-tile);
+  display: block;
+}
+.opp-scrim {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 22px;
+  background: var(--portrait-scrim);
+  border-radius: 0 0 var(--r-tile) var(--r-tile);
+  pointer-events: none;
+}
+.opp-code {
+  position: absolute; bottom: 4px; left: 5px;
+  font: 700 10px/1 var(--ui);
+  letter-spacing: 1px;
+  color: var(--text);
+  pointer-events: none;
+}
+.opp-pin {
+  position: absolute; top: -7px; left: -7px;
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-pill);
+  color: var(--gold);
+  cursor: pointer;
+  transition: border-color .16s;
+  z-index: 1;
+}
+.opp-pin:hover { border-color: var(--gold); }
+.opp-pin svg { width: 13px; height: 13px; display: block; }
+.opp-pin::after { content: ''; position: absolute; inset: -9px; border-radius: var(--r-pill); }
+
+/* ── identity ── */
+.opp-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.opp-name {
+  font: 15px/1.2 var(--display); letter-spacing: 1px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.opp-role {
+  font: 400 11px/1.3 var(--ui); color: var(--text-label);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── ENGAGE + reward capsule ── */
+.opp-actions {
+  flex: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px;
+}
+.opp-engage {
+  position: relative;
+  height: 29px; padding: 0 15px;
+  display: inline-flex; align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-danger);
+  border-radius: var(--r-pill);
+  color: var(--danger);
+  font: 12px/1 var(--display); letter-spacing: 1px;
+  cursor: pointer;
+  transition: background .16s;
+}
+.opp-engage:hover { background: rgba(224,82,63,0.12); }
+.opp-engage::after { content: ''; position: absolute; inset: -8px; border-radius: var(--r-pill); }
+/* Locked: full contrast, and the chip names the gate rather than refusing. */
+.opp-engage.locked {
+  background: var(--bg-disabled);
+  border-color: var(--border-disabled);
+  color: var(--text-disabled);
+  cursor: default;
+}
+.opp-engage.locked::after { content: none; }
+
+.opp-reward {
+  display: flex;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.opp-cash {
+  padding: 4px 10px;
+  background: var(--gold-chrome);
+  color: var(--ink);
+  font: 13px/1.1 var(--display);
+  white-space: nowrap;
+}
+
+/* ── gauges ── */
+.opp-gauges { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.opp-gauge { display: flex; align-items: center; gap: 8px; }
+.opp-gauge-k {
+  flex: none; width: 48px;
+  font: 500 10px/1 var(--ui); letter-spacing: 2px; color: var(--text-label);
+}
+.opp-hp {
+  flex: 1; height: 7px;
+  background: var(--track); border-radius: var(--r-pill); overflow: hidden;
+}
+.opp-hp-fill {
+  height: 100%; background: var(--danger);
+  border-radius: var(--r-pill); transition: width .4s;
+}
+.opp-threat { flex: 1; display: flex; gap: 3px; }
+/* Severity reads off POSITION, not just count: 1–2 grey, 3–5 chrome, 6–8 red. */
+.opp-seg {
+  flex: 1; height: 7px;
+  background: var(--track);
+  border-radius: var(--r-pill);
+  transition: background .4s;
+}
+.opp-seg.lo.on  { background: var(--text-mid); }
+.opp-seg.mid.on { background: var(--gold); }
+.opp-seg.hi.on  { background: var(--danger); }
+
+/* ═══ ENGAGE MODAL ═══ */
+.eng-box {
+  width: min(340px, calc(100vw - 36px));
+  padding: 16px;
+  background: var(--overlay-fill);
+  border: 1px solid var(--border-danger);
+  border-radius: var(--r-panel);
+  box-shadow: var(--modal-shadow);
+  transform: scale(0.94);
+  transition: transform .22s;
+}
+.overlay.open .eng-box { transform: scale(1); }
+
+.eng-target { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.eng-portrait {
+  flex: none; width: 54px; height: 54px;
+  border: 1px solid var(--border-danger);
+  border-radius: var(--r-icon);
+  background: var(--surface);
+  overflow: hidden;
+}
+.eng-portrait img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top center; display: block;
+}
+.eng-target-id { min-width: 0; }
+.eng-name {
+  font: 21px/1.1 var(--display); letter-spacing: 2px; color: var(--danger);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.eng-role {
+  margin-top: 3px;
+  font: 500 10px/1 var(--ui); letter-spacing: 2px;
+  color: var(--text-label); text-transform: uppercase;
+}
+
+/* sim window — 96px, scanline texture */
+.eng-sim {
+  position: relative;
+  height: 96px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-tile);
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px),
+    var(--surface-deep);
+  overflow: hidden;
+}
+.eng-idle, .eng-trace {
+  position: absolute; inset: 0;
+  transition: opacity .4s;
+}
+.eng-idle {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.eng-idle-k { font: 500 10px/1 var(--ui); letter-spacing: 2px; color: var(--text-label); }
+.eng-odds { font: 34px/1 var(--display); letter-spacing: 1px; color: var(--text); }
+.eng-odds.good { color: var(--success); }
+.eng-odds.even { color: var(--gold); }
+.eng-odds.bad  { color: var(--danger); }
+
+/* idle shows the odds; running and done show the trace */
+.eng-sim.is-idle .eng-trace { opacity: 0; }
+.eng-sim.is-running .eng-idle,
+.eng-sim.is-done .eng-idle { opacity: 0; pointer-events: none; }
+
+.eng-stamp {
+  position: absolute; inset: 0;
+  display: none; place-items: center;
+  background: rgba(10,9,8,0.55);
+  font: 56px/1 var(--display);
+}
+.eng-stamp.show { display: grid; }
+.eng-stamp.win  { color: var(--gold);   text-shadow: 0 0 26px rgba(232,201,138,0.55); }
+.eng-stamp.loss { color: var(--danger); text-shadow: 0 0 26px rgba(224,82,63,0.55); }
+
+.eng-caption {
+  position: absolute; left: 0; right: 0; bottom: 6px;
+  text-align: center;
+  font: 500 10px/1 var(--ui); letter-spacing: 1.5px;
+  color: var(--text-mid);
+  z-index: 1;
+}
+.eng-caption.good { color: var(--success); }
+.eng-caption.bad  { color: var(--danger); }
+
+.eng-foot { display: flex; gap: 9px; margin-top: 14px; }
+.eng-dip, .eng-hit {
+  padding: 12px 0;
+  border-radius: var(--r-pill);
+  font: 13px/1 var(--display); letter-spacing: 1px;
+  cursor: pointer;
+  transition: background .16s, border-color .16s;
+}
+.eng-dip {
+  flex: 1;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+.eng-dip:hover { border-color: var(--border-gold); }
+.eng-hit {
+  flex: 1.4;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-danger);
+  color: var(--danger);
+}
+.eng-hit:hover { background: rgba(224,82,63,0.12); }
+.eng-dip:disabled, .eng-hit:disabled {
+  background: var(--bg-disabled); border-color: var(--border-disabled);
+  color: var(--text-disabled); cursor: default;
+}
+.eng-close {
+  width: 100%; margin-top: 9px; padding: 12px 0;
+  background: var(--gold-chrome); color: var(--ink);
+  border: 0; border-radius: var(--r-pill);
+  font: 13px/1 var(--display); letter-spacing: 1px; cursor: pointer;
+}

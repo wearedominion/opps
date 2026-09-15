@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/00-base.css">
   <link rel="stylesheet" href="css/10-chrome.css">
   <link rel="stylesheet" href="css/20-legacy.css">
+  <link rel="stylesheet" href="css/25-opps-list.css">
   <link rel="stylesheet" href="css/30-plugs.css">
   <link rel="stylesheet" href="css/35-settings.css">
   <link rel="stylesheet" href="css/40-profile.css">
@@ -278,53 +279,49 @@
     </div>
   </div>
 
-  <!-- COMBAT OVERLAY -->
+  <!-- ENGAGE MODAL (DOM-112 — OVERLAYS.md §Engage modal)
+       Keeps the DOM-72 turn-based fight underneath: the sim window's three
+       states are idle (pre-fight odds) → running (the round-by-round trace)
+       → done (the W/L stamp). DIP is the existing RUN escape. -->
   <div class="overlay" id="combat-overlay">
-    <div class="combat-box">
-      <div class="combat-title">GETTIN ACTIVE</div>
+    <div class="eng-box">
 
-      <div class="vs-row">
-        <div class="fighter">
-          <div class="fighter-portrait-wrap ally"></div>
-          <div class="fighter-name" id="c-player">YOU</div>
-          <div class="hp-bar"><div class="hp-fill" id="c-player-hp" style="width:100%"></div></div>
+      <div class="eng-target">
+        <div class="eng-portrait">
+          <img id="c-enemy-portrait" src="" alt="" hidden>
         </div>
-        <div class="vs-text">VS</div>
-        <div class="fighter">
-          <div class="fighter-portrait-wrap opp">
-            <img id="c-enemy-portrait" src="" alt="" hidden>
-            <div class="fighter-icon" id="c-enemy-icon"></div>
-          </div>
-          <div class="fighter-name" id="c-enemy-name">OPP</div>
-          <div class="hp-bar"><div class="hp-fill enemy-hp" id="c-enemy-hp" style="width:100%"></div></div>
+        <div class="eng-target-id">
+          <div class="eng-name" id="c-enemy-name">OPP</div>
+          <div class="eng-role" id="c-enemy-role"></div>
         </div>
       </div>
-      <!-- The sparkline well (DOM-103): round-by-round HP traces per the
-           contract's selector table — chrome line = you, --red = opp. The
-           DOM-72 rebuild dropped it; restored, fed by the turn-based round
-           history. Lines are stroked from CSS tokens (.you / .opp).
-           Renderer: js/combat.js. -->
-      <div class="combat-log" id="combat-log">
-        <svg class="combat-spark" id="combat-spark" aria-hidden="true">
-          <line class="combat-spark-mid" id="spark-mid"></line>
-          <path class="opp" id="spark-opp"></path>
-          <path class="you" id="spark-you"></path>
-          <circle class="combat-spark-dot opp" id="spark-dot-opp" r="3"></circle>
-          <circle class="combat-spark-dot you" id="spark-dot-you" r="3"></circle>
-        </svg>
-        <div class="combat-spark-result" id="spark-result"></div>
-      </div>
-      <div id="combat-info-wrap">
-        <div class="combat-odds">
-          <span class="combat-odds-k">WIN ODDS</span>
-          <span id="c-odds"></span>
+
+      <!-- Sim window — 96px, scanline texture. -->
+      <div class="eng-sim" id="eng-sim">
+        <div class="eng-idle">
+          <div class="eng-idle-k">WIN PROBABILITY</div>
+          <div class="eng-odds" id="c-odds">—</div>
         </div>
-        <!-- Turn-based rounds (DOM-72): both sides deal damage each round. -->
-        <button class="attack-btn wide" id="hit-btn" onclick="hitEm()">HIT 'EM</button>
-        <button class="run-btn" id="run-btn" onclick="runAway()">RUN</button>
+        <!-- The fight trace (the DOM-103 sparkline well, restyled): chrome
+             line = you, --red = opp, one point per round. -->
+        <div class="eng-trace" id="combat-log">
+          <svg class="combat-spark" id="combat-spark" aria-hidden="true">
+            <line class="combat-spark-mid" id="spark-mid"></line>
+            <path class="opp" id="spark-opp"></path>
+            <path class="you" id="spark-you"></path>
+            <circle class="combat-spark-dot opp" id="spark-dot-opp" r="3"></circle>
+            <circle class="combat-spark-dot you" id="spark-dot-you" r="3"></circle>
+          </svg>
+        </div>
+        <div class="eng-stamp" id="spark-result"></div>
+        <div class="eng-caption" id="combat-result"></div>
       </div>
-      <div class="combat-result" id="combat-result"></div>
-      <button class="close-combat" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
+
+      <div class="eng-foot">
+        <button class="eng-dip" id="run-btn" onclick="runAway()">DIP</button>
+        <button class="eng-hit" id="hit-btn" onclick="hitEm()">HIT &#39;EM</button>
+      </div>
+      <button class="eng-close" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
     </div>
   </div>
   <!-- Clout log modal (DOM-115). OVERLAYS.md: bottom sheet, z 60, max-height
