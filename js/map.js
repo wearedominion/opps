@@ -14,11 +14,54 @@ const GameMap = (() => {
 
   // ── data ──────────────────────────────────────
 
+  // data/city.json is the city (DOM-123 extracted it; DOM-118 is what finally
+  // reads it). The seed, the five building tiers, the downtown falloff, the
+  // faction territory anchors, the labels and the pins all come from the file —
+  // only the street grid is still derived here, because it is generated from
+  // the seed rather than authored. Falls back to the built-ins if the fetch
+  // missed, which keeps a dead network from taking the map down.
+  function cityFile() {
+    return (typeof CITY !== 'undefined' && CITY) || null;
+  }
+
   function mapData() {
     if (_dataCache) return _dataCache;
-    const W = 1240, H = 2300;
-    let s = 20260611 >>> 0;
+    const city = cityFile();
+    const W = (city && city.W) || 1240, H = (city && city.H) || 2300;
+    let s = ((city && city.seed) || 20260611) >>> 0;
     const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+
+    const TIERS = (city && city.tiers) || [];
+    const DOWN = (city && city.downtown) || null;
+    const FACTIONS = (city && city.factions) || {};
+    const ANCHORS = (city && city.territory && city.territory.anchors) || [];
+
+    // Which tier a parcel is, biased towards the skyline downtown. The file
+    // gives the shape of that bias (radius / falloff / peak) but not the
+    // formula, so this is the reading: proximity raises the floor of the roll,
+    // and `peak` says how far up it can push.
+    function tierFor(cx, cy) {
+      if (!TIERS.length) return null;
+      let bias = 0;
+      if (DOWN) {
+        const d = Math.hypot(cx - DOWN.x, cy - DOWN.y) / DOWN.radius;
+        const near = Math.pow(Math.max(0, 1 - d), DOWN.falloff || 1);
+        bias = near * ((DOWN.peak || 4) / TIERS.length);
+      }
+      const roll = Math.min(0.999, rnd() * (1 - bias) + bias);
+      for (const t of TIERS) if (roll < t.frac) return t;
+      return TIERS[TIERS.length - 1];
+    }
+
+    // Territory is the anchors' business; a parcel belongs to the first anchor
+    // whose radius covers it. G.turf overrides that for anything the player has
+    // taken, which is why claiming redraws rather than regenerating.
+    function ownerFor(cx, cy) {
+      for (const a of ANCHORS) {
+        if (Math.hypot(cx - a.x, cy - a.y) <= a.radius) return { owner: a.owner, turf: a.turf };
+      }
+      return { owner: 'neutral', turf: null };
+    }
     // Chrome Money map palette (CLAUDE.md, structural change #5).
     // Values are literals because this SVG is built in JS — CSS custom
     // properties cannot reach it.
@@ -54,10 +97,22 @@ const GameMap = (() => {
             if (r1 < 0.22) continue;
             const pw = Math.max(14, gw - 6 - rnd() * gw * 0.32);
             const ph = Math.max(14, gh - 6 - rnd() * gh * 0.32);
+            const bx = x0 + 4 + a * gw + rnd() * Math.max(0, gw - pw - 4);
+            const by = y0 + 4 + b * gh + rnd() * Math.max(0, gh - ph - 4);
+            const tier = tierFor(bx + pw / 2, by + ph / 2);
+            const own = ownerFor(bx + pw / 2, by + ph / 2);
             bldgs.push({
-              x: x0 + 4 + a * gw + rnd() * Math.max(0, gw - pw - 4),
-              y: y0 + 4 + b * gh + rnd() * Math.max(0, gh - ph - 4),
-              w: pw, h: ph, yl: r1 > 0.91
+              // Stable id from the grid position, not an array index: it has to
+              // survive a regeneration so a claim in G.turf still points at the
+              // same parcel next boot.
+              id: 'p' + i + '-' + j + '-' + a + '-' + b,
+              x: bx, y: by, w: pw, h: ph, yl: r1 > 0.91,
+              tier: tier ? tier.id : 1,
+              tierName: tier ? tier.name : 'Parcel',
+              fill: tier ? tier.fill2d : null,
+              edge: tier ? tier.edge2d : null,
+              owner: own.owner, turf: own.turf,
+              objective: r1 > 0.985,
             });
           }
         }
@@ -109,8 +164,30 @@ const GameMap = (() => {
       { x: 860,  y: 2120, t: 'Airport',     size: 24 },
       { x: 300,  y: 2020, t: 'Southside',   size: 24 }
     ];
-    _dataCache = { W, H, C, blocks, bldgs, parks, vLines, hLines, cross, avenues, river, bridges, pins, labels };
+    _dataCache = {
+      W, H, C, blocks, bldgs, vLines, hLines, cross,
+      parks:    (city && city.parks)    || parks,
+      avenues:  (city && city.avenues)  || avenues,
+      river:    (city && city.river)    || river,
+      bridges:  (city && city.bridges)  || bridges,
+      pins:     (city && city.pins)     || pins,
+      labels:   (city && city.labels)   || labels,
+      factions: FACTIONS,
+    };
     return _dataCache;
+  }
+
+  // A parcel's owner, with the player's claims on top of the anchors. G.turf is
+  // the persistent half — the anchors are the map's starting state.
+  function bldgOwner(b) {
+    const claimed = (typeof G !== 'undefined' && G && G.turf) ? G.turf[b.id] : null;
+    return claimed ? claimed.owner : b.owner;
+  }
+
+  function bldgById(id) {
+    const d = mapData();
+    for (const b of d.bldgs) if (b.id === id) return b;
+    return null;
   }
 
   // ── SVG builder ───────────────────────────────
@@ -140,10 +217,27 @@ const GameMap = (() => {
     d.blocks.forEach(b => { out += el('rect', { x: b.x, y: b.y, width: b.w, height: b.h, rx: 2.5, fill: C.block, stroke: C.blockEdge, 'stroke-width': 1 }); });
     out += '</g>';
 
-    // Buildings
-    out += '<g>';
-    d.bldgs.forEach(b => { out += el('rect', { x: b.x, y: b.y, width: b.w, height: b.h, rx: 1.5, fill: b.yl ? C.bldgY : C.bldg, stroke: b.yl ? C.bldgYEdge : C.bldgEdge, 'stroke-width': 1 }); });
+    // Buildings. Tier decides the fill; a faction that owns the parcel gets a
+    // 2.2px stroke in its colour instead of the 1px tier edge, so territory
+    // reads at a glance without a separate overlay.
+    out += '<g id="map-bldgs">';
+    d.bldgs.forEach(b => {
+      const own = bldgOwner(b);
+      const fac = d.factions && d.factions[own];
+      const owned = own !== 'neutral' && fac;
+      out += el('rect', {
+        x: b.x, y: b.y, width: b.w, height: b.h, rx: 1.5,
+        fill: b.fill || (b.yl ? C.bldgY : C.bldg),
+        stroke: owned ? fac.color : (b.edge || (b.yl ? C.bldgYEdge : C.bldgEdge)),
+        'stroke-width': owned ? 2.2 : 1,
+        'data-bid': b.id,
+      });
+    });
     out += '</g>';
+
+    // Selection highlight lives in its own group so picking a parcel repaints
+    // two rects rather than the whole city.
+    out += '<g id="map-sel"></g>';
 
     // Parks
     out += '<g>';
@@ -285,9 +379,16 @@ const GameMap = (() => {
 
   // ── pointer events (pan + pinch) ─────────────
 
+  // A tap selects, a drag pans. Tracked by distance travelled rather than by
+  // a click handler, because the SVG is inside the element that captures the
+  // pointer for panning — a plain click fires after every drag.
+  let _downAt = null;
+  const TAP_SLOP = 6;
+
   function onDown(e) {
     e.preventDefault();
     _ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    _downAt = _ptrs.size === 1 ? { x: e.clientX, y: e.clientY, id: e.pointerId, moved: 0 } : null;
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
     if (_el) _el.style.cursor = 'grabbing';
   }
@@ -308,14 +409,22 @@ const GameMap = (() => {
       }
     } else {
       const v = view();
-      v.tx += e.clientX - p.x;
-      v.ty += e.clientY - p.y;
+      const dx = e.clientX - p.x, dy = e.clientY - p.y;
+      if (_downAt && _downAt.id === e.pointerId) _downAt.moved += Math.abs(dx) + Math.abs(dy);
+      v.tx += dx;
+      v.ty += dy;
       _ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       apply();
     }
   }
 
   function onUp(e) {
+    if (_downAt && _downAt.id === e.pointerId && _downAt.moved <= TAP_SLOP) {
+      const hit = document.elementFromPoint(e.clientX, e.clientY);
+      const bid = hit && hit.getAttribute && hit.getAttribute('data-bid');
+      if (bid) selectParcel(bid); else if (hit && hit.closest && hit.closest('#map-container')) deselectParcel();
+    }
+    _downAt = null;
     _ptrs.delete(e.pointerId);
     if (_el && _ptrs.size === 0) _el.style.cursor = 'grab';
   }
@@ -365,6 +474,190 @@ const GameMap = (() => {
     requestAnimationFrame(apply);
   }
 
+  // ── MODES: 2d · 3d · overview ────────────────
+  // Mutually exclusive and session-only. Each keeps its own pan/zoom, so
+  // switching away and back does not lose where you were looking.
+
+  let _mode = '2d';
+  const HINTS = {
+    '2d':       'DRAG TO PAN · SCROLL / PINCH TO ZOOM · ⌖ BASE · ⊡ FULL CITY',
+    '3d':       'DRAG TO ORBIT · RIGHT-DRAG / TWO-FINGER TO PAN · SCROLL TO ZOOM · DOUBLE-TAP TO RESET',
+    'overview': 'DRAG TO PAN · PINCH TO ZOOM',
+  };
+
+  function setMode(mode) {
+    if (mode !== '2d' && mode !== '3d' && mode !== 'overview') return;
+    _mode = mode;
+    const outer = document.querySelector('.map-outer');
+    if (outer) outer.setAttribute('data-mode', mode);
+    if (mode === 'overview') ovBuild();
+    if (mode === '3d' && typeof toggleMap3D === 'function' && !_3dOn) { _3dOn = true; toggleMap3D(); }
+    if (mode !== '3d' && _3dOn && typeof toggleMap3D === 'function') { _3dOn = false; toggleMap3D(); }
+    const hint = document.querySelector('.map-hint');
+    if (hint) hint.textContent = HINTS[mode];
+    renderSelCard();
+    syncModeButtons();
+  }
+  let _3dOn = false;
+
+  function syncModeButtons() {
+    document.querySelectorAll('[data-mapmode]').forEach(b => {
+      b.classList.toggle('is-active', b.getAttribute('data-mapmode') === _mode);
+    });
+    const ov = document.getElementById('map-overview-btn');
+    if (ov) ov.classList.toggle('is-active', _mode === 'overview');
+  }
+
+  // ── OVERVIEW ─────────────────────────────────
+  // The illustrated raster. Its own pan/zoom, clamped so an edge of the image
+  // can never come into view — the clamp is recomputed from the cover-fit size
+  // on every apply, because that size depends on the container.
+
+  const OV_MIN = 1, OV_MAX = 1.8;
+  let _ov = { s: 1, tx: 0, ty: 0 };
+  let _ovPtrs = new Map();
+  let _ovBuilt = false;
+
+  function ovEls() {
+    return { wrap: document.getElementById('map-overview'), img: document.getElementById('map-overview-img') };
+  }
+
+  function ovCoverSize(wrap) {
+    const iw = 1200, ih = 2150;
+    const scale = Math.max(wrap.clientWidth / iw, wrap.clientHeight / ih);
+    return { w: iw * scale, h: ih * scale };
+  }
+
+  function ovApply() {
+    const { wrap, img } = ovEls();
+    if (!wrap || !img) return;
+    const cover = ovCoverSize(wrap);
+    _ov.s = Math.max(OV_MIN, Math.min(OV_MAX, _ov.s));
+    const maxX = Math.max(0, (cover.w * _ov.s - wrap.clientWidth) / 2);
+    const maxY = Math.max(0, (cover.h * _ov.s - wrap.clientHeight) / 2);
+    _ov.tx = Math.max(-maxX, Math.min(maxX, _ov.tx));
+    _ov.ty = Math.max(-maxY, Math.min(maxY, _ov.ty));
+    img.style.transform = 'translate(' + _ov.tx + 'px,' + _ov.ty + 'px) scale(' + _ov.s + ')';
+  }
+
+  function ovZoom(f) { _ov.s *= f; ovApply(); }
+  function ovReset() { _ov = { s: 1, tx: 0, ty: 0 }; ovApply(); }
+
+  function ovBuild() {
+    const { wrap } = ovEls();
+    if (!wrap || _ovBuilt) { ovApply(); return; }
+    _ovBuilt = true;
+    wrap.addEventListener('pointerdown', e => {
+      _ovPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    wrap.addEventListener('pointermove', e => {
+      const p = _ovPtrs.get(e.pointerId);
+      if (!p) return;
+      if (_ovPtrs.size >= 2) {
+        const ids = [..._ovPtrs.keys()];
+        const a0 = _ovPtrs.get(ids[0]), b0 = _ovPtrs.get(ids[1]);
+        const d0 = Math.hypot(a0.x - b0.x, a0.y - b0.y);
+        _ovPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        const a1 = _ovPtrs.get(ids[0]), b1 = _ovPtrs.get(ids[1]);
+        const d1 = Math.hypot(a1.x - b1.x, a1.y - b1.y);
+        if (d0 > 0) { _ov.s *= d1 / d0; ovApply(); }
+        return;
+      }
+      _ov.tx += e.clientX - p.x;
+      _ov.ty += e.clientY - p.y;
+      _ovPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      ovApply();
+    });
+    const end = e => { _ovPtrs.delete(e.pointerId); };
+    wrap.addEventListener('pointerup', end);
+    wrap.addEventListener('pointercancel', end);
+    wrap.addEventListener('wheel', e => {
+      e.preventDefault();
+      ovZoom(e.deltaY < 0 ? 1.12 : 1 / 1.12);
+    }, { passive: false });
+    ovApply();
+  }
+
+  // ── SELECTION + CLAIM ────────────────────────
+
+  let _sel = null;   // selected parcel id, session-only
+
+  function drawSelection() {
+    const g = document.getElementById('map-sel');
+    if (!g) return;
+    const b = _sel ? bldgById(_sel) : null;
+    if (!b) { g.innerHTML = ''; renderSelCard(); return; }
+    // Two rects, per 01-hood.md: an outer blinking halo and a tight inner edge.
+    g.innerHTML =
+      '<rect x="' + (b.x - 6) + '" y="' + (b.y - 6) + '" width="' + (b.w + 12) + '" height="' + (b.h + 12) +
+        '" rx="4" fill="none" stroke="#e8c98a" stroke-width="1.6" opacity="0.55" class="map-sel-blink"/>' +
+      '<rect x="' + (b.x - 2.5) + '" y="' + (b.y - 2.5) + '" width="' + (b.w + 5) + '" height="' + (b.h + 5) +
+        '" rx="3" fill="none" stroke="#f3e0b4" stroke-width="2.6"/>';
+    renderSelCard();
+  }
+
+  function selectParcel(id) { _sel = id; drawSelection(); }
+  function deselectParcel() { _sel = null; drawSelection(); }
+
+  function renderSelCard() {
+    const host = document.getElementById('map-sel-card');
+    if (!host) return;
+    const b = _sel ? bldgById(_sel) : null;
+    if (!b || _mode === 'overview') { host.innerHTML = ''; host.hidden = true; return; }
+    host.hidden = false;
+    const d = mapData();
+    const own = bldgOwner(b);
+    const fac = (d.factions && d.factions[own]) || { name: 'Unclaimed', color: '#5b6571' };
+    const mine = own === 'player';
+    const name = b.objective ? 'Objective Site' : b.tierName;
+    const claimed = (typeof G !== 'undefined' && G && G.turf) ? G.turf[b.id] : null;
+    const turf = (claimed && claimed.turf) || b.turf;
+    host.innerHTML =
+      '<div class="map-card-row">' +
+        '<span class="map-card-swatch" style="background:' + fac.color + '"></span>' +
+        '<span class="map-card-body">' +
+          '<span class="map-card-k">PARCEL ' + b.id.toUpperCase() + (turf ? ' · ' + turf : '') + '</span>' +
+          '<span class="map-card-name">' + name + '</span>' +
+          '<span class="map-card-own">' +
+            '<span class="map-card-dot" style="background:' + fac.color + '"></span>' +
+            '<span style="color:' + (own === 'neutral' ? '#8e8e9a' : fac.color) + '">' +
+              (own === 'neutral' ? 'UNCLAIMED' : fac.name.toUpperCase()) + '</span>' +
+          '</span>' +
+        '</span>' +
+        '<button class="map-card-x" onclick="GameMap.deselect()" aria-label="Deselect">✕</button>' +
+      '</div>' +
+      (mine
+        ? '<div class="map-card-owned">◆ CONTROLLED BY YOUR CREW</div>'
+        : '<button class="map-card-claim sheen" onclick="GameMap.claim()">CLAIM TURF</button>');
+  }
+
+  // Claiming pays from the territory table DOM-124 landed — by building tier,
+  // and more for an objective site. The award engine is the only thing that
+  // knows what a tier is worth, so nothing is priced here.
+  function claimSelected() {
+    const b = _sel ? bldgById(_sel) : null;
+    if (!b) return;
+    if (bldgOwner(b) === 'player') { if (typeof toast === 'function') toast('Already yours.', true); return; }
+    if (!G.turf) G.turf = {};
+    G.turf[b.id] = { owner: 'player', turf: b.turf || 'YOUR BLOCK', at: Date.now() };
+
+    if (typeof awardXp === 'function' && typeof XpAwards !== 'undefined') {
+      const weight = b.objective ? XpAwards.territoryObjective() : XpAwards.territoryBuilding(b.tier);
+      awardXp(weight, 'TURF CLAIMED', {
+        reason: (typeof REASON !== 'undefined' ? REASON.QUEST_REWARD : 'quest_reward'),
+        ref: { parcel: b.id, tier: b.tier },
+        toast: true,
+      });
+    }
+    if (typeof GameState !== 'undefined') GameState.save();
+    // Repaint the parcel's stroke without regenerating the city.
+    const rect = document.querySelector('[data-bid="' + b.id + '"]');
+    const fac = mapData().factions && mapData().factions.player;
+    if (rect && fac) { rect.setAttribute('stroke', fac.color); rect.setAttribute('stroke-width', '2.2'); }
+    drawSelection();
+  }
+
   function zoomIn()  { zoomBy(1.5, _el ? _el.clientWidth / 2 : 180, _el ? _el.clientHeight / 2 : 300); }
   function zoomOut() { zoomBy(1 / 1.5, _el ? _el.clientWidth / 2 : 180, _el ? _el.clientHeight / 2 : 300); }
   function reset() {
@@ -385,7 +678,12 @@ const GameMap = (() => {
   // The base sits at the bounds centre from city.json.
   function centerBase() { centerOn(381, 866, 1); }
 
-  return { init, zoomIn, zoomOut, reset, centerBase, centerOn, data: mapData };
+  return {
+    init, zoomIn, zoomOut, reset, centerBase, centerOn, data: mapData,
+    select: selectParcel, deselect: deselectParcel, claim: claimSelected,
+    ovZoom: ovZoom, ovReset: ovReset, ovApply: ovApply,
+    setMode: setMode, mode: () => _mode, ownerOf: bldgOwner, byId: bldgById,
+  };
 })();
 
 // This screen claims its tab (DOM-127). The Hood is idempotent: init() no-ops once the city is built.

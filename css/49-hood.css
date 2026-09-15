@@ -1,0 +1,143 @@
+/* ── THE HOOD (DOM-118) ──
+   S9. The one screen with no section title and no body padding — it fills the
+   scroll body. Modes are mutually exclusive and driven by data-mode on
+   .map-outer, so which controls exist is CSS, not markup rebuilding. */
+
+.map-outer { position: relative; overflow: hidden; height: 100%; background: #595c63; }
+
+/* A radial vignette over every mode. Never intercepts a gesture. */
+.map-vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  background: radial-gradient(130% 100% at 50% 42%, transparent 55%, rgba(0,0,0,.5) 100%);
+}
+
+/* ── mode visibility ── */
+.map-outer[data-mode="overview"] #map-container { display: none; }
+.map-overview { display: none; }
+.map-outer[data-mode="overview"] .map-overview {
+  display: block; position: absolute; inset: 0; overflow: hidden;
+  background: #0b0b0c; touch-action: none; cursor: grab;
+}
+.map-overview img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  transform-origin: center; will-change: transform; pointer-events: none;
+  user-select: none; -webkit-user-drag: none;
+}
+.map-outer[data-mode="overview"] .map-2d-stack,
+.map-outer[data-mode="3d"] .map-2d-stack { display: none; }
+
+/* ── control stacks ── */
+.map-ctl-left, .map-ctl-right {
+  position: absolute; top: 12px; z-index: 5;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.map-ctl-left { left: 12px; align-items: flex-start; }
+.map-ctl-right { right: 12px; align-items: flex-end; }
+
+.map-overview-btn {
+  font-family: var(--display); font-size: 12px; letter-spacing: 1px;
+  color: var(--text); background: rgba(13,13,17,.9);
+  border: 1px solid var(--border-strong); border-radius: var(--r-pill);
+  padding: 8px 14px; cursor: pointer; transition: border-color .16s;
+}
+.map-overview-btn:hover { border-color: var(--border-gold); }
+.map-overview-btn.is-active {
+  color: var(--ink); background: var(--gold-chrome); border-color: transparent;
+}
+
+.map-seg {
+  display: flex; overflow: hidden;
+  border: 1px solid var(--border-strong); border-radius: var(--r-pill);
+  background: rgba(13,13,17,.9);
+}
+.map-seg button {
+  font-family: var(--display); font-size: 12px; letter-spacing: 1px;
+  color: var(--text-mid); background: transparent; border: 0;
+  padding: 8px 14px; cursor: pointer; transition: color .16s;
+}
+.map-seg button.is-active { color: var(--ink); background: var(--gold-chrome); }
+
+/* Each stack owns its own `display`, in one rule. Declaring the shared layout
+   after a `.map-ov-stack { display: none }` put the Overview zoom buttons back
+   on screen in 2D — both single-class, later wins. */
+.map-2d-stack { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.map-ov-stack { display: none; flex-direction: column; gap: 6px; align-items: flex-start; }
+.map-outer[data-mode="overview"] .map-ov-stack { display: flex; }
+.map-2d-stack button, .map-ov-stack button {
+  width: 36px; height: 36px; border-radius: var(--r-icon);
+  background: rgba(13,13,17,.9); border: 1px solid var(--border-strong);
+  color: var(--text); font-size: 17px; line-height: 1; padding: 0;
+  cursor: pointer; transition: border-color .16s, color .16s;
+}
+.map-2d-stack button:hover, .map-ov-stack button:hover { border-color: var(--border-gold); color: var(--gold); }
+#map-zoom-chip {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  color: var(--text-mid); background: rgba(13,13,17,.9);
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  padding: 4px 9px;
+}
+
+/* ── selection ── */
+.map-sel-blink { animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 0%, 100% { opacity: .55; } 50% { opacity: .15; } }
+
+.map-sel-card {
+  position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 6;
+  border: 1px solid var(--border-gold); border-radius: 20px;
+  background: var(--overlay-fill); box-shadow: var(--modal-shadow);
+  overflow: hidden;
+}
+.map-outer[data-mode="overview"] .map-sel-card,
+.map-outer[data-mode="3d"] .map-sel-card { display: none; }
+.map-card-row { display: flex; align-items: center; gap: 12px; padding: 15px; }
+.map-card-swatch {
+  flex: none; width: 36px; height: 36px; border-radius: var(--r-icon);
+  border: 1px solid rgba(255,255,255,.18);
+}
+.map-card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.map-card-k {
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  color: var(--text-label);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.map-card-name {
+  margin-top: 4px;
+  font-family: var(--display); font-size: 20px; letter-spacing: 2px; color: var(--text);
+  line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.map-card-own { margin-top: 6px; display: flex; align-items: center; gap: 7px; }
+.map-card-own span:last-child {
+  font-family: var(--ui); font-weight: 700; font-size: 11px; letter-spacing: .5px;
+}
+.map-card-dot { flex: none; width: 7px; height: 7px; border-radius: var(--r-pill); }
+.map-card-x {
+  flex: none; width: 28px; height: 28px; border-radius: var(--r-pill);
+  background: var(--surface-raised); border: 1px solid var(--border-strong);
+  color: var(--text-mid); font-size: 12px; line-height: 1; padding: 0; cursor: pointer;
+  transition: border-color .16s, color .16s;
+}
+.map-card-x:hover { border-color: var(--border-gold); color: var(--gold); }
+.map-card-claim {
+  display: block; width: 100%;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--ink); background: var(--gold-chrome);
+  border: 0; border-radius: 0; padding: 13px; cursor: pointer;
+  transition: filter .16s;
+}
+.map-card-claim:hover { filter: brightness(1.08); }
+.map-card-owned {
+  border-top: 1px solid var(--track); padding: 12px 15px; text-align: center;
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  color: var(--success);
+}
+
+/* ── hint ── */
+.map-hint {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 4;
+  pointer-events: none; text-align: center;
+  padding: 30px 16px 12px;
+  background: linear-gradient(0deg, rgba(8,8,10,.7), transparent);
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 1px;
+  color: var(--text-mid);
+}
