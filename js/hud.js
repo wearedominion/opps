@@ -2,13 +2,6 @@
 //  HUD
 // ─────────────────────────────────────────────
 
-// What a collect is worth RIGHT NOW — accrued since the last collect, clamped
-// by the level-gated offline cap (DOM-74). Every display of "income ready"
-// (HUD, stats, notifications) reads this one number.
-function collectIncome() {
-  return Math.floor(spotsAccruedTotal(Date.now()));
-}
-
 function updateHUD() {
   const set = (id, val) => { const el = $(id); if (el) el.textContent = val; };
   const bar = (id, pct) => { const el = $(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
@@ -45,5 +38,4 @@ function updateHUD() {
   set('health-label', G.health.current + ' / ' + G.health.max);
   bar('health-bar', (G.health.current / G.health.max) * 100);
 
-  set('collect-income', '$' + collectIncome());
 }

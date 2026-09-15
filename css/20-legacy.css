@@ -1,71 +1,13 @@
 /* ═══════════════════════════════════════════════════════════
    v0.1 SCREENS AWAITING REBUILD
-   Job grid, Hood, Store, Properties, feed, overlays, combat modal, threat,
-   Stats, level-up banner, toast, IAP, Crew, scrollbar, Map and enemy cards —
-   carried over from v0.1 unchanged. As each screen is rebuilt under DOM-107
-   its rules move out to css/screens/<name>.css and shrink this file.
+   Fight/Hood, Store, feed, overlays, combat modal, threat, Stats, level-up
+   banner, toast, IAP, Crew, scrollbar, Map and enemy cards — carried over from
+   v0.1 unchanged. As each screen is rebuilt under DOM-107 its rules move out to
+   css/screens/<name>.css and shrink this file. The job grid and the Properties
+   grid left with the ACTIVITIES and SPOTS screens (DOM-142).
 
    Linked from index.html in this order; the cascade depends on it.
    ═══════════════════════════════════════════════════════════ */
-/* ── JOB GRID ──
-   Single-column rows, action anchored right and vertically centred. */
-.job-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-list);
-}
-.job-card {
-  background: var(--panel-fill);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 11px 13px;
-  cursor: pointer;
-  transition: border-color .16s;
-  position: relative;
-}
-.job-card:hover { border-color: var(--border-ctrl); }
-/* locked jobs render at full contrast — the action names the gate */
-.job-card.locked { cursor: not-allowed; }
-.job-card.locked:hover { border-color: var(--border); }
-.job-name {
-  font-family: var(--display); font-size: 15px; letter-spacing: 1px;
-  color: var(--text); margin-bottom: 6px;
-}
-.job-meta { display: flex; gap: var(--gap-section); font-size: 11px; color: var(--faint); margin-bottom: 8px; }
-.job-meta span { display: flex; align-items: center; gap: 4px; }
-.job-meta .val { color: var(--text); font-weight: 500; }
-.job-pay { color: var(--chrome); font-size: 13px; font-weight: 500; }
-.job-progress-wrap { margin-top: 8px; }
-.job-progress-label {
-  display: flex; justify-content: space-between;
-  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--faint); margin-bottom: 4px;
-}
-.job-bar { height: 4px; background: var(--track); border-radius: var(--r-pill); overflow: hidden; }
-.job-bar-fill { height: 100%; background: var(--energy-fill); border-radius: var(--r-pill); transition: width .4s; }
-.do-job-btn {
-  margin-top: 10px;
-  float: right;
-  background: var(--chrome-fill);
-  border: none;
-  color: var(--chrome-ink);
-  font-family: var(--display);
-  font-size: 13px;
-  letter-spacing: 1px;
-  padding: 10px 20px;
-  border-radius: var(--r-pill);
-  cursor: pointer;
-  transition: filter .16s;
-}
-.do-job-btn:hover { filter: brightness(1.06); }
-.do-job-btn:disabled {
-  background: var(--chip-locked-bg);
-  border: 1px solid var(--chip-locked-border);
-  color: var(--disabled);
-  cursor: not-allowed;
-  filter: none;
-}
-
 /* ── FIGHT / HOOD ── */
 .enemy-list { display: flex; flex-direction: column; gap: var(--gap-list); }
 .enemy-card {
@@ -114,46 +56,6 @@
   white-space: nowrap;
 }
 .attack-btn:hover { filter: brightness(1.15); }
-
-/* ── PROPERTIES ── */
-.prop-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--gap-list);
-}
-.prop-card {
-  background: var(--panel-fill);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-}
-.prop-name { font-family: var(--display); font-size: 14px; letter-spacing: 1px; color: var(--text); }
-.prop-income { color: var(--green); font-size: 12px; margin: 4px 0 6px; font-family: var(--ui); font-weight: 500; }
-.prop-owned { color: var(--chrome); font-size: 12px; margin-bottom: 10px; }
-.prop-btn {
-  width: 100%;
-  margin-top: auto;
-  background: var(--control);
-  border: 1px solid var(--border-ctrl);
-  color: var(--text);
-  font-family: var(--display);
-  font-size: 12px;
-  letter-spacing: 1px;
-  padding: 10px;
-  border-radius: var(--r-pill);
-  cursor: pointer;
-  transition: filter .16s;
-}
-.prop-btn:hover { border-color: var(--border-gold); }
-.prop-btn:disabled {
-  background: var(--chip-locked-bg);
-  border: 1px solid var(--chip-locked-border);
-  color: var(--disabled);
-  cursor: not-allowed;
-  filter: none;
-}
 
 /* ── FEED ──
    Two lines, no panel and no border. Newest at --muted with a 4px dot
@@ -303,7 +205,9 @@
   cursor: not-allowed;
 }
 
-/* THE HOSPITAL (DOM-72) — the recovery card at the top of the Hood tab. */
+/* THE HOSPITAL (DOM-72/DOM-76). No longer a card on a screen: it is app chrome
+   above every tab (DOM-142), so the lockout is visible wherever the player is.
+   Placement lives with the shell in css/10-chrome.css; these are its internals. */
 .hospital-body {
   display: flex;
   align-items: center;

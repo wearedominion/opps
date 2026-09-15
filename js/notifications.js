@@ -23,7 +23,6 @@ const Notify = {
   scheduleAll() {
     if (this._canNotify()) {
       this.reEngage();
-      this.incomeReady();
       this.movesFull();
     } else if (typeof Auth !== 'undefined' && Auth.canPrompt()) {
       this._clearStale();
@@ -60,27 +59,6 @@ const Notify = {
       });
     } catch (e) {
       console.warn('Notify.movesFull failed:', e);
-    }
-  },
-
-  // Called after buying a property or on boot (if player has spots).
-  // Reminds player to collect income after 24 hours.
-  async incomeReady() {
-    if (!this._canNotify()) return;
-    const income = collectIncome();
-    if (income === 0) return;
-    try {
-      await JestSDK.notifications.unscheduleNotification({ identifier: 'income_ready' });
-      await JestSDK.notifications.scheduleNotification({
-        identifier: 'income_ready',
-        title: 'Your spots are producing',
-        body: `$${income.toLocaleString()} sitting in your spots. Don't leave it on the table.`,
-        ctaText: 'Collect Now',
-        scheduledInDays: 1,
-        priority: 'low',
-      });
-    } catch (e) {
-      console.warn('Notify.incomeReady failed:', e);
     }
   },
 

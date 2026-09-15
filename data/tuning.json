@@ -73,10 +73,6 @@
     "healCost": { "type": "geometric", "base": 420, "ratio": 1.1 }
   },
 
-  "spots": {
-    "upgradeEnabled": false
-  },
-
   "gear": {
     "upgradeEnabled": true,
     "maxUpgradeLevel": null,
@@ -92,13 +88,6 @@
     "slotRotation": ["weapon", "armor", "vehicle"],
     "maxBonusSlotsPerType": 3,
     "cloutPerRecruit": 250
-  },
-
-  "hoodActions": {
-    "restMovesCost": 1,
-    "restHealAmount": 25,
-    "launderMovesCost": 2,
-    "launderRate": 0
   },
 
   "monetization": {

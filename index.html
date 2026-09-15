@@ -83,57 +83,30 @@
   <main>
 
     <!-- Screen label — a caption, not a title -->
-    <div class="section-label"><h3 id="section-title">ACTIVITIES</h3><div class="rule"></div></div>
+    <div class="section-label"><h3 id="section-title"></h3><div class="rule"></div></div>
 
     <!-- FEED -->
     <div id="feed">
       <div class="feed-line info">» Welcome to OPPS. Build your empire.</div>
     </div>
 
-    <!-- HOOD TAB -->
-    <div class="tab active" id="tab-hood">
-      <!-- HOSPITAL (DOM-72) — hidden while healthy; the defeat flow lands here. -->
-      <div class="card hospital-card" id="hospital-card" hidden>
-        <div class="card-title">THE HOSPITAL</div>
-        <div class="hospital-body">
-          <div class="hospital-status">You got beat down. Discharged in
-            <span class="hospital-timer" id="hospital-timer">0:00</span></div>
-          <button class="hospital-heal-btn" id="hospital-heal-btn" onclick="hospitalHealNow()">HEAL NOW</button>
-          <button class="hospital-iap-btn" id="hospital-iap-btn" hidden>SKIP THE WAIT</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">HOOD ACTIVITIES</div>
-        <div class="job-grid">
-          <div class="job-card" onclick="doActivity('collect')">
-            <div class="job-name">Collect From Spots</div>
-            <div class="job-meta">
-              <span>TAKE <span class="val" id="collect-income">$0</span></span>
-              <span>MOVES <span class="val">0</span></span>
-            </div>
-            <div class="do-job-btn">COLLECT</div>
-          </div>
-          <div class="job-card" onclick="doActivity('rest')">
-            <div class="job-name">Rest Up (Heal)</div>
-            <div class="job-meta">
-              <span>HEAL <span class="val">+25 HP</span></span>
-              <span>MOVES <span class="val">1</span></span>
-            </div>
-            <div class="do-job-btn secondary">REST</div>
-          </div>
-          <div class="job-card" onclick="doActivity('launder')">
-            <div class="job-name">Launder Money</div>
-            <div class="job-meta">
-              <span class="val">SHUT DOWN</span>
-            </div>
-            <div class="do-job-btn secondary">LAUNDER</div>
-          </div>
-        </div>
+    <!-- HOSPITAL (DOM-72/DOM-76) — app chrome, not screen content. It used to
+       sit on the ACTIVITIES screen, which is gone; being outside the tabs is
+       also truer to it, since the lockout follows you across every screen
+       rather than waiting on one. Hidden while healthy, so a well player
+       never sees it. -->
+    <div class="card hospital-card" id="hospital-card" hidden>
+      <div class="card-title">THE HOSPITAL</div>
+      <div class="hospital-body">
+        <div class="hospital-status">You got beat down. Discharged in
+          <span class="hospital-timer" id="hospital-timer">0:00</span></div>
+        <button class="hospital-heal-btn" id="hospital-heal-btn" onclick="hospitalHealNow()">HEAL NOW</button>
+        <button class="hospital-iap-btn" id="hospital-iap-btn" hidden>SKIP THE WAIT</button>
       </div>
     </div>
 
     <!-- MAP TAB -->
-    <div class="tab" id="tab-map">
+    <div class="tab active" id="tab-map">
       <!-- THE HOOD (S9, DOM-118). The one screen with no section title and no
            body padding: it fills the scroll body. Three mutually exclusive
            modes hang off data-mode on .map-outer. -->
@@ -197,14 +170,6 @@
 
     <!-- STORE TAB -->
     <div class="tab" id="tab-store"></div>
-
-    <!-- PROPS TAB -->
-    <div class="tab" id="tab-props">
-      <div class="card">
-        <div class="card-title">SPOTS — PASSIVE INCOME</div>
-        <div class="prop-grid" id="prop-list"></div>
-      </div>
-    </div>
 
     <!-- CREW TAB -->
     <div class="tab" id="tab-crew"></div>
@@ -489,8 +454,6 @@
 <script src="js/hospital.js"></script>
 <script src="js/combat.js"></script>
 <script src="js/store.js"></script>
-<script src="js/properties.js"></script>
-<script src="js/hood.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/crew.js"></script>

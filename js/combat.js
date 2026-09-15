@@ -152,8 +152,7 @@ function startCombat(enemyId) {
   syncHospital();
   if (isHospitalized()) {
     toast("You're laid up in the Hospital!", true);
-    showTab('hood');
-    renderHospital();
+    renderHospital();   // the card is app chrome — it surfaces wherever you are
     return;
   }
   var staminaCost = tune('combat.staminaPerFight');
@@ -535,7 +534,7 @@ function closeCombat() {
   _fight = null;
   $('combat-overlay').classList.remove('open');
   // Landing in the Hospital is a consequence of losing — surface it.
-  if (isHospitalized()) { showTab('hood'); renderHospital(); }
+  if (isHospitalized()) renderHospital();
 }
 
 // This screen claims its tab (DOM-127). Threat is derived from live stats, so

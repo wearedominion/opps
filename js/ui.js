@@ -8,8 +8,8 @@ function $(id) { return document.getElementById(id); }
 // The map is deliberately absent — it is the one screen with no label.
 const SECTION_TITLES = {
   map: 'THE HOOD', jobs: 'MAKE MOVES', fight: 'OPPS LIST', plugs: 'PLUGS',
-  crew: 'CREW', profile: 'PLAYER PROFILE', hood: 'ACTIVITIES',
-  props: 'SPOTS', store: 'THE PLUG', stats: 'STATS', settings: 'SETTINGS',
+  crew: 'CREW', profile: 'PLAYER PROFILE',
+  store: 'THE PLUG', stats: 'STATS', settings: 'SETTINGS',
 };
 
 function showTab(name) {

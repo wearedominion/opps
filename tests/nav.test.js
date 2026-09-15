@@ -38,6 +38,57 @@ test('no hamburger and no drawer survive anywhere in the client', () => {
   }
 });
 
+// ── the legacy screens are gone, not merely unreachable (Jake, 2026-09-15) ──
+test('ACTIVITIES and SPOTS left the client, and took their code with them', () => {
+  const markup = stripHtmlComments(html);
+  for (const id of ['tab-hood', 'tab-props']) {
+    assert.ok(!markup.includes(id), id + ' is still mounted');
+  }
+  for (const f of ['js/hood.js', 'js/properties.js']) {
+    assert.ok(!fs.existsSync(path.join(ROOT, f)), f + ' still exists');
+    assert.ok(!markup.includes(f), f + ' is still loaded by index.html');
+  }
+  // the identifiers those files owned must not survive as callers with no callee
+  const dead = /doActivity|renderProps|buyProp|collectSpots|collectIncome|spotsAccruedTotal|incomeReady/;
+  for (const { f, src } of js) {
+    assert.ok(!dead.test(stripJsComments(src)), 'js/' + f + ' still calls into a deleted screen');
+  }
+  const rules = stripCssComments(css);
+  for (const sel of ['.job-card', '.do-job-btn', '.prop-card', '.prop-grid']) {
+    assert.ok(!rules.includes(sel), sel + ' is styling a screen that no longer exists');
+  }
+});
+
+test('the client boots onto a tab, so the bar is never blank on first paint', () => {
+  const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
+  const boot = (main.match(/showTab\('(\w+)'\)/) || [])[1];
+  const markup = stripHtmlComments(html);
+  const tabs = (markup.match(/class="tabbar-btn"[^>]*data-nav="(\w+)"/g) || [])
+    .map(m => m.match(/data-nav="(\w+)"/)[1]);
+  assert.ok(tabs.includes(boot),
+    'the client boots onto "' + boot + '", which is not one of the five tabs — ' +
+    'the bar would show no gold tab at launch');
+  // and the markup's own starting screen must be that same tab
+  assert.ok(new RegExp('class="tab active" id="tab-' + boot + '"').test(markup),
+    'the markup starts on a different screen than showTab() does');
+});
+
+// ── the Hospital survived the screen it used to live on ──
+test('the Hospital is app chrome now, and outlives any one screen', () => {
+  const markup = stripHtmlComments(html);
+  const card = markup.indexOf('id="hospital-card"');
+  assert.ok(card > -1, 'the Hospital card is gone — the defeat flow has no surface');
+  // it must sit outside every .tab, or it dies with whichever screen holds it
+  const tabsBefore = (markup.slice(0, card).match(/<div class="tab[ "]/g) || []).length;
+  assert.strictEqual(tabsBefore, 0, 'the Hospital card is inside a screen again');
+  // the paid exit is the point of the card staying (DOM-76)
+  assert.ok(markup.includes('id="hospital-iap-btn"'), 'the SKIP THE WAIT offer went with it');
+  // nothing navigates to surface it any more — it is already wherever you are
+  const combat = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+  assert.ok(!/showTab\('hood'\)/.test(combat), 'combat still routes to the deleted ACTIVITIES screen');
+  assert.ok(/renderHospital\(\)/.test(combat), 'combat no longer surfaces the Hospital at all');
+});
+
 // ── NAV-1 acceptance: eight destinations, all reachable ──
 test('every destination the drawer used to own has a replacement entry point', () => {
   const markup = stripHtmlComments(html);

@@ -34,14 +34,6 @@
   100% { transform: scale(2.6); opacity: 0; }
 }
 
-/* hood activity actions — COLLECT is the one primary; the rest go secondary */
-.do-job-btn.secondary {
-  background: var(--control);
-  border: 1px solid var(--border-ctrl);
-  color: var(--text);
-}
-.do-job-btn.secondary:hover { border-color: var(--border-gold); filter: none; }
-
 /* Replaces inline style="" attributes swept out of the renderers
    (crew.js, jobs.js, stats.js). Static styling belongs here. */
 .card-note { color: var(--muted); font-size: 13px; }
