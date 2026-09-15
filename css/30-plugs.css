@@ -116,7 +116,11 @@
   transform: scale(0.94);
   transition: transform .22s;
 }
-#plug-overlay.open .plug-modal { transform: scale(1); }
+/* Any overlay, not just #plug-overlay: .plug-modal is a shared shell now —
+   05-crew.md specifies the crew popup as "same geometry as the plug popup",
+   and DOM-114 reuses it rather than cloning 60 lines of panel. Scoped to one
+   id, the open animation only ever played for the screen that got there first. */
+.overlay.open .plug-modal { transform: scale(1); }
 
 .plug-modal-portrait-wrap {
   position: relative;

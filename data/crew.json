@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "_note": "CREW roster (DOM-114). HITTERS and DEALERS are NPC placeholders, lifted from the Chrome Money v0.2 prototype. MY ROSTER is NOT here — Jake ruled 2026-09-15 that it is the player's real Lieutenants from the referral feed, so js/crew.js builds that section from live data. `slot` is a key into portraits.json `plugs`, shared with the Plugs screen exactly as 05-crew.md specifies. `loc` is a point in the data/city.json coordinate space (1240x2300) that the map pin centres on.",
+  "sections": [
+    {
+      "key": "hitters",
+      "title": "HITTERS",
+      "members": [
+        { "id": "malik", "name": "MALIK ‘TRIGGA’", "doing": "Posted up · 7th & Lenox", "working": true, "line": "Say less. Who we hittin’, boss?", "loc": { "x": 470, "y": 980 }, "slot": "plug-marco" }
+      ]
+    },
+    {
+      "key": "dealers",
+      "title": "DEALERS",
+      "members": [
+        { "id": "junior", "name": "JUNIOR", "doing": "Servin’ · 5th & Lenox", "working": true, "line": "Wussup boss? Block stay jumpin’.", "loc": { "x": 560, "y": 1100 }, "slot": "plug-tommy" },
+        { "id": "deshawn", "name": "DESHAWN", "doing": "On the block · 3rd St", "working": true, "line": "We good out here, boss.", "loc": { "x": 300, "y": 1300 }, "slot": "plug-dex" },
+        { "id": "pook", "name": "POOK", "doing": "At home", "working": false, "line": "Yeah boss? I’m restin’ up.", "loc": { "x": 220, "y": 700 }, "slot": "plug-marco" },
+        { "id": "tez", "name": "TEZ", "doing": "Movin’ downtown", "working": true, "line": "Talk to me, boss.", "loc": { "x": 430, "y": 850 }, "slot": "plug-tommy" },
+        { "id": "quan", "name": "QUAN", "doing": "At home", "working": false, "line": "Wussup wit it, boss?", "loc": { "x": 680, "y": 560 }, "slot": "plug-dex" }
+      ]
+    }
+  ]
+}

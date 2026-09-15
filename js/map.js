@@ -373,13 +373,19 @@ const GameMap = (() => {
     _mv = { s, tx: (W - 1240 * s) / 2, ty: (H - 2300 * s) / 2 };
     apply();
   }
-  function centerBase() {
+  // Put a city-coordinate point in the middle of the viewport. apply() still
+  // clamps to the map edges, so a point near a corner lands as close as the
+  // map allows rather than panning empty space into view.
+  function centerOn(x, y, scale) {
     if (!_el) return;
-    _mv = { s: 1, tx: _el.clientWidth / 2 - 381, ty: _el.clientHeight / 2 - 866 };
+    const s = scale || 1;
+    _mv = { s: s, tx: _el.clientWidth / 2 - x * s, ty: _el.clientHeight / 2 - y * s };
     apply();
   }
+  // The base sits at the bounds centre from city.json.
+  function centerBase() { centerOn(381, 866, 1); }
 
-  return { init, zoomIn, zoomOut, reset, centerBase, data: mapData };
+  return { init, zoomIn, zoomOut, reset, centerBase, centerOn, data: mapData };
 })();
 
 // This screen claims its tab (DOM-127). The Hood is idempotent: init() no-ops once the city is built.
