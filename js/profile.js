@@ -58,6 +58,9 @@ let pfPending = {};      // { skillId: ranksStaged }
 let pfGearPick = null;   // { type, idx } of the open slot picker
 let pfInfoKey = null;    // skillId of the open info popup
 let pfConfirmOpen = false;
+let pfRanksOpen = false;   // ranks popup
+let pfPublicRow = null;    // the projected row the public profile is showing
+let pfBoardFilter = null;  // which leaderboard filter pill is lit
 
 // ═════════════════════════════════════════════
 //  PURE HELPERS (no DOM — unit-testable)
@@ -183,7 +186,7 @@ function pfRenderIdentity() {
         <div class="pf-name" title="${pfEsc(G.handle || 'YOU')}">${pfEsc(G.handle || 'YOU')}</div>
         <div class="pf-rank-row">
           <span class="pf-rank">${pfEsc(rank)}</span>
-          <button class="pf-i-btn" onclick="pfOpenInfo('rank')" aria-label="About ranks">i</button>
+          <button class="pf-i-btn" onclick="pfOpenRanks()" aria-label="See all ranks">i</button>
         </div>
         <div class="pf-clout-row">
           <span class="pf-clout">${G.clout.toLocaleString()}</span>
@@ -191,7 +194,7 @@ function pfRenderIdentity() {
         </div>
         <div class="pf-xp-wrap">
           <div class="pf-xp-labels">
-            <span class="l">${cp.atCap ? 'MAX LEVEL' : toNext.toLocaleString() + ' TO NEXT'}</span>
+            <span class="l">${cp.atCap ? 'MAX LEVEL' : 'XP TO ' + pfEsc(rankForLevel(G.level + 1))}</span>
             <span class="r">${cp.atCap ? '' : cp.into.toLocaleString() + ' / ' + cp.need.toLocaleString()}</span>
           </div>
           <div class="pf-xp-track"><div class="pf-xp-fill" style="width:${pct}%"></div></div>
@@ -225,17 +228,15 @@ function pfRenderSkills() {
   const rows = SKILL_DEFS.map(def => {
     const base = pfSkillTarget(def);
     const staged = pfPending[def.id] || 0;
-    const shown = base + staged;
     const cost = pfSkillCost(def.id);
     const afford = left >= cost;
-    const segs = 12;
-    const onBase = Math.max(0, Math.min(segs, Math.round((base / def.segMax) * segs)));
-    const onStaged = Math.max(0, Math.min(segs - onBase, Math.round((staged / def.segMax) * segs)));
-    let segHtml = '';
-    for (let i = 0; i < segs; i++) {
-      const cls = i < onBase ? 'pf-seg on' : i < onBase + onStaged ? 'pf-seg staged' : 'pf-seg';
-      segHtml += `<div class="${cls}"></div>`;
-    }
+    // 07-profile.md gives the bar as "width = total/12", which is the
+    // prototype's scale — its skills top out around 12. The repo's do not
+    // (health runs to 240), so /12 would peg every bar at 100% immediately.
+    // The shape is the doc's; the denominator is the skill's own segMax.
+    const grant = pfSkillGrant(def.id);
+    const shownTotal = base + staged * grant;
+    const barPct = Math.max(0, Math.min(100, (shownTotal / def.segMax) * 100));
     return `
       <div class="pf-skill${staged ? ' staged' : ''}">
         <div class="pf-skill-top">
@@ -247,15 +248,18 @@ function pfRenderSkills() {
             <div class="pf-skill-cost${afford ? ' afford' : ''}">${cost} ${cost === 1 ? 'PT' : 'PTS'} PER RANK</div>
           </div>
           <div class="pf-skill-val-wrap">
-            <div class="pf-skill-val${staged ? ' staged' : ''}">${shown}</div>
-            <div class="pf-skill-delta">${staged ? '+' + staged + ' STAGED' : 'CURRENT'}</div>
+            <div class="pf-skill-val${staged ? ' staged' : ''}">${
+              staged ? base + ' <span class="pf-arrow">&rarr;</span> ' + shownTotal : base}</div>
+            <div class="pf-skill-delta">${
+              staged ? '+' + (staged * grant) + ' · ' + (staged * cost) + (staged * cost === 1 ? ' PT' : ' PTS')
+                     : 'CURRENT'}</div>
           </div>
           <div class="pf-steps">
             <button class="pf-step" onclick="pfStage('${def.id}',-1)" ${staged ? '' : 'disabled'} aria-label="Remove a staged rank">−</button>
             <button class="pf-step inc" onclick="pfStage('${def.id}',1)" ${afford ? '' : 'disabled'} aria-label="Stage a rank">+</button>
           </div>
         </div>
-        <div class="pf-seg-row">${segHtml}</div>
+        <div class="pf-skill-bar"><span style="width:${barPct}%"></span></div>
       </div>`;
   }).join('');
 
@@ -289,8 +293,8 @@ function pfRenderSkills() {
       </div>
       <div class="pf-actions">
         <button class="pf-btn-reset" onclick="pfResetPending()" ${canCommit ? '' : 'disabled'}>RESET</button>
-        <button class="pf-btn-confirm" onclick="pfOpenConfirm()" ${canCommit ? '' : 'disabled'}>
-          ${canCommit ? 'CONFIRM ' + spent + (spent === 1 ? ' PT' : ' PTS') : 'NOTHING STAGED'}
+        <button class="pf-btn-confirm${canCommit ? ' sheen' : ''}" onclick="pfOpenConfirm()" ${canCommit ? '' : 'disabled'}>
+          ${canCommit ? 'LOCK IN ' + spent + (spent === 1 ? ' PT' : ' PTS') : 'NOTHING TO LOCK'}
         </button>
       </div>
     </div>`;
@@ -430,21 +434,61 @@ function pfRenderGear() {
 }
 
 // ── LEADERBOARD ──
-// Handoff gap 4 / TDD §9: cross-player data has no source today (saves are
-// per-user blobs; server/ is purchase-verification only). Ships inert until
-// that dependency is resolved. Must never throw or block the tab.
+// Ships on the DOM-122 stub: data/leaderboard.json is already a list of public
+// projections — the exact shape pfPublicProjection() returns, plus `pos` and
+// `faction`. A live source replaces the file and nothing here changes.
+//
+// The player is not in that file, so they are spliced in at the position their
+// own Clout earns. Without that the board has no YOU row, and the spec's YOU
+// chip would be decoration for a row that never renders.
+function pfBoardRows() {
+  const data = (typeof LEADERBOARD !== 'undefined' && LEADERBOARD) || null;
+  const rows = ((data && data.rows) || []).map(r => Object.assign({}, r));
+  const me = pfPublicProjection(G);
+  // Rank comes from the level, not the row's stored string: DOM-124 replaced
+  // the ten band names with 100 titles, so a stub row's "Block Boy" no longer
+  // names anything. One rank source, which is what that ticket asked for.
+  for (const r of rows) r.rank = rankForLevel(r.level);
+  const mine = rows.find(r => r.handle && me.handle && r.handle.toUpperCase() === me.handle.toUpperCase());
+  if (mine) mine.you = true;
+  else rows.push(Object.assign({}, me, { you: true }));
+  rows.sort((a, b) => (b.clout || 0) - (a.clout || 0));
+  rows.forEach((r, i) => { r.pos = i + 1; });
+  return rows;
+}
+
 function pfRenderBoard() {
+  const data = (typeof LEADERBOARD !== 'undefined' && LEADERBOARD) || null;
+  const filters = (data && data.filters) || [];
+  const active = pfBoardFilter || (filters.find(f => f.default) || {}).id;
+  const pills = filters.map(f =>
+    `<button class="pf-board-pill${f.id === active ? ' is-active' : ''}"` +
+    ` onclick="pfSetBoardFilter('${f.id}')">${pfEsc(f.label)}</button>`).join('');
+
+  const rows = pfBoardRows();
+  const body = rows.map(r => `
+    <button class="pf-board-row${r.you ? ' is-you' : ''}" onclick="pfOpenPublic(${r.pos})">
+      <span class="pos${r.pos <= 3 ? ' is-top' : ''}">${r.pos}</span>
+      <span class="who">
+        <span class="tag">${pfEsc(r.handle)}</span>
+        ${r.you ? '<span class="pf-you">YOU</span>' : ''}
+      </span>
+      <span class="clout">${Number(r.clout || 0).toLocaleString()}</span>
+      <span class="chev">&rsaquo;</span>
+    </button>`).join('');
+
   return `
-    <div>
-      <div class="pf-sec-head">
-        <h4>LEADERBOARD</h4>
-        <div class="pf-sec-rule"></div>
+    <div class="pf-board">
+      <div class="pf-board-head">
+        <div class="pf-sec-head"><h4>LEADERBOARD</h4><div class="pf-sec-rule"></div></div>
+        <div class="pf-board-pills">${pills}</div>
       </div>
-      <div class="pf-empty">
-        <div class="pf-empty-label">NO DATA</div>
-        <div class="pf-empty-hint">The board lights up once the streets start talking. Nothing to rank yet.</div>
+      <div class="pf-board-table">
+        <div class="pf-board-hrow"><span>#</span><span>PLAYER</span><span>CLOUT</span><span></span></div>
+        ${body}
       </div>
       <div class="pf-board-hint">TAP A PLAYER TO SEE THEIR PROFILE</div>
+      ${data ? '' : '<div class="pf-board-note">Standings are a placeholder until a live source lands.</div>'}
     </div>`;
 }
 
@@ -457,7 +501,8 @@ function pfRenderBoard() {
 function pfRenderOverlays() {
   const host = $('pf-overlays');
   if (!host) return;
-  host.innerHTML = pfRenderPicker() + pfRenderConfirm() + pfRenderInfo();
+  host.innerHTML = pfRenderPicker() + pfRenderConfirm() + pfRenderInfo()
+    + pfRenderRanks() + pfRenderPublic();
 }
 
 function pfRenderPicker() {
@@ -506,60 +551,167 @@ function pfRenderPicker() {
 function pfRenderConfirm() {
   if (!pfConfirmOpen) return '';
   const spent = pfPendingCost(pfPending);
-  const lines = SKILL_DEFS.filter(d => pfPending[d.id]).map(d => `
+  const left = (G.skillPts || 0) - spent;
+  const lines = SKILL_DEFS.filter(d => pfPending[d.id]).map(d => {
+    const from = pfSkillTarget(d);
+    const to = from + pfPending[d.id] * pfSkillGrant(d.id);
+    return `
     <div class="pf-conf-line">
       <span class="k">${d.label}</span>
-      <span class="v">${pfSkillTarget(d)} → ${pfSkillTarget(d) + pfPending[d.id] * pfSkillGrant(d.id)}</span>
-    </div>`).join('');
+      <span class="v">${from} <span class="pf-arrow">&rarr;</span> <b>${to}</b></span>
+    </div>`;
+  }).join('');
   return `
     <div class="pf-scrim confirm open" onclick="pfCloseConfirm()">
-      <div class="pf-panel lime" onclick="event.stopPropagation()">
+      <div class="pf-panel" onclick="event.stopPropagation()">
         <div class="pf-panel-head">
           <div class="pf-fill">
             <div class="pf-panel-title">LOCK IT IN</div>
-            <div class="pf-panel-sub">SPENDING ${spent} ${spent === 1 ? 'POINT' : 'POINTS'}</div>
+            <div class="pf-panel-cost">${spent} ${spent === 1 ? 'POINT' : 'POINTS'} · ${left} LEFT AFTER</div>
           </div>
           <button class="pf-x" onclick="pfCloseConfirm()" aria-label="Close">✕</button>
         </div>
         <div class="pf-panel-body">
           ${lines}
-          <div class="pf-warn spaced">
-            <span class="pf-warn-text">This is permanent. There is no respec — you cannot take these points back.</span>
-          </div>
+          <div class="pf-warn-strip">This can\u2019t be undone. There is no respec in this season.</div>
         </div>
         <div class="pf-panel-foot">
-          <button class="pf-btn-reset" onclick="pfCloseConfirm()">BACK</button>
-          <button class="pf-btn-confirm" onclick="pfCommitSkills()">SPEND IT</button>
+          <button class="pf-btn-reset" onclick="pfCloseConfirm()">GO BACK</button>
+          <button class="pf-btn-confirm sheen" onclick="pfCommitSkills()">CONFIRM</button>
         </div>
       </div>
     </div>`;
 }
 
+// What each build tag means, and the footnote under every stat. Copy tracks
+// the design_reference `buildMeanings` / `statNotes`.
+const PF_BUILD_MEANING = {
+  GRINDER: 'You farm. Jobs, mastery, cash.',
+  FIGHTER: 'You press. Fights, more often.',
+  TANK:    'You last. Rounds, not seconds.',
+  COMBAT:  'You hit, or you do not get hit.',
+};
+const PF_STAT_FOOTNOTE = 'Points are permanent. There is no respec in this season.';
+
 function pfRenderInfo() {
   if (!pfInfoKey) return '';
-  let title, tag, body;
-  if (pfInfoKey === 'rank') {
-    title = 'RANK';
-    tag = 'PROGRESSION';
-    body = 'Your rank is the title the streets give you as your Clout climbs. It is flavor on top of your level — the level is what actually gates content.';
-  } else {
-    const def = pfSkillDef(pfInfoKey);
-    if (!def) return '';
-    title = def.label;
-    tag = def.build;
-    const c = pfSkillCost(def.id);
-    body = def.desc + ' Costs ' + c + (c === 1 ? ' point' : ' points') + ' per rank.';
-  }
+  const def = pfSkillDef(pfInfoKey);
+  if (!def) return '';
+  const cost = pfSkillCost(def.id);
+  const grant = pfSkillGrant(def.id);
   return `
     <div class="pf-scrim info open" onclick="pfCloseInfo()">
       <div class="pf-panel" onclick="event.stopPropagation()">
         <div class="pf-panel-head">
-          <div class="pf-fill"><div class="pf-panel-title">${title}</div></div>
+          <div class="pf-fill"><div class="pf-panel-title">${def.label}</div></div>
           <button class="pf-x" onclick="pfCloseInfo()" aria-label="Close">✕</button>
         </div>
         <div class="pf-panel-body">
-          <span class="pf-build-tag">${tag}</span>
-          <div class="pf-body-copy">${pfEsc(body)}</div>
+          <div class="pf-build-row">
+            <span class="pf-build-tag">${def.build}</span>
+            <span class="pf-build-mean">${pfEsc(PF_BUILD_MEANING[def.build] || '')}</span>
+          </div>
+          <div class="pf-body-copy">${pfEsc(def.desc)}</div>
+          <div class="pf-tiles">
+            <div class="pf-tile">
+              <div class="pf-eyebrow">CURRENT</div>
+              <div class="pf-tile-val">${pfSkillTarget(def)}</div>
+            </div>
+            <div class="pf-tile">
+              <div class="pf-eyebrow">COST PER RANK</div>
+              <div class="pf-tile-val">${cost} <span class="pf-tile-sub">for +${grant}</span></div>
+            </div>
+          </div>
+          <div class="pf-footnote">${PF_STAT_FOOTNOTE}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── RANKS POPUP ──
+// Every rank, where you are in it, and what the next one costs. ranks.json is
+// 100 titles spread across the level cap (DOM-124), so this lists a row per
+// title at the level that title starts on — not a row per level, which would
+// be 120 rows of mostly nothing.
+function pfRankRows() {
+  const names = (typeof RANK_NAMES !== 'undefined' && RANK_NAMES) || [];
+  const cap = tune('progression.maxLevel');
+  const out = [];
+  let last = null;
+  for (let lv = 1; lv <= cap; lv++) {
+    const name = rankForLevel(lv);
+    if (name === last) continue;
+    last = name;
+    out.push({ level: lv, name: name, req: cloutToReach(lv), you: rankForLevel(G.level) === name });
+  }
+  return out;
+}
+
+function pfRenderRanks() {
+  if (!pfRanksOpen) return '';
+  const rows = pfRankRows().map(r => `
+    <div class="pf-rank-line${r.you ? ' is-you' : ''}${r.level > G.level ? ' is-ahead' : ''}">
+      <span class="lv">${r.level}</span>
+      <span class="nm">${pfEsc(r.name)}</span>
+      ${r.you ? '<span class="pf-you">YOU</span>' : ''}
+      <span class="rq">${r.req.toLocaleString()}</span>
+    </div>`).join('');
+  return `
+    <div class="pf-scrim ranks open" onclick="pfCloseRanks()">
+      <div class="pf-panel tall" onclick="event.stopPropagation()">
+        <div class="pf-panel-head">
+          <div class="pf-fill">
+            <div class="pf-panel-title">RANKS</div>
+            <div class="pf-panel-sub">CLOUT IS WHAT MOVES YOU</div>
+          </div>
+          <button class="pf-x" onclick="pfCloseRanks()" aria-label="Close">✕</button>
+        </div>
+        <div class="pf-panel-scroll">${rows}</div>
+      </div>
+    </div>`;
+}
+
+// ── PUBLIC PROFILE ──
+// Everything shown here comes from pfPublicProjection(), which is the ONE
+// place the self/public boundary is drawn. A field that is not on the
+// projection cannot reach this markup, by construction.
+function pfRenderPublic() {
+  if (!pfPublicRow) return '';
+  const p = pfPublicRow;
+  const self = !!p.you;
+  const gear = (p.gear || []).map(g => `
+    <div class="pf-pub-gear">
+      <div class="pf-pub-gear-name tier-${pfEsc(g.tier)}">${pfEsc(g.name)}</div>
+      <div class="pf-pub-gear-sub">${pfEsc(String(g.type || '').toUpperCase())}${g.level ? ' · LV ' + g.level : ''}</div>
+    </div>`).join('');
+  return `
+    <div class="pf-scrim public open" onclick="pfClosePublic()">
+      <div class="pf-panel ${self ? 'is-self' : 'is-other'}" onclick="event.stopPropagation()">
+        <div class="pf-panel-head">
+          <div class="pf-fill"><div class="pf-panel-sub">BOARD ${p.pos || '—'}</div></div>
+          <button class="pf-x" onclick="pfClosePublic()" aria-label="Close">✕</button>
+        </div>
+        <div class="pf-panel-body">
+          <div class="pf-pub-id">
+            <div class="pf-pub-portrait" role="img" aria-label="Player portrait placeholder"></div>
+            <div class="pf-pub-col">
+              <div class="pf-pub-tag">${pfEsc(p.handle)}</div>
+              <div class="pf-pub-rank">
+                <span>${pfEsc(p.rank)}</span>
+                ${p.faction ? '<span class="pf-faction">' + pfEsc(String(p.faction).toUpperCase()) + '</span>' : ''}
+              </div>
+              <div class="pf-pub-clout">${Number(p.clout || 0).toLocaleString()} <span>CLOUT</span></div>
+            </div>
+          </div>
+          <div class="pf-sec-head"><h4>CREW ON DECK</h4><div class="pf-sec-rule"></div></div>
+          ${gear ? '<div class="pf-pub-gear-grid">' + gear + '</div>'
+                 : '<div class="pf-empty"><div class="pf-empty-label">NOTHING FIELDED</div></div>'}
+        </div>
+        <div class="pf-panel-foot">
+          ${self
+            ? '<div class="pf-pub-self">◆ THIS IS WHAT THE STREETS SEE</div>'
+            : '<button class="pf-btn-reset" onclick="pfClosePublic()">MESSAGE</button>' +
+              '<button class="pf-btn-opp" onclick="pfClosePublic()">MARK AS OPP</button>'}
         </div>
       </div>
     </div>`;
@@ -713,11 +865,24 @@ function pfToggleField(itemId) {
 }
 
 function pfOpenInfo(key) { pfInfoKey = key; renderProfile(); }
+function pfOpenRanks()  { pfRanksOpen = true; renderProfile(); }
+function pfCloseRanks() { pfRanksOpen = false; renderProfile(); }
+function pfSetBoardFilter(id) { pfBoardFilter = id; renderProfile(); }
+
+// The row is already a public projection; opening it cannot widen what it
+// carries, because there is nothing else on it to show.
+function pfOpenPublic(pos) {
+  pfPublicRow = pfBoardRows().find(r => r.pos === pos) || null;
+  renderProfile();
+}
+function pfClosePublic() { pfPublicRow = null; renderProfile(); }
 function pfCloseInfo()   { pfInfoKey = null; renderProfile(); }
 
-// The stats overlay is its own system (build order item 4) and replaces
-// js/stats.js. Until then the button routes to the existing STATS tab so the
-// affordance is never dead.
+// The v0.2 stats overlay needs six counters — DEAD OPPS, ROBBERIES, CAR
+// THEFTS, HOES and the rest — and not one of them exists to count yet. That is
+// DOM-131 (stat counters + badge engine), split out of this ticket for exactly
+// that reason. Routing to the existing STATS tab keeps the affordance real
+// instead of opening an overlay of zeroes; DOM-131 re-points it.
 function pfOpenStats() {
   if (typeof showTab === 'function') showTab('stats');
 }
