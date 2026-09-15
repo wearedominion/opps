@@ -34,7 +34,8 @@ function renderCrewWith(over) {
     REASON: { RECRUIT_BONUS: 'recruit_bonus' },
   };
   const src = fs.readFileSync(path.join(ROOT, 'js/crew.js'), 'utf8')
-    + '\n;globalThis.__t = { Crew, renderCrew, crewMember, crewCount, crewGoToMap };';
+    + '\n;globalThis.__t = { Crew, renderCrew, crewMember, crewCount, crewGoToMap,'
+    + ' _crewLieutenantCard, _crewNpcCard };';
   vm.runInNewContext(src, ctx);
   ctx.__t.Crew._memberCount = o.count || 0;
   ctx.__t.renderCrew();
@@ -94,13 +95,20 @@ test('a Lieutenant card claims nothing the referral feed can tell us', () => {
   // line — so the card carries none of those affordances. Inventing
   // "Servin' · 5th & Lenox" for a real player is the one thing this must not do.
   const r = renderCrewWith({ count: 3 });
-  const cards = r.html.split('crew-card is-lieutenant').slice(1).map(s => s.split('</div></div>')[0]);
-  assert.strictEqual(cards.length, 3);
-  for (const c of cards) {
-    assert.ok(!/crew-pin/.test(c), 'a Lieutenant has a map pin, but no location');
-    assert.ok(!/openCrewMember/.test(c), 'a Lieutenant opens a dialogue, but has no line');
-    assert.ok(!/is-working/.test(c), 'a Lieutenant shows a working dot we cannot know');
+  // The builder's whole output, not a slice of the page: slicing the rendered
+  // HTML on a closing tag silently stopped short of the portrait panel, so a
+  // pin added there did not trip this.
+  for (const n of [1, 2, 3]) {
+    const card = r._crewLieutenantCard(n);
+    assert.ok(!/crew-pin/.test(card), 'a Lieutenant has a map pin, but no location');
+    assert.ok(!/openCrewMember/.test(card), 'a Lieutenant opens a dialogue, but has no line');
+    assert.ok(!/is-working/.test(card), 'a Lieutenant shows a working dot we cannot know');
+    assert.ok(!/<img/.test(card), 'a Lieutenant has portrait art that is not theirs');
+    assert.ok(card.indexOf('LIEUTENANT 0' + n) !== -1);
   }
+  // and an NPC card is the contrast: it has every one of those
+  const npc = r._crewNpcCard(CREW_JSON.sections[0].members[0]);
+  assert.ok(/crew-pin/.test(npc) && /openCrewMember/.test(npc) && /<img/.test(npc));
   assert.ok(/LIEUTENANT 01/.test(r.html) && /LIEUTENANT 03/.test(r.html));
 });
 
