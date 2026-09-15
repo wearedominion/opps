@@ -56,7 +56,7 @@
   --r-panel: 22px;  /* centered overlay panels */
   --r-sheet: 24px;  /* bottom sheets: 24px 24px 0 0 */
   --r-card: 16px;   /* cards, list containers */
-  --r-tile: 14px;   /* small tiles, portrait frames, drawer items */
+  --r-tile: 14px;   /* small tiles, portrait frames, the Store entry */
   --r-icon: 12px;   /* 38px icon buttons, 36px map controls */
 
   --pad-screen: 20px;  --gap-list: 9px;  --gap-section: 14px;

@@ -14,6 +14,7 @@
        one line here — it never appends to someone else's file (DOM-127). -->
   <link rel="stylesheet" href="css/00-base.css">
   <link rel="stylesheet" href="css/10-chrome.css">
+  <link rel="stylesheet" href="css/15-nav.css">
   <link rel="stylesheet" href="css/20-legacy.css">
   <link rel="stylesheet" href="css/25-opps-list.css">
   <link rel="stylesheet" href="css/30-plugs.css">
@@ -34,7 +35,15 @@
   <!-- HEADER (v0.2 README §Header) -->
   <header>
     <div class="hdr-row">
-      <div class="logo">OPPS</div>
+      <!-- Profile entry (DOM-145) — takes the wordmark's place at the far
+           left. The level chip half-overhangs the bottom edge; js/hud.js keeps
+           it on the live level. Goes gold on Profile AND Settings, which is
+           what data-nav-also says. -->
+      <button class="hdr-profile" id="btn-profile" data-nav="profile" data-nav-also="settings"
+              onclick="showTab('profile')" aria-label="Profile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span class="hdr-profile-lv" id="h-profile-lv">1</span>
+      </button>
 
       <!-- clout cluster: CLOUT over value · rank over a 4px level-progress bar · ▾.
            (The bar wears --xp, the token the contract fixes for level meters;
@@ -59,9 +68,12 @@
         <span class="hdr-badge" id="msg-badge" hidden></span>
       </button>
 
-      <!-- hamburger — opens the nav drawer -->
-      <button class="hdr-btn" id="btn-menu" onclick="openDrawer()" aria-label="Menu">
-        <span class="hamb" aria-hidden="true"><i></i><i></i><i></i></span>
+      <!-- Store entry (DOM-144) — takes the hamburger's place. Bigger than the
+           38px Messages button beside it on purpose: this one sells things.
+           The sheen is the ::after stripe; prefers-reduced-motion stops it. -->
+      <button class="hdr-store" id="btn-store" data-nav="store"
+              onclick="showTab('store')" aria-label="Store">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
       </button>
     </div>
     <div class="hdr-rule"></div>
@@ -221,30 +233,36 @@
 
   </main>
 
-  <!-- NAV DRAWER (v0.2 OVERLAYS.md) — stays mounted so open/close animates.
-       Eight spec items; the LEGACY section is temporary (ruled on DOM-110,
-       2026-09-14) and shrinks as DOM-115/117/118 absorb those screens. -->
-  <div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
-  <aside class="drawer" id="drawer" aria-hidden="true">
-    <div class="drawer-head">
-      <div class="drawer-wordmark">OPPS</div>
-      <button class="btn-x" onclick="closeDrawer()" aria-label="Close menu">&#x2715;</button>
-    </div>
-    <nav class="drawer-items">
-      <button class="drawer-item" data-nav="map"      onclick="navTo('map')"><span class="drawer-dot"></span><span class="drawer-label">THE HOOD</span></button>
-      <button class="drawer-item" data-nav="jobs"     onclick="navTo('jobs')"><span class="drawer-dot"></span><span class="drawer-label">MAKE MOVES</span></button>
-      <button class="drawer-item" data-nav="fight"    onclick="navTo('fight')"><span class="drawer-dot"></span><span class="drawer-label">OPPS LIST</span></button>
-      <button class="drawer-item" data-nav="plugs"    onclick="navTo('plugs')"><span class="drawer-dot"></span><span class="drawer-label">PLUGS</span></button>
-      <button class="drawer-item" data-nav="crew"     onclick="navTo('crew')"><span class="drawer-dot"></span><span class="drawer-label">CREW</span></button>
-      <button class="drawer-item" data-nav="store"    onclick="navTo('store')"><span class="drawer-dot"></span><span class="drawer-label">STORE</span></button>
-      <button class="drawer-item" data-nav="profile"  onclick="navTo('profile')"><span class="drawer-dot"></span><span class="drawer-label">PROFILE</span></button>
-      <button class="drawer-item" data-nav="settings" onclick="navTo('settings')"><span class="drawer-dot"></span><span class="drawer-label">SETTINGS</span></button>
-      <div class="drawer-divider">LEGACY</div>
-      <button class="drawer-item legacy" data-nav="hood"  onclick="navTo('hood')"><span class="drawer-dot"></span><span class="drawer-label">ACTIVITIES</span></button>
-      <button class="drawer-item legacy" data-nav="props" onclick="navTo('props')"><span class="drawer-dot"></span><span class="drawer-label">SPOTS</span></button>
-      <button class="drawer-item legacy" data-nav="stats" onclick="navTo('stats')"><span class="drawer-dot"></span><span class="drawer-label">STATS</span></button>
-    </nav>
-  </aside>
+  <!-- BOTTOM TAB BAR (DOM-143) — the nav drawer's replacement. Five tabs, one
+       gold at a time; on Store/Profile/Settings none of them is gold and the
+       header entry carries the down state instead. z 45 keeps it over the map
+       and the scroll body but under every scrim, sheet and modal. -->
+  <nav class="tabbar" id="tabbar" aria-label="Primary">
+    <button class="tabbar-btn" data-nav="map" onclick="showTab('map')" aria-label="The Hood">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      <span class="tabbar-label">HOOD</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="jobs" onclick="showTab('jobs')" aria-label="Make Moves">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+      <span class="tabbar-label">MOVES</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="fight" onclick="showTab('fight')" aria-label="Opps List">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>
+      <span class="tabbar-label">OPPS</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="plugs" onclick="showTab('plugs')" aria-label="Plugs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path></svg>
+      <span class="tabbar-label">PLUGS</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="crew" onclick="showTab('crew')" aria-label="Crew">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"></path></svg>
+      <span class="tabbar-label">CREW</span>
+    </button>
+  </nav>
 
   <!-- METRICS / CURRENCIES PANEL -->
   <div id="metrics-overlay" onclick="closeMetrics()">

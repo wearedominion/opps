@@ -114,8 +114,30 @@
 .pf-xp-labels .r { font-size: 11px; color: var(--muted); }
 .pf-xp-track { height: 7px; border-radius: var(--r-pill); background: var(--track); overflow: hidden; }
 .pf-xp-fill { height: 100%; background: var(--xp); border-radius: var(--r-pill); transition: width .4s; }
-.pf-stats-btn {
+/* gear + STATS ride one absolutely-positioned row (DOM-146). They used to be
+   a single absolute button; the row is what lets the gear sit immediately left
+   of STATS without either of them knowing the other's width. */
+.pf-id-actions {
   position: absolute; top: -1px; right: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+/* 31px circle — deliberately smaller and quieter than STATS beside it.
+   Settings is a door you take occasionally, not a headline. */
+.pf-gear-btn {
+  flex: none;
+  width: 31px; height: 31px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--text-bright);
+  cursor: pointer;
+  transition: border-color .16s;
+}
+.pf-gear-btn svg { width: 16px; height: 16px; }
+.pf-gear-btn:hover { border-color: var(--border-gold); }
+
+.pf-stats-btn {
   font-family: var(--display); font-size: 12px;
   letter-spacing: 1px; border-radius: var(--r-pill); padding: 9px 14px;
   cursor: pointer; transition: border-color .16s, filter .16s;
@@ -530,7 +552,7 @@
    pointer-events none) so open/close always animates. Scrim tap
    closes; the panel stopPropagation()s.
 
-   z-ladder: drawer 50/51 · metrics 55 · messages 55 · ranks 58 ·
+   z-ladder: tab bar 45 · metrics 55 · messages 55 · ranks 58 ·
    engage 60 · log 60 · public profile 64 · confirm alloc 66 ·
    stat info 67 · equip picker 68 · stats 69 · dialogue 70 ·
    gold confirm 71 · XP toast 90.

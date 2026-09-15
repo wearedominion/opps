@@ -19,6 +19,10 @@ function updateHUD() {
   set('h-clout', G.clout.toLocaleString());
   set('h-rank', rank);
 
+  // level chip on the header's Profile entry (DOM-145) — the only place the
+  // raw level number shows outside the metrics panel
+  set('h-profile-lv', G.level);
+
   // metrics panel hero
   set('m-clout', G.clout.toLocaleString());
   set('m-level', G.level);
