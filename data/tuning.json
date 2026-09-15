@@ -13,7 +13,6 @@
   "progression": {
     "maxLevel": 120,
     "skillPointsPerLevel": 5,
-    "levelsPerRank": 10,
     "levelUpRefillsPools": true,
     "autoStatGainPerLevel": { "attack": 3, "defense": 2, "health": 15, "moves": 2 }
   },

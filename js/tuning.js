@@ -18,7 +18,7 @@
 const TUNING_REQUIRED = [
   'start.cash', 'start.attack', 'start.defense',
   'start.moves', 'start.stamina', 'start.health',
-  'progression.maxLevel', 'progression.skillPointsPerLevel', 'progression.levelsPerRank',
+  'progression.maxLevel', 'progression.skillPointsPerLevel',
   'progression.levelUpRefillsPools',
   'progression.autoStatGainPerLevel.attack', 'progression.autoStatGainPerLevel.defense',
   'progression.autoStatGainPerLevel.health', 'progression.autoStatGainPerLevel.moves',

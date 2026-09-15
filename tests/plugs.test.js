@@ -3,6 +3,7 @@
 
 const {
   fs, path, vm, assert, ROOT, readAllCss, SCHEMA_VERSION, G, test,
+  TABLE, XP_SPEC, REASON_CODES_BY_NAME,
 } = require('./harness');
 
 // ─────────────────────────────────────────────
@@ -13,18 +14,28 @@ const {
 // ($, PLUGS, PORTRAITS, GameState, questFor…), so the sandbox stubs only what
 // the recruit path actually touches and exports the pure helpers.
 function loadPlugs(saved) {
-  const src = fs.readFileSync(path.join(ROOT, 'js/plugs.js'), 'utf8')
-    + '\n;globalThis.__t = { plugCtaLabel, plugRecruited, plugCommit, plugNameSize,'
-    + ' PLUG_XP_RECRUIT, G };';
+  // js/xp.js is loaded for real rather than stubbed: what a recruit pays is
+  // now the award engine's answer (DOM-124), and a stub would assert nothing.
+  const src = fs.readFileSync(path.join(ROOT, 'js/xp.js'), 'utf8') + '\n'
+    + fs.readFileSync(path.join(ROOT, 'js/plugs.js'), 'utf8')
+    + '\n;globalThis.__t = { plugCtaLabel, plugRecruited, plugCommit, plugNameSize, G };';
   const saves = [];
+  const paid = [];
   // A fake canvas with a measureText proportional to px * characters. Without
   // this `document` is undefined, plugNameSize throws on the first call and
   // every name returns the minimum — which makes any assertion about sizing
   // pass even if the measurement loop were deleted.
   const ctx = {
     console, JSON, Object, Math, Array,
-    G: { plugsRecruited: saved === undefined ? [] : saved },
+    G: { plugsRecruited: saved === undefined ? [] : saved, level: 1, xpFirsts: {} },
     GameState: { save: () => saves.push(1) },
+    // The real curve and the real spec — the award is only meaningful
+    // against both.
+    PROGRESSION: TABLE,
+    XP_SYSTEM: XP_SPEC,
+    REASON: REASON_CODES_BY_NAME,
+    addClout: (amt, reason, ref) => paid.push({ amt, reason, ref }),
+    log: () => {},
     document: {
       createElement: () => ({
         getContext: () => ({
@@ -43,7 +54,7 @@ function loadPlugs(saved) {
     $: () => null,
   };
   vm.runInNewContext(src, ctx);
-  return Object.assign({}, ctx.__t, { saves });
+  return Object.assign({}, ctx.__t, { saves, paid });
 }
 
 const PLUGS_JSON = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/plugs.json'), 'utf8'));
@@ -68,9 +79,14 @@ test('plugs — once recruited, the final press runs the job instead', () => {
 test('plugs — the first commit recruits and pays once', () => {
   const P = loadPlugs();
   const first = P.plugCommit('plug-dex');
+  // The number is the spec's, read from the spec — not a literal that could
+  // agree with a stale copy in the code (DOM-124).
+  const spec = XP_SPEC.actionXp.plugs.byPlug.find(x => x.slotId === 'plug-dex').recruitXp;
   assert.deepStrictEqual(
     { amount: first.amount, label: first.label, first: first.first, awarded: first.awarded },
-    { amount: P.PLUG_XP_RECRUIT, label: 'PLUG RECRUITED', first: true, awarded: true });
+    { amount: spec, label: 'PLUG RECRUITED', first: true, awarded: true });
+  assert.deepStrictEqual(P.paid.map(r => r.reason), ['plug_recruit'],
+    'the recruit is attributable in the Clout log');
   assert.deepStrictEqual(Array.from(P.G.plugsRecruited), ['plug-dex']);
   assert.strictEqual(P.saves.length, 1);
 });

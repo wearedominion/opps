@@ -334,6 +334,9 @@ Carried from the draft, with current status:
     `xpNext * 1.6` are gone. The table was retuned from `round(100 · 1.05^L)` to
     `round(100 · 1.10^L)` — the 1.05 curve was too flat — so lifetime clout to the level-120 cap
     is ~92.7M rather than ~696k. The profile's Clout bar and "TO NEXT" label read this table.
+    <!-- SUPERSEDED by DOM-124 (2026-09-15): ranks.json now holds 100 titles SPREAD across
+         the 120-level cap, and tuning.progression.levelsPerRank no longer exists. The
+         paragraph below records the band model it replaced. See data/README.md. -->
     `ranks.json` was also fixed: rank names are now **bands** of `tuning.progression.levelsPerRank`
     (10) levels via `rankForLevel()`, so level 11 is "Soldier", not "Untouchable".
     **No open question here.** The open item is grant-side scaling, tracked on DOM-67.

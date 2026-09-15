@@ -243,7 +243,10 @@
 .mv-cap { color: var(--text-disabled); }
 .mv-daily-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 /* XP rewards are blue; cash is gold. Never the same colour. */
-.mv-xp-reward { font-family: var(--display); font-size: 15px; letter-spacing: 1px; color: var(--xp); }
+/* The daily's reward is Clout, so it takes --gold like every other value.
+   It was --xp back when the card advertised XP; DOM-124 established there is
+   no XP, and the contract reserves that blue for the XP/level meters. */
+.mv-clout-reward { font-family: var(--display); font-size: 15px; letter-spacing: 1px; color: var(--gold); }
 
 /* ── 4. The Hood ── */
 .mv-turf {

@@ -55,6 +55,11 @@ const G = {
   // they offer. Additive field with a default — no SCHEMA_VERSION bump.
   plugsRecruited: [],
 
+  // Actions whose first-completion x2 (misc.firstTimeBonus, DOM-124) has been
+  // paid, keyed by action id. Additive field with a default — no
+  // SCHEMA_VERSION bump; an old save simply earns its bonuses again.
+  xpFirsts: {},
+
   // MAKE MOVES (DOM-115). Objective index reached on the featured main job.
   // Additive with a default — no SCHEMA_VERSION bump.
   //

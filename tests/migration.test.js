@@ -2,7 +2,7 @@
 // Part of the suite; run it all with `node tests/run.js`.
 
 const {
-  assert, levelFromClout, rankForLevel, TABLE, RANKS, PER_RANK, migrate, SCHEMA_VERSION,
+  assert, levelFromClout, rankForLevel, TABLE, RANKS, MAX_LEVEL, migrate, SCHEMA_VERSION,
   G, FIXTURE, FIXTURE_V2, FIXTURE_V3, clone, plain, test,
 } = require('./harness');
 
@@ -205,9 +205,13 @@ test('the fixture player moves from level 5 to level 9', () => {
   assert.strictEqual(levelFromClout(save.clout, TABLE), 9); // syncLevel() does, on load
 });
 
-test('and keeps its rank title, because bands are wider than the move', () => {
-  // Under the r=1.10 curve the fixture lands at level 9, still inside the first
-  // 10-level band. Bands absorb small level moves; the second band starts at 11.
-  assert.strictEqual(rankForLevel(9, RANKS, PER_RANK), 'Shorty');
-  assert.strictEqual(rankForLevel(11, RANKS, PER_RANK), 'Soldier');
+test('and its rank title moves with it, because titles are ~1.2 levels wide', () => {
+  // This USED to assert the opposite: under 10-level bands the fixture's 5 -> 9
+  // move stayed inside the first band and the title never changed. DOM-124
+  // spread 100 titles over 120 levels, so a four-level move is now three
+  // titles. Worth pinning rather than deleting: it is the visible consequence
+  // of the ruling, and the thing a player would notice on their next load.
+  assert.strictEqual(rankForLevel(5, RANKS, MAX_LEVEL), RANKS[3]);
+  assert.strictEqual(rankForLevel(9, RANKS, MAX_LEVEL), RANKS[6]);
+  assert.notStrictEqual(rankForLevel(5, RANKS, MAX_LEVEL), rankForLevel(9, RANKS, MAX_LEVEL));
 });

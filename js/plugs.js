@@ -140,7 +140,8 @@ function plugRecruited(plugId) {
 
 // Recruiting a plug is a one-time event and pays once. Used until the XP system
 // lands (DOM-124); this is the prototype's own fallback figure.
-const PLUG_XP_RECRUIT = 35;
+// What a recruit is worth comes from data/xp-system.json now (DOM-124), which
+// prices each plug individually — so no constant here to drift from it.
 
 // Committing the last line of the pitch.
 //
@@ -168,11 +169,12 @@ function plugCommit(plugId) {
     return { amount: 0, label: 'JOB DONE', first: false, awarded: false };
   }
   G.plugsRecruited.push(plugId);
-  // DOM-124 defines awardXp and the XP toast. Guarded so Plugs ships and
-  // starts persisting recruits now; the award becomes visible when it lands.
-  if (typeof awardXp === 'function') awardXp(PLUG_XP_RECRUIT, 'PLUG RECRUITED');
+  const amount = awardXp(XpAwards.plugRecruit(plugId), 'PLUG RECRUITED', {
+    reason: REASON.PLUG_RECRUIT,
+    ref: { plugId: plugId },
+  });
   GameState.save();
-  return { amount: PLUG_XP_RECRUIT, label: 'PLUG RECRUITED', first: true, awarded: true };
+  return { amount: amount, label: 'PLUG RECRUITED', first: true, awarded: true };
 }
 
 // The quest panel under the dialog (DOM-90): steps with live progress, the

@@ -1,0 +1,222 @@
+{
+  "meta": {
+    "name": "OPPS — action award spec",
+    "version": "1.0.0",
+    "updated": "2026-06-17",
+    "source": "docs/design/chrome-money-v0.2/design_reference/xp-system.json v1.0.0",
+    "summary": "Relative weights for what each player action is worth. Paid in CLOUT, the games one currency — there is no separate XP.",
+    "adopted": {
+      "what": "actionXp only — the relative weight of one action against another.",
+      "notWhat": "The 1-100 curve, its level thresholds and its 2,245,525 lifetime total. data/progression.json is the single authority for the level curve and stays so; see data/README.md. Do not re-add a levels block here.",
+      "ruling": "DOM-124, Jake 2026-09-15, option (a): keep one currency (Clout) and the repo 1.10 curve; harvest this file for content only.",
+      "titles": "The 100 rank titles from the source levels[] were lifted into data/ranks.json and spread across the repos 120 levels."
+    },
+    "scale": {
+      "note": "These numbers are SPEC WEIGHTS, not Clout. js/xp.js converts one to the other against data/progression.json — see xpScale() there for the policy and its open question.",
+      "denominatedAt": 1
+    },
+    "unpaid": {
+      "note": "opps and missions.sideHustles are recorded here for completeness but are NOT paid from this file. data/enemies.json and data/jobs.json already price those two actions, level-scaled, and DOM-67 calibrates them. Paying both would double-pay; replacing them would overwrite a calibrated economy with a flat table. See js/xp.js XP_UNPAID.",
+      "categories": [
+        "opps",
+        "missions.sideHustles"
+      ]
+    }
+  },
+  "actionXp": {
+    "missions": {
+      "mainStory": {
+        "note": "Featured / main-job beats in MAKE MOVES. Largest single XP sources; pace the core climb.",
+        "perObjective": 60,
+        "completion": {
+          "base": 250,
+          "range": [
+            200,
+            320
+          ]
+        },
+        "examples": [
+          {
+            "id": "take_the_block",
+            "title": "TAKE THE BLOCK",
+            "xp": 250,
+            "bonus": "+ territory (see territory.claimTurf)"
+          }
+        ]
+      },
+      "sideHustles": {
+        "note": "Side hustles in MAKE MOVES. Repeatable, mid-size awards.",
+        "base": 45,
+        "byKind": {
+          "standard": 45,
+          "timed": 60,
+          "multiTarget": 65
+        },
+        "examples": [
+          {
+            "id": "quick_flip",
+            "title": "QUICK FLIP",
+            "kind": "timed",
+            "xp": 60,
+            "note": "Bonus for beating the timer."
+          },
+          {
+            "id": "clean_house",
+            "title": "CLEAN HOUSE",
+            "kind": "multiTarget",
+            "xp": 65,
+            "note": "Take out 5 Street Enforcers."
+          },
+          {
+            "id": "run_the_plug",
+            "title": "RUN THE PLUG",
+            "kind": "standard",
+            "xp": 35,
+            "note": "Recruit a new supplier (see plugs.recruit)."
+          }
+        ]
+      },
+      "daily": {
+        "note": "Daily objectives + login. Small, steady drip to reward showing up.",
+        "dailyGrind": 30,
+        "login": 10,
+        "streakBonusPerDay": 5,
+        "streakBonusCap": 50
+      }
+    },
+    "plugs": {
+      "note": "NPC suppliers in PLUGS. Recruiting a plug, then completing the job they offer.",
+      "recruit": 35,
+      "jobBase": 50,
+      "byPlug": [
+        {
+          "slotId": "plug-tommy",
+          "name": "TOMMY",
+          "moniker": "THE FENCE",
+          "recruitXp": 35,
+          "jobXp": 45,
+          "job": "Move merchandise, no questions asked."
+        },
+        {
+          "slotId": "plug-theresa",
+          "name": "THERESA",
+          "moniker": "THE CONNECT",
+          "recruitXp": 35,
+          "jobXp": 55,
+          "job": "Handle a favor to unlock the re-up discount."
+        },
+        {
+          "slotId": "plug-kylie",
+          "name": "KYLIE",
+          "moniker": "THE LOOKOUT",
+          "recruitXp": 35,
+          "jobXp": 50,
+          "job": "Act on intel — raid the Rival Crew."
+        },
+        {
+          "slotId": "plug-marco",
+          "name": "BIG HOMIE MARCO",
+          "moniker": "THE MECHANIC",
+          "recruitXp": 35,
+          "jobXp": 45,
+          "job": "Boost parts off the Auto Theft Ring."
+        },
+        {
+          "slotId": "plug-dex",
+          "name": "DEX",
+          "moniker": "THE TWEAKER",
+          "recruitXp": 35,
+          "jobXp": 70,
+          "job": "Set up a bigger play downtown."
+        }
+      ]
+    },
+    "opps": {
+      "note": "Eliminating Opps (OPPS LIST). XP scales with risk tier and threat rating.",
+      "formula": "xp = base[risk] + perThreat[risk] * threat",
+      "base": {
+        "Low": 8,
+        "Medium": 15,
+        "High": 25
+      },
+      "perThreat": {
+        "Low": 2,
+        "Medium": 3,
+        "High": 5
+      },
+      "cleanKillBonus": 5,
+      "targets": [
+        {
+          "code": "S-01",
+          "name": "LOCAL SNITCH",
+          "role": "Informant",
+          "risk": "Low",
+          "threat": 2,
+          "xp": 12
+        },
+        {
+          "code": "E-04",
+          "name": "STREET ENFORCER",
+          "role": "Street Muscle",
+          "risk": "Low",
+          "threat": 4,
+          "xp": 16
+        },
+        {
+          "code": "C-07",
+          "name": "RIVAL CREW",
+          "role": "Gang",
+          "risk": "Medium",
+          "threat": 3,
+          "xp": 24
+        },
+        {
+          "code": "A-02",
+          "name": "AUTO THEFT RING",
+          "role": "Car Thieves",
+          "risk": "Medium",
+          "threat": 6,
+          "xp": 33
+        },
+        {
+          "code": "B-01",
+          "name": "RIVAL BOSS",
+          "role": "Gang Leader",
+          "risk": "High",
+          "threat": 6,
+          "xp": 55
+        },
+        {
+          "code": "F-09",
+          "name": "UNDERCOVER AGENT",
+          "role": "Federal Agent",
+          "risk": "High",
+          "threat": 8,
+          "xp": 65
+        }
+      ]
+    },
+    "territory": {
+      "note": "THE HOOD map. Claiming/holding buildings & turf. Building XP scales with the size tier from city-data.js.",
+      "claimBuildingByTier": {
+        "1": 5,
+        "2": 10,
+        "3": 20,
+        "4": 35,
+        "5": 60
+      },
+      "claimObjectiveBuilding": 75,
+      "claimTurf": 100,
+      "defendRaid": 75,
+      "hold24h": 50
+    },
+    "misc": {
+      "note": "Minor street actions (surface in the activity LOG).",
+      "robbery": 35,
+      "shakedownDealer": 25,
+      "flipProduct": 50,
+      "escapeHeat": 15,
+      "firstTimeBonus": "x2 on the first completion of any uniquely-IDed action"
+    }
+  }
+}
