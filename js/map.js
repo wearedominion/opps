@@ -661,7 +661,7 @@ const GameMap = (() => {
     if (typeof awardXp === 'function' && typeof XpAwards !== 'undefined') {
       const weight = b.objective ? XpAwards.territoryObjective() : XpAwards.territoryBuilding(b.tier);
       awardXp(weight, 'TURF CLAIMED', {
-        reason: (typeof REASON !== 'undefined' ? REASON.QUEST_REWARD : 'quest_reward'),
+        reason: (typeof REASON !== 'undefined' ? REASON.TERRITORY_CLAIM : 'territory_claim'),
         ref: { parcel: b.id, tier: b.tier },
         toast: true,
       });
