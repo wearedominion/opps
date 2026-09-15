@@ -7,10 +7,18 @@
 // ═════════════════════════════════════════════
 //  GEAR — REAL CATALOG (DOM-75)
 //  The prototype's hardcoded GEAR_SLOTS / GEAR_ITEMS body-doll is gone: the
-//  loadout runs on data/store.json (weapon / armor / vehicle / utility), one
+//  loadout runs on data/gear.json (weapon / armor / vehicle / utility), one
 //  primary slot per type plus Crew-unlocked secondaries, capacity from
-//  slotCapacity() (js/state.js). This closed the TDD §7 open decision:
-//  gear lives in store.json; there is no separate gear.json.
+//  slotCapacity() (js/state.js).
+//
+//  Single source of truth (DOM-123, 2026-09-14): data/gear.json owns every
+//  item definition — storefront stock and drop-only alike. data/store.json was
+//  this same catalog under a narrower name and is gone; the storefront is the
+//  rows where dropOnly is not set. This supersedes the earlier TDD §7 note
+//  that gear lived in store.json with no separate gear.json.
+//
+//  Items also carry a `slot` (the 7 permanent paper-doll keys, DOM-121). The
+//  `type` field below is transitional and is retired by DOM-120/DOM-121.
 // ═════════════════════════════════════════════
 
 // A skill raises either a POOL ceiling (`pool` -> G[pool].max, topping up
@@ -62,7 +70,7 @@ function pfEsc(s) {
 }
 
 // Gear types in display order: the Crew rotation first, then whatever else the
-// catalog carries (utility). Data-driven — a new type in store.json just shows up.
+// catalog carries (utility). Data-driven — a new type in gear.json just shows up.
 function pfGearTypes() {
   const rot = tune('crew.slotRotation').slice();
   for (const i of STORE_ITEMS) if (rot.indexOf(i.type) === -1) rot.push(i.type);

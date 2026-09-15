@@ -8,7 +8,7 @@ the targets (DOM-71/DOM-81, §6)** · **Gear catalog priced against the faucets 
 fixed-point (DOM-69/76, §12)** · **EV — USD conversion layer (DOM-94, §13)** ·
 **Rarity drop ladder, blue+ drop-only (DOM-18, §16)**
 **Read before:** setting any number in `data/tuning.json`, `data/jobs.json`,
-`data/enemies.json`, `data/store.json`, `data/properties.json` or `data/progression.json`.
+`data/enemies.json`, `data/gear.json`, `data/properties.json` or `data/progression.json`.
 **Tracks:** DOM-67 (this doc + `tools/econ-sim/`) · feeds DOM-79, DOM-71, DOM-81, DOM-73, DOM-74.
 
 The simulator is `tools/econ-sim/sim.js` — run `node tools/econ-sim/sim.js` from the repo
@@ -107,7 +107,7 @@ shield **at current numbers** — recheck if `defeatLossRate` or starting balanc
 | F2 | **Spots as built are a $127k/h tap-farm** (full income per tap, 60s min). No accrual rate exists in tuning — the intended collect-on-login model cannot be tuned until DOM-74 defines one. **RESOLVED 2026-09-11** — the DOM-74 pass (§9) replaces per-tap income with cap-clamped accrual; the tap-farm is structurally gone. | ~~DOM-74~~ closed |
 | F3 | **Health, not Stamina, paces fighting**: at p=0.5 health regen sustains ~5.6 fights/h vs stamina's 20/h. The Hospital/heal loop is the real combat governor — price heals accordingly. **RESOLVED 2026-09-12** — the DOM-72 pass (§11) makes this the design: the Hospital timer gates free fighting at ~4/h and the priced early-out is the recurring combat drain. | ~~DOM-72~~ closed |
 | F4 | **The catalogs starve the curve** (see §2). Flat Clout/day from L7 meets ×1.1/level costs — the late game is a wall, not a slope. **RESOLVED 2026-09-11** — the DOM-71/DOM-81 catalog pass (§6) extends both catalogs to L110 and lands the cap at exactly 365 committed days. | ~~DOM-71, DOM-81~~ closed |
-| F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `store.json` to pace it. **RESOLVED 2026-09-11** — the DOM-73 pass (§7) gates every item and prices by rule at the gate (8h/8h/12h/4h by type). | ~~DOM-73~~ closed |
+| F5 | **Gear is trivially affordable** — the priciest item costs ~2.2h of jobs at L7, and there are no level gates on `gear.json` to pace it. **RESOLVED 2026-09-11** — the DOM-73 pass (§7) gates every item and prices by rule at the gate (8h/8h/12h/4h by type). | ~~DOM-73~~ closed |
 
 ## 5. DOM-79 decision record — ratified 2026-09-11 (Jake)
 

@@ -257,5 +257,5 @@ Health is **retained** (this reverses the earlier "remove Health" decision) and 
 - **`js/state.js`** — **keep** `health`/`maxHealth`; add **hospitalized state + heal-ready timestamp**. Add `stamina`/`maxStamina` (fights) alongside the `energy`→`moves` rename.
 - **`js/main.js`** — level-up refills Stamina, Moves, **and Health**.
 - **`js/hud.js` / `index.html`** — **keep** the Health bar; add a Stamina meter; combat overlay HP bars are now meaningful (they drive the round loop).
-- **`data/store.json` / `js/store.js`** — the Safe House `hpBonus` field is **meaningful again** (gear can grant Health); generalize so gear may carry Attack/Defense/Health.
+- **`data/gear.json` / `js/store.js`** — the Safe House `hpBonus` field is **meaningful again** (gear can grant Health); generalize so gear may carry Attack/Defense/Health.
 - **Hospital/heal** — new: a heal action (time-based regen, plus Cash and/or premium speed-up). Likely lives in The Hood or the hospital surface.

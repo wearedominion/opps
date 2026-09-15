@@ -30,7 +30,7 @@ const TUNING      = readJSON('data/tuning.json');
 const PROGRESSION = readJSON('data/progression.json').levels;
 const JOBS        = readJSON('data/jobs.json');
 const ENEMIES     = readJSON('data/enemies.json');
-const STORE       = readJSON('data/store.json');
+const STORE       = readJSON('data/gear.json');
 // Cash-sink math reads BUYABLE only (DOM-18): blue+ rarities are drop-only,
 // so they are never a purchase sink — their notional value is drop upside,
 // quantified in dropReport(), never silently mixed into the circuit.

@@ -1,0 +1,386 @@
+{
+  "version": 1,
+  "_note": "City configuration for THE HOOD (DOM-118), extracted from the Chrome Money v0.2 prototype design_reference/city-data.js by DOM-123. The city is GENERATED, not stored: this file holds the seed and the parameters, and the generator in js/ reproduces the same buildings every time. Do not store generated buildings here.",
+  "seed": 20260611,
+  "W": 1240,
+  "H": 2300,
+  "downtown": {
+    "x": 400,
+    "y": 1000,
+    "radius": 1450,
+    "falloff": 1.6,
+    "peak": 4.2
+  },
+  "bounds": {
+    "w": 1100,
+    "h": 1980,
+    "cx": 381,
+    "cy": 866,
+    "panMargin": 0.2
+  },
+  "tiers": [
+    {
+      "id": 1,
+      "name": "Single-family house",
+      "frac": 0.46,
+      "fill2d": "#1f2229",
+      "edge2d": "#2a2e37",
+      "color3d": "#434b59",
+      "hBase": 0.85,
+      "hSpan": 0.2
+    },
+    {
+      "id": 2,
+      "name": "Townhouse / small multi-unit",
+      "frac": 0.58,
+      "fill2d": "#282d36",
+      "edge2d": "#343b46",
+      "color3d": "#4e5667",
+      "hBase": 1.5,
+      "hSpan": 0.5
+    },
+    {
+      "id": 3,
+      "name": "Mid-rise",
+      "frac": 0.7,
+      "fill2d": "#333a45",
+      "edge2d": "#404853",
+      "color3d": "#5a6376",
+      "hBase": 2.5,
+      "hSpan": 0.7
+    },
+    {
+      "id": 4,
+      "name": "High-rise",
+      "frac": 0.83,
+      "fill2d": "#3f4754",
+      "edge2d": "#4d5664",
+      "color3d": "#667085",
+      "hBase": 4,
+      "hSpan": 1.1
+    },
+    {
+      "id": 5,
+      "name": "Downtown skyscraper",
+      "frac": 0.96,
+      "fill2d": "#4c5666",
+      "edge2d": "#5b6571",
+      "color3d": "#737e94",
+      "hBase": 5.5,
+      "hSpan": 2.5
+    }
+  ],
+  "gold": {
+    "fill2d": "#39352a",
+    "edge2d": "#474132",
+    "color3d": "#39352a"
+  },
+  "factions": {
+    "player": {
+      "id": "player",
+      "name": "Your Crew",
+      "color": "#e8c98a",
+      "token": "--chrome"
+    },
+    "rival": {
+      "id": "rival",
+      "name": "Rival Territory",
+      "color": "#e0523f",
+      "token": "--red"
+    },
+    "neutral": {
+      "id": "neutral",
+      "name": "Unclaimed",
+      "color": "#55555f",
+      "token": "--ghost"
+    }
+  },
+  "territory": {
+    "anchors": [
+      {
+        "x": 430,
+        "y": 1010,
+        "owner": "player",
+        "turf": "BASE",
+        "radius": 380
+      },
+      {
+        "x": 845,
+        "y": 968,
+        "owner": "rival",
+        "turf": "CALDERO CARTEL",
+        "radius": 320
+      },
+      {
+        "x": 905,
+        "y": 1640,
+        "owner": "rival",
+        "turf": "THE HOOK",
+        "radius": 300
+      },
+      {
+        "x": 600,
+        "y": 1352,
+        "owner": "rival",
+        "turf": "MERCER ST CRIPS",
+        "radius": 250
+      },
+      {
+        "x": 815,
+        "y": 2040,
+        "owner": "rival",
+        "turf": "HELLHOUNDS MC",
+        "radius": 300
+      },
+      {
+        "x": 470,
+        "y": 360,
+        "owner": "rival",
+        "turf": "CROFT SOCIETY",
+        "radius": 280
+      }
+    ]
+  },
+  "camera": {
+    "target": {
+      "x": 430,
+      "y": 1010
+    },
+    "orbit": {
+      "phi": 0.95,
+      "dist": 780,
+      "phiRange": [
+        0.3,
+        1.25
+      ],
+      "distRange": [
+        240,
+        2100
+      ]
+    },
+    "sun": {
+      "dir": [
+        0.62,
+        0.46,
+        -0.64
+      ],
+      "dist": 2600,
+      "intensity": 1.56
+    }
+  },
+  "parks": [
+    {
+      "x": 1000,
+      "y": 260,
+      "w": 200,
+      "h": 170
+    },
+    {
+      "x": 250,
+      "y": 420,
+      "w": 170,
+      "h": 130
+    },
+    {
+      "x": 140,
+      "y": 1160,
+      "w": 200,
+      "h": 160
+    },
+    {
+      "x": 700,
+      "y": 1700,
+      "w": 300,
+      "h": 230
+    },
+    {
+      "x": 1010,
+      "y": 1430,
+      "w": 160,
+      "h": 140
+    }
+  ],
+  "avenues": [
+    "M-12 460 L1252 1240",
+    "M-12 1900 L860 -12",
+    "M180 2312 L1252 1430",
+    "M-12 980 L640 -12",
+    "M520 2312 L1252 1860",
+    "M-12 1560 L760 2312",
+    "M620 -12 L1252 760"
+  ],
+  "river": "M980 -20 C 900 360, 1060 620, 860 940 C 700 1190, 520 1330, 540 1620 C 556 1860, 430 2080, 470 2320",
+  "bridges": [
+    [
+      "M880 300",
+      "L990 312"
+    ],
+    [
+      "M880 766",
+      "L1000 752"
+    ],
+    [
+      "M600 1208",
+      "L716 1244"
+    ],
+    [
+      "M478 1500",
+      "L604 1488"
+    ],
+    [
+      "M414 2012",
+      "L548 1996"
+    ]
+  ],
+  "pins": [
+    {
+      "x": 430,
+      "y": 1010,
+      "kind": "player",
+      "label": "BASE",
+      "sub": "Your turf · Downtown",
+      "pulse": true
+    },
+    {
+      "x": 845,
+      "y": 968,
+      "kind": "rival",
+      "label": "CALDERO CARTEL",
+      "sub": "East Caldero · 8/8"
+    },
+    {
+      "x": 905,
+      "y": 1640,
+      "kind": "rival",
+      "label": "THE HOOK",
+      "sub": "Harborside · 6/8"
+    },
+    {
+      "x": 600,
+      "y": 1352,
+      "kind": "rival",
+      "label": "MERCER ST CRIPS",
+      "sub": "Dunbar Flats · 5/8"
+    },
+    {
+      "x": 815,
+      "y": 2040,
+      "kind": "rival",
+      "label": "HELLHOUNDS MC",
+      "sub": "Salton Corridor · 7/8"
+    },
+    {
+      "x": 470,
+      "y": 360,
+      "kind": "rival",
+      "label": "CROFT SOCIETY",
+      "sub": "Corona Heights · 6/8"
+    },
+    {
+      "x": 700,
+      "y": 1480,
+      "kind": "drop",
+      "label": "DROP",
+      "sub": "Reward · 19:48"
+    },
+    {
+      "x": 250,
+      "y": 1850,
+      "kind": "drop",
+      "label": "STASH",
+      "sub": "Reward · $400"
+    }
+  ],
+  "labels": [
+    {
+      "x": 70,
+      "y": 205,
+      "t": "Westshore",
+      "sub": "The Coast",
+      "size": 21,
+      "rot": 0,
+      "op": 0.82
+    },
+    {
+      "x": 360,
+      "y": 258,
+      "t": "Corona Heights",
+      "sub": "The Hill",
+      "size": 21,
+      "rot": 0,
+      "op": 0.82
+    },
+    {
+      "x": 980,
+      "y": 232,
+      "t": "Colinas Hills",
+      "sub": "The Hills",
+      "size": 21,
+      "rot": 0,
+      "op": 0.85
+    },
+    {
+      "x": 250,
+      "y": 945,
+      "t": "Downtown",
+      "sub": "The Core",
+      "size": 26,
+      "rot": 0,
+      "op": 1
+    },
+    {
+      "x": 822,
+      "y": 832,
+      "t": "East Caldero",
+      "sub": "The East",
+      "size": 22,
+      "rot": 72,
+      "op": 0.78
+    },
+    {
+      "x": 520,
+      "y": 1288,
+      "t": "Dunbar Flats",
+      "sub": "The Flats",
+      "size": 22,
+      "rot": 0,
+      "op": 0.8
+    },
+    {
+      "x": 96,
+      "y": 1440,
+      "t": "Holloway Park",
+      "sub": "The Commons",
+      "size": 21,
+      "rot": 0,
+      "op": 0.82
+    },
+    {
+      "x": 770,
+      "y": 1560,
+      "t": "Harborside",
+      "sub": "The Port",
+      "size": 21,
+      "rot": 0,
+      "op": 0.85
+    },
+    {
+      "x": 255,
+      "y": 2010,
+      "t": "Valle Verde",
+      "sub": "The Valle",
+      "size": 22,
+      "rot": 0,
+      "op": 0.8
+    },
+    {
+      "x": 760,
+      "y": 2120,
+      "t": "Salton Corridor",
+      "sub": "End of the Line",
+      "size": 20,
+      "rot": 0,
+      "op": 0.8
+    }
+  ]
+}

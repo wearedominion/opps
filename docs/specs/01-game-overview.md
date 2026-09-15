@@ -160,7 +160,7 @@ NPC "connect" characters with portraits and multi-line dialog (narrative/flavor;
 in-session only). Data is defined in `js/plugs.js`.
 
 ### 4.6 The Plug / Store (`store` tab)
-Buy gear (`data/store.json`, **generated** — prices are hours-of-income at each item's level
+Buy gear (`data/gear.json`, **generated** — prices are hours-of-income at each item's level
 gate) that boosts attack/defense; owned gear is **upgradeable** (`upgradeGear`, geometric cost,
 stat cap at LV 10 with cosmetic prestige beyond — DOM-88). Ownership is own-once per item
 (duplicates tracked for a future consumption rule). Also hosts the direct-purchase SKU section

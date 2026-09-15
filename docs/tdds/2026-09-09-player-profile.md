@@ -167,8 +167,9 @@ authored and will be added to the repo separately.
   `js/profile.js`, add the two `fetch`es to the `Promise.all`, assign to `GEAR`/`SKILLS`, and
   update the denominator to `/ 7`. The rendering code reads through helper functions
   (`pfAllItems`, `pfFindItem`, `pfSkillDef`) precisely so this swap touches nothing else.
-- **⚠️ STILL UNRESOLVED — `gear.json` vs `store.json`.** Either store items gain a `slot` field
-  and `gear.json` is dropped, or `gear.json` supersedes `store.json` for equippables.
+- **✅ RESOLVED 2026-09-14 (DOM-123) — `gear.json` vs `store.json`.** `store.json` was renamed to
+  `data/gear.json` and owns every item definition; there is no second file. Items gained a `slot`
+  field carrying the seven permanent paper-doll keys (DOM-121). See `data/README.md` §gear.json.
   **Duplicating item definitions across two files is not acceptable.** Deferring the JSON work
   deferred this decision too — it must be answered before the data migration, and it is coupled to
   the `buyItem()` refactor in §11.
@@ -315,7 +316,8 @@ Carried from the draft, with current status:
 6. **Secondary gear slots.** `docs/profileScreen.md` §5 requires secondary slots with +1/+2/+3
    badges, capacity from Crew size. **This build has single slots only — the spec and the build
    still conflict. Unresolved.**
-7. **`gear.json` vs `store.json`** — one source of truth for items (§7). **Still unresolved**;
+7. ~~**`gear.json` vs `store.json`** — one source of truth for items (§7).~~ **RESOLVED
+   2026-09-14 (DOM-123): `gear.json` owns item definitions; `store.json` is gone.** Originally:
    deferred along with the JSON migration.
 8. **Leaderboard data source** (§9) — **still the blocking dependency.**
 

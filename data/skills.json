@@ -1,0 +1,47 @@
+[
+  {
+    "id": "moves",
+    "label": "MAX MOVES",
+    "build": "GRINDER",
+    "tuning": "moves",
+    "effect": "More PvE jobs per session — faster mastery, cash and levels",
+    "buildMeaning": "A build that runs more jobs per session to out-earn and out-level everyone else.",
+    "note": "The safe economic path. Every point widens the pool you draw from to run jobs, so you clear more of the map per session and bank mastery faster."
+  },
+  {
+    "id": "stamina",
+    "label": "MAX STAMINA",
+    "build": "FIGHTER",
+    "tuning": "stamina",
+    "effect": "Attack other players more often. Costs double — fighting cadence is an investment",
+    "buildMeaning": "A build that can attack far more often, built to pressure other players.",
+    "note": "The aggression path. Stamina gates how often you can attack another player, and it costs double on purpose — a fighting cadence should be a real investment."
+  },
+  {
+    "id": "health",
+    "label": "MAX HEALTH",
+    "build": "TANK",
+    "tuning": "health",
+    "effect": "Survive more rounds in turn-based fights. Resist hospitalization, poor to farm",
+    "buildMeaning": "A build with a deep health pool that can endure more fights.",
+    "note": "The defender identity. Combat is turn-based, so a deeper pool means you outlast attackers, resist hospitalization, and stop being worth farming."
+  },
+  {
+    "id": "attack",
+    "label": "ATTACK",
+    "build": "COMBAT",
+    "tuning": "attack",
+    "effect": "Damage dealt when you engage. Equipped gear dominates this total",
+    "buildMeaning": "A base combat stat rather than a build of its own — gear carries most of this number.",
+    "note": "Base combat stat. Equipped gear is expected to dominate your Attack total, so raw points here are a weak sink until tuned."
+  },
+  {
+    "id": "defense",
+    "label": "DEFENSE",
+    "build": "COMBAT",
+    "tuning": "defense",
+    "effect": "Damage reduced when you get hit. Equipped gear dominates this total",
+    "buildMeaning": "A base combat stat rather than a build of its own — gear carries most of this number.",
+    "note": "Base combat stat. Equipped gear is expected to dominate your Defense total, so raw points here are a weak sink until tuned."
+  }
+]

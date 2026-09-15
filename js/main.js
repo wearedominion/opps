@@ -5,9 +5,27 @@
 let JOBS = [];
 let QUESTS = [];   // data/quests.json — Plug quests (DOM-90)
 let ENEMIES = [];
+// Item definitions (data/gear.json). THE single source of truth for every item
+// in the game — storefront stock and drop-only alike (DOM-123). The old
+// data/store.json was this same catalog under a narrower name; it is gone.
+let GEAR = [];
+// Transitional alias for GEAR, kept so the pre-v0.2 renderers keep reading the
+// catalog under their old name. New code uses GEAR; the alias is deleted when
+// DOM-116 (Store) and DOM-117 (Profile GEAR) rebuild the last of those screens.
 let STORE_ITEMS = [];
 let PROPERTIES = [];
 let RANK_NAMES = [];
+// Skill definitions (data/skills.json) — identity and copy only. Point costs
+// and per-point grants stay in tuning.json; a skill row names its tuning key.
+let SKILLS = [];
+// Plug roster (data/plugs.json), migrated out of PLUGS_DATA in js/plugs.js.
+let PLUGS = [];
+// MAKE MOVES content (data/moves.json): featured job, side hustles, daily,
+// turf, hood ops, sightings. Placeholder content — see the file's _note.
+let MOVES = null;
+// City configuration (data/city.json): seed + parameters for THE HOOD. The
+// city is generated from the seed, never stored building-by-building.
+let CITY = null;
 // Economy tunables (data/tuning.json). Object, not an array — see 04-game-data-spec §3.6.
 // Null until loadGameData() resolves; economy callers must guard (`TUNING?.loot`).
 let TUNING = null;
@@ -129,15 +147,15 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 12) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 16) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, store, properties, ranks, tuning, progression, monetization, unlocks, quests, platform, portraits] = await Promise.all([
+    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, platform, portraits] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
-      track(fetch('data/store.json').then(r => r.json())),
+      track(fetch('data/gear.json').then(r => r.json())),
       track(fetch('data/properties.json').then(r => r.json())),
       track(fetch('data/ranks.json').then(r => r.json())),
       track(fetch('data/tuning.json').then(r => r.json())),
@@ -146,6 +164,13 @@ async function loadGameData() {
       track(fetch('data/unlocks.json').then(r => r.json())),
       // Quest content — a miss degrades to plugs-without-quests, not a dead app.
       track(fetch('data/quests.json').then(r => r.json()).catch(() => [])),
+      // Skill / plug / Make Moves / city content (DOM-123). Each degrades to an
+      // empty screen rather than a dead app, matching the quests treatment
+      // above — none of them gate boot the way tuning and progression do.
+      track(fetch('data/skills.json').then(r => r.json()).catch(() => [])),
+      track(fetch('data/plugs.json').then(r => r.json()).catch(() => [])),
+      track(fetch('data/moves.json').then(r => r.json()).catch(() => null)),
+      track(fetch('data/city.json').then(r => r.json()).catch(() => null)),
       // Optional config — a miss must not block core data or the loader (T5).
       track(fetch('data/platform.json').then(r => r.json()).catch(() => ({}))),
       // Optional art map — a miss degrades to placeholder circles, not a dead app.
@@ -154,7 +179,8 @@ async function loadGameData() {
 
     JOBS        = jobs;
     ENEMIES     = enemies;
-    STORE_ITEMS = store;
+    GEAR        = gear;
+    STORE_ITEMS = GEAR;   // transitional alias — same array, not a copy
     PROPERTIES  = properties;
     RANK_NAMES  = ranks;
     TUNING      = tuning;
@@ -162,6 +188,10 @@ async function loadGameData() {
     IAP_PRODUCTS = monetization;
     UNLOCKS      = unlocks;
     QUESTS       = quests || [];
+    SKILLS       = skills || [];
+    PLUGS        = plugs || [];
+    MOVES        = moves || null;
+    CITY         = city || null;
     PLATFORM    = platform || {};
     PORTRAITS   = {
       enemies: (portraits && portraits.enemies) || {},
