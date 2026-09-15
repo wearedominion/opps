@@ -147,3 +147,6 @@ async function crewRefresh() {
   const count = Crew.getCount();
   toast(count > 0 ? `Crew: ${count} soldier${count > 1 ? 's' : ''}` : 'No crew members yet.');
 }
+
+// This screen claims its tab (DOM-127). Crew size changes from recruiting, so the roster is rebuilt on entry.
+registerScreen('crew', renderCrew);

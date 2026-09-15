@@ -1,0 +1,143 @@
+/* ═══════════════════════════════════════════════════════════
+   OPPS — CHROME MONEY v0.2
+   Implements the UI Implementation Contract in CLAUDE.md and the
+   v0.2 design handoff (docs/design/chrome-money-v0.2/README.md).
+   Cold near-black panels. One warm metal gradient reserved for
+   money and the single primary action. Anton display over
+   Space Grotesk UI. No emoji, no red outside combat.
+
+   Do not add values from the retired amber/highlighter guide.
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* ── Chrome Money v0.2 tokens — canonical (README §Design tokens) ── */
+  /* surfaces */
+  --app:            #08080a;  /* outside the app frame */
+  --bg:             #0b0b0c;  /* app background, always with the pinstripe */
+  --surface-deep:   #0d0d11;  /* header wells, image backdrops, log container */
+  --surface:        #111116;  /* card gradient end, portrait backdrops */
+  --surface-raised: #1b1b22;  /* buttons, icon wells, inputs, avatars */
+  --track:          #1f1f27;  /* meter tracks, hairline section rules */
+  --row-divider:    #1d1c22;  /* hairline between list rows */
+
+  /* borders — always 1px */
+  --border:          #26262e;  /* default card border, header rule */
+  --border-strong:   #33333d;  /* control borders (buttons, inputs, portraits) */
+  --border-gold:     #3d3627;  /* gold-tinted: accent cards, hover, overlays */
+  --border-danger:   #5a2b24;  /* engage / opp borders */
+  --border-disabled: #22222a;  /* disabled buttons/chips (with --bg-disabled) */
+  --bg-disabled:     #141419;
+
+  /* ink */
+  --gold:          #e8c98a;  /* flat gold: values, icons, active labels */
+  --gold-deep:     #a8873f;  /* end of gold bar-fill gradient */
+  --ink:           #161208;  /* text on gold — never white */
+  --text:          #f2f0ec;  /* primary text */
+  --text-bright:   #d8d6d0;  /* body copy, message bubbles, icons */
+  --text-mid:      #8e8e9a;  /* secondary text, inactive labels */
+  --text-label:    #7a7a86;  /* eyebrow labels, timestamps */
+  --text-disabled: #4f4f59;  /* disabled labels, "/ cap" halves */
+  --xp:            #6f8cff;  /* XP/level bars, skill-point badge */
+  --danger:        #e0523f;  /* opps, HP bars, unread badges, timers */
+  --success:       #4fd39a;  /* owned/completed/positive, working dots */
+
+  /* gradients (exact strings) */
+  --gold-chrome:   linear-gradient(135deg,#f3e0b4,#e8c98a 40%,#c9a55c);
+  --card-fill:     linear-gradient(180deg,#181820,#111116);
+  --overlay-fill:  linear-gradient(180deg,#181820,#0d0d11);
+  --warm-card:     linear-gradient(110deg,#1d1b16,#111116);
+  --gold-bar:      linear-gradient(90deg,#e8c98a,#a8873f);
+  --portrait-scrim: linear-gradient(0deg,rgba(8,8,10,0.9),transparent);
+  --portrait-scrim-soft: linear-gradient(0deg,rgba(8,8,10,0.7),transparent); /* shorter scrims over list art */
+
+  --modal-shadow: 0 30px 80px rgba(0,0,0,.6);
+
+  /* shape — everything is a pill or a soft card */
+  --r-pill: 999px;  /* ALL buttons, chips, badges, bars, avatars */
+  --r-panel: 22px;  /* centered overlay panels */
+  --r-sheet: 24px;  /* bottom sheets: 24px 24px 0 0 */
+  --r-card: 16px;   /* cards, list containers */
+  --r-tile: 14px;   /* small tiles, portrait frames, drawer items */
+  --r-icon: 12px;   /* 38px icon buttons, 36px map controls */
+
+  --pad-screen: 20px;  --gap-list: 9px;  --gap-section: 14px;
+
+  --display: 'Anton', sans-serif;
+  --ui:      'Space Grotesk', sans-serif;
+
+  /* rarity (DOM-18, CLAUDE.md "Rarity") — v0.2 KEEPS this 6-tier
+     reserved-hue scale (ruled on DOM-110, 2026-09-14): the prototype's
+     4-tier gold-LEGEND scale is NOT adopted; gold stays money-only.
+     Item NAME ink + 1px border tint, never a fill, never a glow.
+     Mythic reserved. */
+  --rarity-common:    #a6a6b2;  --rarity-common-edge:    #33333d;
+  --rarity-uncommon:  #8fbf78;  --rarity-uncommon-edge:  #33412f;
+  --rarity-rare:      #56b3c9;  --rarity-rare-edge:      #24404a;
+  --rarity-epic:      #a08ae6;  --rarity-epic-edge:      #3a3354;
+  --rarity-legendary: #d99a4e;  --rarity-legendary-edge: #4a3823;
+  --rarity-mythic:    #cf6f9e;  --rarity-mythic-edge:    #48293a;
+
+  /* ── Legacy v0.1 aliases ──
+     The pre-v0.2 rules below still read these. Each screen rebuild
+     (DOM-111..119) moves its rules onto the canonical names; delete the
+     aliases with the last one. Do not use them in new code. */
+  --well:        var(--surface-deep);
+  --panel-top:   #181820;
+  --panel:       var(--surface);
+  --control:     var(--surface-raised);
+  --border-ctrl: var(--border-strong);
+  --border-red:  var(--border-danger);
+  --body:        var(--text-bright);
+  --muted:       var(--text-mid);
+  --faint:       var(--text-label);
+  --ghost:       #55555f;
+  --disabled:    var(--text-disabled);
+  --chrome:      var(--gold);
+  --chrome-ink:  var(--ink);
+  --red:         var(--danger);
+  --green:       var(--success);
+  --chrome-fill: var(--gold-chrome);
+  --panel-fill:  var(--card-fill);
+  --energy-fill: var(--gold-bar);
+  --chip-locked-bg:     var(--bg-disabled);
+  --chip-locked-border: var(--border-disabled);
+}
+
+::selection { background: var(--chrome); color: var(--chrome-ink); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--app);
+  color: var(--body);
+  font-family: var(--ui);
+  font-size: 15px;
+  line-height: 1.5;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   APP SHELL
+   The bezel is a prototype presentation device and is NOT built.
+   ═══════════════════════════════════════════════════════════ */
+
+.app {
+  position: relative;
+  width: 100%;
+  max-width: 402px;
+  margin: 0 auto;
+  /* a fixed frame: the header stays put and `main` scrolls inside it,
+     rather than the whole document scrolling */
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  /* the pinstripe — screen surface only (v0.2 exact string) */
+  background-image: repeating-linear-gradient(45deg,
+    rgba(255,255,255,0.012), rgba(255,255,255,0.012) 1px,
+    transparent 1px, transparent 7px);
+}

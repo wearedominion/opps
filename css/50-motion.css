@@ -1,0 +1,62 @@
+/* ═══════════════════════════════════════════════════════════
+   MOTION (README §Motion)
+   The shared transition and keyframe set, plus three single-line rules that
+   have always ridden along with it.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ── MOTION (v0.2 README §Motion) ── */
+/* sheen — reward-granting gold CTAs ONLY (COMPLETE, BUY, LOCK IN/CONFIRM,
+   CLAIM TURF). Parent needs position:relative-free pills: the recipe is
+   self-contained — overflow hidden + ::after stripe. */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 34%;
+  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);
+  animation: sheen 4.2s linear infinite;
+  pointer-events: none;
+}
+@keyframes sheen {
+  0%       { transform: translateX(-150%) skewX(-18deg); }
+  55%,100% { transform: translateX(320%)  skewX(-18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  button::after, .sheen::after { animation: none !important; }
+}
+/* live dots / timers / selection ring */
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.blink { animation: blink 1.4s infinite; }
+/* map pings */
+@keyframes mappulse {
+  0%   { transform: scale(0.5); opacity: .8; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* hood activity actions — COLLECT is the one primary; the rest go secondary */
+.do-job-btn.secondary {
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
+}
+.do-job-btn.secondary:hover { border-color: var(--border-gold); filter: none; }
+
+/* Replaces inline style="" attributes swept out of the renderers
+   (crew.js, jobs.js, stats.js). Static styling belongs here. */
+.card-note { color: var(--muted); font-size: 13px; }
+.iap-unit { font-family: var(--ui); font-size: 10px; letter-spacing: 2px; color: var(--faint); }
+
+.job-locked-note {
+  color: var(--disabled); font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; margin-top: 6px;
+}
+
+/* money in the metrics panel: --chrome at body size, never the hero clip */
+.metric-val.cash { color: var(--chrome); }
+
+.levelup-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+#inventory-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+#map-container { position: absolute; inset: 0; overflow: hidden; cursor: grab; }

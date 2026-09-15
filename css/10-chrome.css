@@ -1,0 +1,313 @@
+/* ═══════════════════════════════════════════════════════════
+   SHARED CHROME
+   The furniture every screen sits in: header and clout cluster, the scroll
+   body, tab containers, cards, buttons and meters. A screen restyling one of
+   these is changing it for every screen — say so on the ticket.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ── HEADER ── */
+header {
+  flex: none;
+  padding: 52px var(--pad-screen) 0;
+  background: var(--bg);
+  position: relative;
+  z-index: 10;
+}
+.hdr-row { display: flex; align-items: center; gap: var(--gap-section); }
+
+.logo {
+  font-family: var(--display);
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: 4px;
+  background: var(--gold-chrome);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+/* ── clout cluster (v0.2 README §Header) — tap opens the metrics panel ──
+   CLOUT label over the value; rank title over a 4px XP mini-bar; a 9px ▾ */
+.hdr-cluster {
+  display: flex; align-items: center; gap: 10px;
+  margin-left: auto;
+  background: none; border: none; padding: 0;
+  cursor: pointer; text-align: left;
+  transition: opacity .16s;
+}
+.hdr-cluster:hover { opacity: .82; }
+.hdr-cluster-col { display: flex; flex-direction: column; gap: 3px; }
+.hdr-cluster-k {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
+}
+.hdr-cluster-v {
+  font-family: var(--display); font-size: 15px; letter-spacing: 1px;
+  line-height: 1; color: var(--text);
+}
+.hdr-xp-mini {
+  display: block; min-width: 58px; height: 4px;
+  border-radius: var(--r-pill); background: var(--track); overflow: hidden;
+}
+.hdr-xp-fill {
+  display: block; height: 100%; background: var(--xp);
+  border-radius: var(--r-pill); transition: width .4s;
+}
+.hdr-caret { font-size: 9px; color: var(--text-label); }
+
+/* 38x38 icon buttons — radius 12 (v0.2 icon-button recipe) */
+.hdr-btn {
+  flex: none; position: relative;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-icon);
+  color: var(--text-bright);
+  cursor: pointer;
+  transition: border-color .16s;
+}
+.hdr-btn:hover:not(:disabled) { border-color: var(--border-gold); }
+.hdr-btn:disabled {
+  background: var(--bg-disabled);
+  border-color: var(--border-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+/* unread badge (v0.2: -5px offsets, 1px bg ring, SG 700 9px ink) */
+.hdr-badge {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--danger); border: 1px solid var(--bg);
+  border-radius: var(--r-pill);
+  font-family: var(--ui); font-weight: 700; font-size: 9px; color: var(--ink);
+}
+.hdr-badge[hidden] { display: none; }
+/* hamburger — three 18×2px pills, 4px gaps */
+.hamb { display: flex; flex-direction: column; gap: 4px; }
+.hamb i {
+  display: block; width: 18px; height: 2px;
+  border-radius: var(--r-pill); background: var(--text-bright);
+}
+
+/* signature divider — full-bleed, 15px under the row */
+.hdr-rule {
+  height: 1px; margin: 15px calc(var(--pad-screen) * -1) 0;
+  background: var(--border);
+}
+
+/* ── SCROLL BODY ── (v0.2: 18px sides; The Hood is the 0-padding exception) */
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px 28px;
+  scrollbar-width: none;
+}
+main::-webkit-scrollbar { width: 0; height: 0; }
+
+/* the map fills the body: main becomes a flex column so .map-outer's
+   `flex: 1` resolves against a real height instead of collapsing.
+   Map is the one screen with no side padding. */
+.app.is-map main { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.app.is-map .tab.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.map-outer { min-height: 0; }
+.app.is-map .section-label,
+.app.is-map #feed { display: none; }
+
+/* section label — a caption, not a title. Do not enlarge. */
+.section-label { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.section-label h3 {
+  margin: 0;
+  font-family: var(--ui);
+  font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.section-label .rule { flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+
+/* section header (within screens): Anton 15px title + rule + right count */
+.section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.section-head h4 {
+  margin: 0; font-family: var(--display);
+  font-size: 15px; letter-spacing: 2px; color: var(--text);
+}
+.section-head .rule { flex: 1; height: 1px; background: var(--track); }
+.section-head .count {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
+}
+
+/* ── TABS ── */
+.tab { display: none; }
+.tab.active { display: block; }
+
+/* ═══════════════════════════════════════════════════════════
+   NAV DRAWER (v0.2 OVERLAYS.md) — z 50 scrim / 51 panel.
+   Hidden overlays stay MOUNTED (opacity 0, pointer-events none)
+   so open/close always animates.
+   ═══════════════════════════════════════════════════════════ */
+.drawer-scrim {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.6);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+.drawer-scrim.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 51;
+  width: 262px;
+  display: flex; flex-direction: column;
+  padding: 30px 0 20px;
+  background: var(--overlay-fill);
+  border-right: 1px solid var(--border);
+  box-shadow: 30px 0 80px rgba(0,0,0,0.6);
+  transform: translateX(-112%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+}
+.drawer.open { transform: translateX(0); }
+.drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px 18px;
+  border-bottom: 1px solid var(--track);
+}
+.drawer-wordmark {
+  font-family: var(--display); font-size: 24px; letter-spacing: 4px;
+  line-height: 1;
+  background: var(--gold-chrome);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+.drawer-items { flex: 1; overflow-y: auto; scrollbar-width: none; padding-top: 12px; }
+.drawer-items::-webkit-scrollbar { width: 0; }
+.drawer-item {
+  display: flex; align-items: center; gap: 12px;
+  width: calc(100% - 24px); text-align: left;
+  margin: 0 12px; padding: 14px 16px;
+  border-radius: var(--r-tile);
+  background: transparent; border: 1px solid transparent;
+  cursor: pointer;
+  transition: background .16s;
+}
+.drawer-item:hover { background: rgba(255,255,255,0.02); }
+.drawer-dot {
+  flex: none; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--border-strong);
+}
+.drawer-label {
+  font-family: var(--display); font-size: 15px; letter-spacing: 1.5px;
+  color: var(--text-mid);
+}
+.drawer-item.active {
+  background: var(--surface-raised);
+  border-color: var(--border-gold);
+}
+.drawer-item.active .drawer-dot { background: var(--gold-chrome); }
+.drawer-item.active .drawer-label { color: var(--text); }
+/* locked items (none currently — recipe per OVERLAYS.md) */
+.drawer-item.locked { cursor: default; }
+.drawer-item.locked:hover { background: transparent; }
+.drawer-item.locked .drawer-label { color: var(--text-disabled); }
+.drawer-soon {
+  margin-left: auto; padding: 3px 8px;
+  font-family: var(--ui); font-weight: 700; font-size: 9px;
+  letter-spacing: 1px; color: var(--text-disabled);
+  border: 1px solid var(--border-disabled); border-radius: var(--r-pill);
+}
+/* TEMPORARY (ruled on DOM-110, 2026-09-14): legacy screens keep a quiet
+   drawer section until their v0.2 homes land. ACTIVITIES → DOM-115,
+   SPOTS/STATS → DOM-117/118. Delete this block with the last of them. */
+.drawer-divider {
+  display: flex; align-items: center; gap: 8px;
+  margin: 14px 28px 6px;
+  font-family: var(--ui); font-weight: 500; font-size: 9px;
+  letter-spacing: 2px; color: var(--text-disabled);
+}
+.drawer-divider::after { content: ''; flex: 1; height: 1px; background: var(--track); }
+.drawer-item.legacy { padding: 10px 16px; }
+.drawer-item.legacy .drawer-label { font-size: 12px; color: var(--text-disabled); }
+.drawer-item.legacy.active .drawer-label { color: var(--text-mid); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--panel-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 14px;
+  margin-bottom: var(--gap-section);
+}
+.card-title {
+  font-family: var(--display);
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+/* ── BUTTONS ──
+   All full pills, Anton 12-13 / +1px, 34-38px tall,
+   44px effective hit target via padding. One primary per region. */
+.btn-primary,
+.btn-secondary,
+.btn-hostile,
+.btn-locked {
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  border-radius: var(--r-pill);
+  padding: 11px 20px;
+  min-height: 36px;
+  cursor: pointer;
+  transition: filter .16s, border-color .16s;
+}
+.btn-primary {
+  background: var(--chrome-fill);
+  border: none;
+  color: var(--chrome-ink);
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-secondary {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+.btn-secondary:hover { border-color: var(--border-gold); color: var(--text); }
+/* combat entry only */
+.btn-hostile {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-danger);
+  color: var(--danger);
+}
+.btn-hostile:hover { background: rgba(224,82,63,0.12); }
+/* locked chips state the gate, not the refusal */
+.btn-locked,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-hostile:disabled {
+  background: var(--chip-locked-bg);
+  border: 1px solid var(--chip-locked-border);
+  color: var(--disabled);
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* ── METERS ──
+   7px tall (4px mastery), radius 999, track --track, width transition .4s.
+   Fills are fixed per meter: XP --xp, energy --energy-fill,
+   health --green, enemy HP --red, mastery --energy-fill. */
+.meter-track {
+  height: 7px; border-radius: var(--r-pill);
+  background: var(--track); overflow: hidden;
+}
+.meter-track.mastery { height: 4px; }
+.meter-fill {
+  height: 100%; border-radius: var(--r-pill);
+  transition: width .4s;
+}
+.meter-fill.xp      { background: var(--xp); }
+.meter-fill.energy  { background: var(--energy-fill); }
+.meter-fill.health  { background: var(--green); }
+.meter-fill.enemy   { background: var(--red); }
+.meter-fill.mastery { background: var(--energy-fill); }

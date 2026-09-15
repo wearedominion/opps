@@ -28,12 +28,27 @@ function showTab(name) {
 
   const title = $('section-title');
   if (title) title.textContent = SECTION_TITLES[name] || '';
-  if (name === 'stats')  renderStats();
-  if (name === 'crew')   renderCrew();
-  if (name === 'map')    GameMap.init();
-  if (name === 'plugs')  renderPlugs();
-  if (name === 'jobs')   renderJobs();   // daily tally, mastery and the log are all live
-  if (name === 'profile' && typeof renderProfile === 'function') renderProfile();
+
+  // Whatever the screen registered for itself. Tabs that are static markup
+  // register nothing and simply render no further.
+  const render = SCREEN_RENDERERS[name];
+  if (render) render();
+}
+
+// ── SCREEN REGISTRY (DOM-127) ───────────────
+// This replaced a stack of `if (name === ...)` lines that every screen ticket
+// had to edit, which made two concurrent screens conflict here over work that
+// had nothing to do with each other. A screen now registers its own renderer
+// from its own file — js/plugs.js owns the 'plugs' line — so adding a screen
+// touches no shared file at all. Registration runs at load; every screen script
+// is below js/ui.js in index.html, which is what makes that safe.
+const SCREEN_RENDERERS = {};
+
+function registerScreen(name, render) {
+  if (SCREEN_RENDERERS[name]) {
+    console.warn('screen "' + name + '" is registered twice — the later one wins');
+  }
+  SCREEN_RENDERERS[name] = render;
 }
 
 // ── NAV DRAWER (v0.2 OVERLAYS.md) ───────────────

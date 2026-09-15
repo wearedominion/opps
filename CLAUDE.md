@@ -24,7 +24,11 @@ assets/           # in-game assets, UI buttons, screens, menus, models, textures
   images
   portraits
 
-css/              # self explanatory, for css formatting
+css/              # one stylesheet per area, linked in order from index.html
+  00-base.css     #   tokens, reset, app frame — every other file reads these
+  10-chrome.css   #   header, scroll body, tabs, cards, buttons, meters
+  20-legacy.css   #   v0.1 screens not yet rebuilt; shrinks as each one lands
+  30..70-*.css    #   one file per rebuilt screen, in cascade order
 
 data/             # JSON files for game data, can be downloaded remotely as new changes to the game are made
 
@@ -32,7 +36,34 @@ data/             # JSON files for game data, can be downloaded remotely as new 
 js/               # all game code
 
 server/           # all server code
+
+tests/            # node tests/run.js — one file per area, discovered not listed
+  harness.js      #   shared rig: the counter, fixtures, sandbox loaders
+  run.js          #   the runner; owns the total and the no-drop guard
+  *.test.js       #   one per area — add a file, never append to someone else's
 ```
+
+### Adding a screen, a stylesheet or a test (DOM-127)
+
+Three files used to have exactly one place where every ticket inserted its
+changes, so any two PRs open at once conflicted there whether or not their work
+overlapped. Each now has a registration point instead of an append point — keep
+it that way:
+
+| Adding | Do this | Never |
+| --- | --- | --- |
+| tests | add `tests/<area>.test.js`; the runner discovers it | append to another area's file |
+| styles | add `css/<nn>-<screen>.css` + one `<link>` in `index.html` | append to `20-legacy.css` |
+| a screen renderer | call `registerScreen('<tab>', render<Screen>)` at the foot of that screen's own `js/` file | add a branch to `showTab()` |
+
+`showTab()` dispatches through `SCREEN_RENDERERS` and calls whatever the screen
+registered for itself; a tab that is static markup registers nothing. Screen
+scripts all load below `js/ui.js` in `index.html`, which is what makes
+registration-at-load safe — keep new ones there.
+
+The one remaining shared line is the `<link>` in `index.html`. Stylesheets are
+numbered with gaps so two screens in flight pick different slots; there is no way
+to drop that line entirely without a build step.
 
 ---
 
@@ -53,10 +84,10 @@ prototype `OPPS App (standalone).html` is ground truth, and when a doc and the p
 disagree, the prototype wins. It supersedes the v0.1 handoff (`docs/design-handoff/chrome-money/`,
 kept for history) for layout, spacing, structure, states, motion, copy, and palette/type.
 Two deliberate exceptions were ruled on DOM-110 (2026-09-14): the **rarity scale** (below) and
-the temporary **LEGACY drawer section** (navigation, below). Target: port `css/styles.css` and
+the temporary **LEGACY drawer section** (navigation, below). Target: port the stylesheets in `css/` and
 the renderers in `js/` to this system **without changing game logic**.
 
-Token naming: `css/styles.css` defines the **v0.2 canonical token names** from the handoff
+Token naming: `css/00-base.css` defines the **v0.2 canonical token names** from the handoff
 README (`--gold`, `--surface-raised`, `--border-strong`, `--text-mid`, `--gold-chrome`, …) plus
 legacy v0.1 aliases (`--chrome`, `--control`, `--border-ctrl`, `--muted`, `--chrome-fill`, …)
 that older screen rules still read. New code uses canonical names only; each screen rebuild
@@ -71,7 +102,7 @@ The orange `#ff3a00` accent is retired; chrome takes over every non-combat accen
 
 ## Tokens
 
-Replace `:root` in `css/styles.css` with:
+Replace `:root` in `css/00-base.css` with:
 
 ```css
 :root {
@@ -122,7 +153,7 @@ Old → new mapping: `--accent` and `--gold` both become `--chrome`; `--green` `
 `--red` `#ff1744` → `#e0523f`; `--text` → `#f2f0ec`; `--muted` `#666` → `#8e8e9a`.
 Delete `--hp-color` (use `--green`).
 
-Also delete every v1.0 token still present in `css/styles.css`: `--amber`, `--amber-deep`,
+Also delete every v1.0 token still present in `css/00-base.css`: `--amber`, `--amber-deep`,
 `--highlighter`, `--lime`, `--olive`, `--red-bright`, `--red-nav`, `--ink-on-accent`, `--seg-empty`,
 `--ink`, `--base`, `--surface`, `--raised`, `--screen-bg`, `--header-bg`, `--text-bright`,
 `--muted-2`, `--faint-2`, `--disabled-dim`, `--card-bg`, `--card-accent-bg`.
@@ -252,6 +283,9 @@ blue/purple/orange/pink ink outside the XP meter.
    *Transition only:* a quiet LEGACY drawer section carries ACTIVITIES / SPOTS / STATS until
    DOM-115/DOM-117/DOM-118 absorb those screens; each of those tickets deletes its item, and the
    final drawer is exactly eight.
+
+   A screen is wired up by calling `registerScreen('<tab>', render<Screen>)` at the foot of its
+   own file in `js/` — see *Adding a screen* above. Do not add a branch to `showTab()`.
 2. **No emoji.** Remove every emoji icon — `.nav-icon`, `.item-icon`, `.prop-icon`, `.fighter-icon`,
    `.enemy-avatar` glyphs, gem spend icons. Meaning comes from colour, type and the real portrait art.
 3. **Locked states.** Never dim a card to 40% opacity. Render at full contrast and swap the action for

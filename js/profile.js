@@ -721,3 +721,6 @@ function pfCloseInfo()   { pfInfoKey = null; renderProfile(); }
 function pfOpenStats() {
   if (typeof showTab === 'function') showTab('stats');
 }
+
+// This screen claims its tab (DOM-127). Gear and skills both land here, so it is rebuilt rather than cached.
+registerScreen('profile', renderProfile);

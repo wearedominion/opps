@@ -414,3 +414,6 @@ function doJob(jobId) {
   GameState.save();
   Notify.movesFull();
 }
+
+// This screen claims its tab (DOM-127). Daily tally, mastery and the Clout log are all live on entry.
+registerScreen('jobs', renderJobs);

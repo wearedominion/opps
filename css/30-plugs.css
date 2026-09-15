@@ -1,0 +1,230 @@
+/* ═══════════════════════════════════════════════════════════
+   S4 — PLUGS (DOM-113)
+   The Plugs roster and the dialogue popup.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ── PLUGS (S4, DOM-113) ──
+   screens/04-plugs.md: a 12px-gap column of horizontal cards. Plugs are the
+   gold-bordered surface — the one list that carries --border-gold at rest, so
+   the connects read as warmer than the neutral opps/crew lists. */
+.plugs-grid { display: flex; flex-direction: column; gap: 12px; }
+
+.plug-card {
+  display: flex;
+  background: var(--card-fill);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+/* 146px full-height portrait column, with a soft bottom scrim so the art
+   never fights the card edge. */
+.plug-portrait-img {
+  flex: none;
+  width: 146px;
+  align-self: stretch;
+  position: relative;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+.plug-portrait-img img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.plug-card-scrim {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 30px;
+  background: var(--portrait-scrim-soft);
+  pointer-events: none;
+}
+
+.plug-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 17px 15px 13px;
+  min-height: 206px;
+}
+.plug-name {
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: var(--text);
+  line-height: 1.05;
+}
+.plug-moniker {
+  margin-top: 7px;
+  font-family: var(--ui);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.plug-line {
+  margin-top: 11px;
+  font-family: var(--ui);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-mid);
+  text-wrap: pretty;
+}
+/* margin-top:auto floats the CTA to the bottom of the 206px column, so cards
+   of unequal copy length still line their buttons up. */
+.plug-action {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 13px;
+}
+/* The card's one primary. No sheen — the sheen is reserved for money. */
+.plug-go-btn {
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--ink);
+  background: var(--gold-chrome);
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 11px 22px;
+  cursor: pointer;
+  transition: filter .16s;
+}
+.plug-go-btn:hover { filter: brightness(1.08); }
+
+/* The DOM-90 quest chip is a direct child of the column now, so it has to opt
+   out of the flex default stretch or it spans the whole card width. */
+.plug-info > .plug-quest-chip { align-self: flex-start; }
+
+/* ── PLUG DIALOGUE POPUP ──
+   OVERLAYS.md: z 70, centered, max-w 330px, radius 22, --border-gold,
+   scale .22s. Same scale-in pattern as the engage modal (DOM-112). */
+#plug-overlay { align-items: center; padding: 18px; }
+.plug-modal {
+  width: 100%;
+  max-width: 330px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-panel);
+  background: var(--overlay-fill);
+  box-shadow: var(--modal-shadow);
+  overflow: hidden;
+  transform: scale(0.94);
+  transition: transform .22s;
+}
+#plug-overlay.open .plug-modal { transform: scale(1); }
+
+.plug-modal-portrait-wrap {
+  position: relative;
+  height: 288px;
+  background: var(--surface);
+}
+.plug-modal-portrait-wrap img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.plug-modal-scrim {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 80px;
+  background: var(--portrait-scrim);
+  pointer-events: none;
+}
+/* The name floats over the art in its own pill rather than sitting in the
+   body, so the portrait keeps the full 288px. */
+.plug-modal-namewrap {
+  position: absolute;
+  left: 14px; right: 14px; bottom: 13px;
+}
+.plug-modal-name {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(8,8,10,0.86);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-pill);
+  padding: 9px 16px;
+  font-family: var(--display);
+  font-size: 21px;      /* JS shrinks toward 14px for long names */
+  letter-spacing: 1px;
+  color: var(--text);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.plug-modal-body { padding: 17px 18px 18px; }
+.plug-modal-moniker {
+  font-family: var(--ui);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+/* min-height holds the footer still while the four lines vary in length. */
+.plug-modal-text {
+  margin-top: 11px;
+  min-height: 84px;
+  font-family: var(--ui);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-bright);
+  text-wrap: pretty;
+}
+.plug-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.plug-modal-spacer { flex: 1; }
+.plug-modal-count {
+  font-family: var(--ui);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-label);
+}
+.plug-later-btn {
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--text-mid);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: color .16s, border-color .16s;
+}
+.plug-later-btn:hover { color: var(--text); border-color: var(--border-gold); }
+
+/* NEXT just advances the dialogue and stays secondary; the last line is the
+   one that commits the recruit, so .is-final takes the region's one primary.
+   When the plug's quest is claimable, COLLECT is that primary instead and
+   .is-final is withheld — one primary per region. */
+.plug-modal-cta {
+  min-width: 104px;
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  border-radius: var(--r-pill);
+  padding: 12px 22px;
+  cursor: pointer;
+  transition: filter .16s, border-color .16s;
+}
+.plug-modal-cta:hover { border-color: var(--border-gold); }
+.plug-modal-cta.is-final {
+  background: var(--gold-chrome);
+  border-color: transparent;
+  color: var(--ink);
+}
+.plug-modal-cta.is-final:hover { filter: brightness(1.08); }

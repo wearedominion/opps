@@ -1,0 +1,388 @@
+/* ═══════════════════════════════════════════════════════════
+   S6 — MAKE MOVES (DOM-115)
+   The Make Moves screen and the Clout log modal.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ── MAKE MOVES (S6, DOM-115) ──
+   screens/02-moves.md. Six sections in an 18px column: featured main job,
+   side hustles, daily, turf status, opp sightings, log preview. */
+.mv { display: flex; flex-direction: column; gap: 18px; }
+
+/* Shared section header: Anton 15 + a hairline rule that eats the slack. */
+.mv-sec { display: flex; align-items: center; gap: 10px; }
+.mv-sec-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: var(--text);
+}
+.mv-sec-rule { flex: 1; height: 1px; background: var(--track); }
+.mv-sec-count {
+  font-family: var(--ui); font-weight: 500;
+  font-size: 10px; letter-spacing: 2px; color: var(--text-label);
+}
+
+.mv-label {
+  font-family: var(--ui); font-weight: 500;
+  font-size: 10px; letter-spacing: 2px; color: var(--text-label);
+  text-transform: uppercase;
+}
+.mv-label.gold { color: var(--gold); }
+
+/* Gold progress bar, three heights: 4px in cards, 7px on the daily. */
+.mv-bar {
+  flex: 1;
+  display: block;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--track);
+  overflow: hidden;
+}
+.mv-bar.sm { flex: 1; }
+.mv-bar.lg { height: 7px; margin-top: 12px; }
+.mv-bar-fill { display: block; height: 100%; background: var(--gold-bar); border-radius: var(--r-pill); }
+
+/* ── 1. Featured main job ── */
+.mv-feat {
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-card);
+  background: var(--card-fill);
+  overflow: hidden;
+}
+.mv-feat-band {
+  position: relative;
+  height: 118px;
+  padding: 13px 15px;
+  background: var(--surface-deep);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.mv-feat-tag {
+  align-self: flex-start;
+  background: var(--gold-chrome);
+  color: var(--ink);
+  font-family: var(--ui); font-weight: 700;
+  font-size: 10px; letter-spacing: 1px;
+  border-radius: var(--r-pill);
+  padding: 5px 11px;
+}
+.mv-feat-title {
+  font-family: var(--display);
+  font-size: 30px; letter-spacing: 2px;
+  color: var(--text); line-height: 1;
+}
+.mv-feat-sub {
+  margin-top: 5px;
+  font-family: var(--ui); font-size: 12px; color: var(--text-mid);
+}
+.mv-feat-body { padding: 16px; }
+
+.mv-prog-row { display: flex; align-items: center; gap: 10px; }
+.mv-prog-count {
+  font-family: var(--ui); font-weight: 500; font-size: 11px; color: var(--text);
+}
+
+.mv-objs { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.mv-obj { display: flex; align-items: center; gap: 10px; }
+/* The dot carries the state; the text only changes weight of colour. */
+.mv-obj-dot {
+  flex: none; width: 14px; height: 14px;
+  border-radius: var(--r-pill);
+  background: var(--track);
+  border: 1px solid transparent;
+}
+.mv-obj.done .mv-obj-dot { background: var(--gold); }
+.mv-obj.now  .mv-obj-dot { background: transparent; border-color: var(--gold); }
+.mv-obj-text { flex: 1; font-family: var(--ui); font-size: 13px; color: var(--text-disabled); }
+.mv-obj.done .mv-obj-text { color: var(--text-mid); }
+.mv-obj.now  .mv-obj-text { color: var(--text); }
+
+.mv-feat-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--track);
+}
+.mv-reward {
+  margin-top: 4px;
+  font-family: var(--display); font-size: 17px; letter-spacing: 1px; color: var(--gold);
+}
+
+/* The screen's one primary, and the only place the sheen is allowed here. */
+.mv-cta {
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--ink);
+  background: var(--gold-chrome);
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 11px 22px;
+  cursor: pointer;
+  transition: filter .16s;
+}
+.mv-cta:hover { filter: brightness(1.08); }
+.mv-cta.is-done {
+  background: var(--bg-disabled);
+  border: 1px solid var(--border-disabled);
+  color: var(--text-disabled);
+  cursor: default;
+}
+.mv-cta.is-done:hover { filter: none; }
+
+/* The sheen: a single slow highlight across a gold pill. Money only. */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: -60%;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent);
+  transform: skewX(-18deg);
+  animation: mv-sheen 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes mv-sheen { 0%, 62% { left: -60%; } 88%, 100% { left: 120%; } }
+
+/* ── 2. Side hustles — the real jobs ── */
+.mv-hustles { display: flex; flex-direction: column; gap: 9px; margin-top: 13px; }
+.mv-hus {
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card-fill);
+  padding: 15px;
+}
+.mv-hus.locked { opacity: .62; }
+.mv-hus-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+/* Job names ship title-case in data/jobs.json; the display face wants them
+   shouted, like every other Anton title on the screen. */
+.mv-hus-title {
+  font-family: var(--display); font-size: 15px; letter-spacing: 1px;
+  color: var(--text); text-transform: uppercase;
+}
+.mv-hus-sub { margin-top: 4px; font-family: var(--ui); font-size: 11px; color: var(--text-label); }
+
+/* Status chips: the hue as ink on a 14%-alpha wash of itself. */
+.mv-chip {
+  flex: none;
+  font-family: var(--ui); font-weight: 700;
+  font-size: 10px; letter-spacing: 1px;
+  border-radius: var(--r-pill);
+  padding: 5px 10px;
+}
+.mv-chip.timed  { color: var(--danger);        background: rgba(224,82,63,.14); }
+.mv-chip.new    { color: var(--success);       background: rgba(79,211,154,.14); }
+.mv-chip.active { color: var(--gold);          background: rgba(232,201,138,.14); }
+.mv-chip.done   { color: var(--text-disabled); background: rgba(79,79,89,.14); }
+.mv-chip.locked { color: var(--text-disabled); background: var(--bg-disabled); }
+
+.mv-hus-prog { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.mv-hus-count { font-family: var(--ui); font-weight: 500; font-size: 11px; color: var(--text-mid); }
+
+.mv-hus-timer { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.mv-timer-label { font-family: var(--ui); font-weight: 500; font-size: 12px; color: var(--danger); }
+.mv-timer-val   { font-family: var(--ui); font-weight: 500; font-size: 12px; color: var(--text); }
+
+/* One blinking dot, shared by the timed hustle and the sightings header. */
+.mv-blink {
+  flex: none; width: 7px; height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--danger);
+  animation: mv-blink 1.4s ease-in-out infinite;
+}
+.mv-hus-timer .mv-blink { width: 6px; height: 6px; }
+@keyframes mv-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
+.mv-hus-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 14px;
+}
+.mv-hus-reward {
+  margin-top: 4px;
+  font-family: var(--display); font-size: 15px; letter-spacing: 1px; color: var(--gold);
+}
+.mv-go {
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--ink);
+  background: var(--gold-chrome);
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: filter .16s;
+}
+.mv-go:hover { filter: brightness(1.08); }
+.mv-done-chip {
+  font-family: var(--ui); font-weight: 700; font-size: 10px; letter-spacing: 1px;
+  color: var(--success);
+  border: 1px solid rgba(79,211,154,.4);
+  border-radius: var(--r-pill);
+  padding: 6px 12px;
+}
+/* A locked row states the gate, never the refusal. */
+.mv-locked-note {
+  font-family: var(--ui); font-size: 11px; letter-spacing: 1px;
+  color: var(--text-disabled); text-align: right; max-width: 52%;
+}
+
+/* ── 3. Daily ── */
+.mv-daily {
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card-fill);
+  padding: 15px;
+  margin-top: 13px;
+}
+.mv-daily-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mv-daily-title { font-family: var(--display); font-size: 15px; letter-spacing: 1px; color: var(--text); }
+.mv-daily-amt { font-family: var(--display); font-size: 17px; letter-spacing: 1px; color: var(--gold); }
+/* The cap half greys out — you are reading the numerator. */
+.mv-cap { color: var(--text-disabled); }
+.mv-daily-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+/* XP rewards are blue; cash is gold. Never the same colour. */
+.mv-xp-reward { font-family: var(--display); font-size: 15px; letter-spacing: 1px; color: var(--xp); }
+
+/* ── 4. The Hood ── */
+.mv-turf {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  margin-top: 13px;
+  padding: 17px;
+  background: var(--warm-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-card);
+}
+.mv-turf-name {
+  margin-top: 5px;
+  font-family: var(--display); font-size: 30px; letter-spacing: 2px;
+  color: var(--text); line-height: 1;
+}
+.mv-turf-right { text-align: right; }
+.mv-turf-val {
+  margin-top: 5px;
+  font-family: var(--display); font-size: 28px; letter-spacing: 1px; color: var(--text); line-height: 1;
+}
+.mv-turf-unit {
+  margin-left: 5px;
+  font-family: var(--ui); font-size: 11px; letter-spacing: 1px; color: var(--text-mid);
+}
+
+.mv-ops { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 9px; }
+.mv-tile {
+  border: 1px solid var(--border);
+  border-radius: var(--r-tile);
+  background: var(--card-fill);
+  padding: 15px;
+}
+.mv-tile-val {
+  margin-top: 6px;
+  font-family: var(--display); font-size: 26px; letter-spacing: 1px; color: var(--text); line-height: 1;
+}
+.mv-tile-val.gold { color: var(--gold); }
+.mv-tile-sub { margin-top: 5px; font-family: var(--ui); font-size: 11px; color: var(--text-mid); }
+
+/* ── 5. Opps spotted ── */
+.mv-spotted {
+  border: 1px solid var(--border-danger);
+  border-radius: var(--r-card);
+  background: var(--card-fill);
+  overflow: hidden;
+}
+.mv-spot-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 15px;
+  border-bottom: 1px solid var(--track);
+}
+.mv-spot-title { flex: 1; font-family: var(--display); font-size: 15px; letter-spacing: 2px; color: var(--text); }
+.mv-spot-chip {
+  font-family: var(--ui); font-weight: 700; font-size: 10px; letter-spacing: 1px;
+  color: var(--danger);
+  background: rgba(224,82,63,.14);
+  border-radius: var(--r-pill);
+  padding: 5px 10px;
+}
+.mv-spot-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 15px;
+  border-top: 1px solid var(--row-divider);
+}
+.mv-spot-row:first-of-type { border-top: none; }
+.mv-spot-name { font-family: var(--display); font-size: 14px; letter-spacing: 1px; color: var(--text); }
+.mv-spot-corner { margin-top: 4px; font-family: var(--ui); font-size: 11px; color: var(--text-mid); }
+.mv-spot-ago {
+  font-family: var(--ui); font-weight: 500;
+  font-size: 10px; letter-spacing: 1px; color: var(--text-label);
+}
+
+/* ── 6. Log preview ── */
+.mv-log {
+  margin-top: 13px;
+  background: var(--surface-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color .16s;
+}
+.mv-log:hover { border-color: var(--border-gold); }
+.mv-log-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 15px;
+  border-top: 1px solid var(--row-divider);
+}
+.mv-log-row:first-child { border-top: none; }
+.mv-log-time { flex: none; font-family: var(--ui); font-weight: 500; font-size: 11px; color: var(--text-label); }
+.mv-log-text { flex: 1; min-width: 0; font-family: var(--ui); font-size: 13px; color: var(--text-bright);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mv-log-delta { flex: none; font-family: var(--ui); font-weight: 700; font-size: 11px; color: var(--text); }
+.mv-log-empty { padding: 16px 15px; font-family: var(--ui); font-size: 13px; color: var(--text-mid); }
+.mv-log-more {
+  padding: 12px;
+  text-align: center;
+  font-family: var(--ui); font-weight: 500;
+  font-size: 10px; letter-spacing: 2px; color: var(--gold);
+  border-top: 1px solid var(--row-divider);
+}
+
+/* ── Clout log modal ──
+   OVERLAYS.md: bottom sheet, z 60, max-height 82%, radius 24 24 0 0,
+   translateY .26s, --border-gold with no bottom edge. */
+#clout-log-overlay { align-items: flex-end; }
+.clout-log {
+  width: 100%;
+  max-height: 82%;
+  display: flex;
+  flex-direction: column;
+  background: var(--overlay-fill);
+  border: 1px solid var(--border-gold);
+  border-bottom: none;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  box-shadow: var(--modal-shadow);
+  transform: translateY(100%);
+  transition: transform .26s;
+}
+#clout-log-overlay.open .clout-log { transform: translateY(0); }
+.clout-log-head {
+  flex: none;
+  display: flex; align-items: center; gap: 10px;
+  padding: 17px 18px 13px;
+  border-bottom: 1px solid var(--track);
+}
+.clout-log-title { font-family: var(--display); font-size: 17px; letter-spacing: 2px; color: var(--text); }
+.clout-log-count {
+  flex: 1;
+  font-family: var(--ui); font-weight: 500;
+  font-size: 10px; letter-spacing: 2px; color: var(--text-label);
+}
+.clout-log-close {
+  flex: none; width: 30px; height: 30px;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text-mid);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color .16s, border-color .16s;
+}
+.clout-log-close:hover { color: var(--text); border-color: var(--border-gold); }
+.clout-log-body { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 8px; }
+.clout-log-body .mv-log-row { padding: 12px 18px; }

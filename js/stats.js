@@ -46,3 +46,6 @@ function renderStats() {
     }).join('');
   }
 }
+
+// This screen claims its tab (DOM-127). The Stats tab redraws on every entry — the numbers move underneath it.
+registerScreen('stats', renderStats);
