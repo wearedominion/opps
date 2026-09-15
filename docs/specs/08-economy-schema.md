@@ -263,9 +263,11 @@ on it**, so treat these as permanent keys in the same way as content `id`s.
 | `level_up_grant` | credit | faucet |
 | `recruit_bonus` | credit | faucet |
 | `iap_grant` | credit | faucet |
+| `territory_claim` | credit | faucet — claiming a parcel in the Hood (DOM-118), paid in Clout |
 | `fight_defeat_loss` | debit | **drain** |
 | `gear_buy` | debit | drain |
 | `gear_upgrade` | debit | drain |
+| `supply_buy` | debit | drain — consumables from the Store's SUPPLIES tab (DOM-116), not gear |
 | `spot_buy` | debit | drain |
 | `reroll_fee` | debit | drain |
 | `heal_cost` | debit | drain |

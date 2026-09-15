@@ -211,7 +211,7 @@ function buySupply(id) {
   const sup = storeSupplies().find(s => s.id === id);
   if (!sup) return;
   if (G.cash < sup.price) { toast("You're broke for that!", true); return; }
-  debit('cash', sup.price, REASON.GEAR_BUY, { ref: { supplyId: sup.id } });
+  debit('cash', sup.price, REASON.SUPPLY_BUY, { ref: { supplyId: sup.id } });
   if (!G.supplies) G.supplies = {};
   G.supplies[id] = supplyHeld(id) + 1;
   log('Bought ' + sup.name + ' — ' + sup.buff, 'info');

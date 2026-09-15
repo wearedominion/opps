@@ -1,7 +1,7 @@
 // The transaction ledger.
 // Part of the suite; run it all with `node tests/run.js`.
 
-const { path, assert, ROOT, G, test } = require('./harness');
+const { fs, path, vm, assert, ROOT, G, test } = require('./harness');
 
 console.log('\nledger');
 
@@ -113,4 +113,48 @@ test('the summary separates faucets from drains, per resource and per reason', (
   assert.strictEqual(s.byReason.move_payout, 300);
   assert.strictEqual(s.byReason.gear_buy, -120);
   assert.strictEqual(global.G.cash, 380, 'and the summary agrees with the wallet');
+});
+
+// ─────────────────────────────────────────────
+//  DOM-135 — the v0.2 spend/award paths own their categories
+// ─────────────────────────────────────────────
+
+test('supplies and turf are their own reasons, not borrowed ones', () => {
+  // Both flows were correct from the start; they were filed under the nearest
+  // existing code because none fitted. Borrowed labels are invisible until a
+  // dashboard reports supply spend as gear spend, so the codes are the fix.
+  assert.strictEqual(L.REASON.SUPPLY_BUY, 'supply_buy');
+  assert.strictEqual(L.REASON.TERRITORY_CLAIM, 'territory_claim');
+  assert.ok(L.REASON_CODES.includes('supply_buy'));
+  assert.ok(L.REASON_CODES.includes('territory_claim'));
+});
+
+test('the two call sites spend and award under their own codes', () => {
+  // Pinned at the call site rather than the enum: adding the code and leaving
+  // the caller on GEAR_BUY is exactly the half-fix this ticket exists to undo.
+  const store = fs.readFileSync(path.join(ROOT, 'js/store.js'), 'utf8');
+  assert.ok(/debit\('cash', sup\.price, REASON\.SUPPLY_BUY/.test(store),
+    'buySupply still debits as gear');
+  assert.ok(/debit\('cash', item\.price, REASON\.GEAR_BUY/.test(store),
+    'buyItem is gear and must stay GEAR_BUY');
+
+  const map = fs.readFileSync(path.join(ROOT, 'js/map.js'), 'utf8');
+  assert.ok(/REASON\.TERRITORY_CLAIM : 'territory_claim'/.test(map),
+    'claimSelected still awards as a quest');
+  assert.ok(!/REASON\.QUEST_REWARD/.test(map), 'a quest reason is left in the hood');
+});
+
+test('a territory claim does not count toward the daily cash grind', () => {
+  // QUEST_REWARD is an earned-cash reason; TERRITORY_CLAIM deliberately is not.
+  // The claim pays Clout, so this never mattered in practice — pin it so it
+  // cannot start mattering if a claim is ever given a cash leg.
+  // EARNED_CASH_REASONS is module-private; read it the way moves.test.js does.
+  const src = fs.readFileSync(path.join(ROOT, 'js/ledger.js'), 'utf8')
+    + '\n;globalThis.__t = { EARNED_CASH_REASONS, REASON };';
+  const ctx = { console, JSON, Object, Math, Date, G: {} };
+  vm.runInNewContext(src, ctx);
+  const { EARNED_CASH_REASONS, REASON } = ctx.__t;
+  const earned = Array.from(EARNED_CASH_REASONS);
+  assert.ok(!earned.includes(REASON.TERRITORY_CLAIM), 'turf income would complete the daily');
+  assert.ok(earned.includes(REASON.QUEST_REWARD), 'the quest reason itself is still earned cash');
 });
