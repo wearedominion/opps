@@ -2042,4 +2042,86 @@ test('make moves — XP rewards are blue and cash rewards are gold', () => {
   assert.ok(/\.mv-hus-reward\s*\{[^}]*color:\s*var\(--gold\)/.test(css));
 });
 
+
+// ─────────────────────────────────────────────
+//  DOM-125 — FW6 asset inventory
+// ─────────────────────────────────────────────
+
+const PORTRAITS_JSON = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/portraits.json'), 'utf8'));
+
+// Enemies known to have no portrait, recorded in assets/README.md. This list
+// exists so the test can fail for a NEW faceless roster entry while staying
+// green on the gaps that are already written down and owned.
+const KNOWN_FACELESS = [
+  'corner', 'trapboss', 'cartel', 'detective', 'syndicate',
+  'kingpin', 'fixer', 'gunchief', 'enforcer', 'shadowboss', 'thedon',
+];
+
+test('assets — every portrait key in the data resolves to a file on disk', () => {
+  for (const group of ['plugs', 'enemies']) {
+    for (const key of Object.keys(PORTRAITS_JSON[group])) {
+      const rel = PORTRAITS_JSON[group][key];
+      assert.ok(fs.existsSync(path.join(ROOT, rel)),
+        group + '.' + key + ' points at a missing file: ' + rel);
+    }
+  }
+});
+
+test('assets — no portrait entry is keyed to an entity that does not exist', () => {
+  const plugIds = new Set(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/plugs.json'), 'utf8')).map(p => p.id));
+  const enemyIds = new Set(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/enemies.json'), 'utf8')).map(e => e.id));
+  for (const key of Object.keys(PORTRAITS_JSON.plugs)) {
+    assert.ok(plugIds.has(key), 'portraits.plugs.' + key + ' is keyed to no plug');
+  }
+  for (const key of Object.keys(PORTRAITS_JSON.enemies)) {
+    assert.ok(enemyIds.has(key), 'portraits.enemies.' + key + ' is keyed to no enemy');
+  }
+});
+
+test('assets — a new roster entry cannot ship faceless without being recorded', () => {
+  const plugs = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/plugs.json'), 'utf8'));
+  const enemies = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/enemies.json'), 'utf8'));
+  // Every plug has art; that is a hard rule, there is no gap list for plugs.
+  for (const p of plugs) {
+    assert.ok(PORTRAITS_JSON.plugs[p.id], 'plug ' + p.id + ' has no portrait');
+  }
+  // Enemies may be faceless only while they are on the documented gap list.
+  const faceless = enemies.filter(e => !PORTRAITS_JSON.enemies[e.id]).map(e => e.id);
+  const unexpected = faceless.filter(id => KNOWN_FACELESS.indexOf(id) === -1);
+  assert.deepStrictEqual(unexpected, [],
+    'new faceless enemies — add art, or record them in assets/README.md');
+  // and the list must not rot the other way: art added means the gap closes
+  const stale = KNOWN_FACELESS.filter(id => PORTRAITS_JSON.enemies[id]);
+  assert.deepStrictEqual(stale, [],
+    'these now have art — drop them from KNOWN_FACELESS and assets/README.md');
+});
+
+test('assets — no emoji and no data-URI art in production code', () => {
+  // The contract is inline stroked SVG only. Typographic glyphs are fine;
+  // pictographs are not, and neither is art inlined as base64.
+  const files = ['index.html', 'css/styles.css']
+    .concat(fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js')).map(f => 'js/' + f));
+  const emoji = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
+  const allowed = new Set(['\u2713', '\u2715', '\u203a', '\u2039']);
+  for (const rel of files) {
+    const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    assert.ok(!/data:image\//.test(src), rel + ' inlines art as a data URI');
+    for (const ch of src) {
+      if (emoji.test(ch) && !allowed.has(ch)) {
+        assert.fail(rel + ' uses U+' + ch.codePointAt(0).toString(16).toUpperCase() + ' as an icon');
+      }
+    }
+  }
+});
+
+test('assets — the inventory records the gaps rather than hiding them', () => {
+  const readme = fs.readFileSync(path.join(ROOT, 'assets/README.md'), 'utf8');
+  for (const id of KNOWN_FACELESS) {
+    assert.ok(readme.includes('`' + id + '`'), 'assets/README.md does not list ' + id);
+  }
+  // the two assets that are not in the handoff must stay called out
+  assert.ok(readme.includes('el-caldero-overview.jpg'), 'the missing overview map is not recorded');
+  assert.ok(readme.includes('mp9-kit.png'), 'the missing MP9 art is not recorded');
+});
+
 console.log('\n' + passed + ' passed' + (process.exitCode ? ', SOME FAILED' : '') + '\n');
