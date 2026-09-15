@@ -55,11 +55,19 @@ it that way:
 | tests | add `tests/<area>.test.js`; the runner discovers it | append to another area's file |
 | styles | add `css/<nn>-<screen>.css` + one `<link>` in `index.html` | append to `20-legacy.css` |
 | a screen renderer | call `registerScreen('<tab>', render<Screen>)` at the foot of that screen's own `js/` file | add a branch to `showTab()` |
+| a screen's `display` | scope it: `.tab.<screen>.active { display: flex }` | declare `display` on the bare screen class |
 
 `showTab()` dispatches through `SCREEN_RENDERERS` and calls whatever the screen
 registered for itself; a tab that is static markup registers nothing. Screen
 scripts all load below `js/ui.js` in `index.html`, which is what makes
 registration-at-load safe — keep new ones there.
+
+Visibility belongs to the tab, not the screen. `.tab:not(.active)` hides at
+(0,2,0) so a screen's own single-class rule cannot outrank it, and a screen
+needing something other than `display: block` says which state it means:
+`.tab.mv.active`. A bare `.mv { display: flex }` ties with `.tab` and wins on
+file order, which left Make Moves drawn on top of every other screen until
+DOM-129. `tests/tabs.test.js` parses the cascade and fails if it comes back.
 
 The one remaining shared line is the `<link>` in `index.html`. Stylesheets are
 numbered with gaps so two screens in flight pick different slots; there is no way
