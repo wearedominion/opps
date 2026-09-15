@@ -36,6 +36,9 @@ function loadPlugs(saved) {
         }),
       }),
     },
+    // The screen claims its tab at load (DOM-127); in here there is no showTab
+    // to claim it from, so swallow the call and test the pure functions.
+    registerScreen: () => {},
     questFor: () => null,
     $: () => null,
   };

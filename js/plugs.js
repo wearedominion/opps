@@ -251,3 +251,6 @@ function advancePlug() {
 function closePlug() {
   $('plug-overlay').classList.remove('open');
 }
+
+// This screen claims its tab (DOM-127). Recruiting a plug changes its card, so the roster is rebuilt on entry.
+registerScreen('plugs', renderPlugs);

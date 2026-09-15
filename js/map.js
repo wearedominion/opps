@@ -381,3 +381,6 @@ const GameMap = (() => {
 
   return { init, zoomIn, zoomOut, reset, centerBase, data: mapData };
 })();
+
+// This screen claims its tab (DOM-127). The Hood is idempotent: init() no-ops once the city is built.
+registerScreen('map', () => GameMap.init());

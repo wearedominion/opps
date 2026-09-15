@@ -20,6 +20,9 @@ function loadMoves(over) {
     G: { jobProgress: {}, moveObjective: 0, dailyCash: 0, dailyCashDate: null },
     JOBS: [], ENEMIES: [], QUESTS: [], MOVES: null,
     document: { querySelector: () => null, querySelectorAll: () => [] },
+    // The screen claims its tab at load (DOM-127); in here there is no showTab
+    // to claim it from, so swallow the call and test the pure functions.
+    registerScreen: () => {},
     setInterval: () => 0, clearInterval: () => {},
     $: () => null,
   }, over || {});
