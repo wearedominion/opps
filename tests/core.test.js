@@ -1717,4 +1717,119 @@ test('city.json — every turf anchor names a faction that exists, and pins are 
   assert.ok(!/#f5902a|#bfce1c/i.test(JSON.stringify(CITY_DATA)), 'a retired v1.0 hex survived');
 });
 
+
+// ─────────────────────────────────────────────
+//  DOM-113 — S4 Plugs + plug dialogue popup
+// ─────────────────────────────────────────────
+
+// plugs.js is a plain script too. It leans on globals the browser supplies
+// ($, PLUGS, PORTRAITS, GameState, questFor…), so the sandbox stubs only what
+// the recruit path actually touches and exports the pure helpers.
+function loadPlugs(saved) {
+  const src = fs.readFileSync(path.join(ROOT, 'js/plugs.js'), 'utf8')
+    + '\n;globalThis.__t = { plugCtaLabel, plugRecruited, plugCommit, plugNameSize,'
+    + ' PLUG_XP_RECRUIT, PLUG_XP_JOB, G };';
+  const saves = [];
+  const ctx = {
+    console, JSON, Object, Math, Array,
+    G: { plugsRecruited: saved === undefined ? [] : saved },
+    GameState: { save: () => saves.push(1) },
+    // no canvas in the sandbox → plugNameSize takes its fallback path
+    document: undefined,
+    questFor: () => null,
+    $: () => null,
+  };
+  vm.runInNewContext(src, ctx);
+  return Object.assign({}, ctx.__t, { saves });
+}
+
+const PLUGS_JSON = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/plugs.json'), 'utf8'));
+
+test('plugs — NEXT walks the pitch; the last line names what it commits', () => {
+  const P = loadPlugs();
+  const tommy = PLUGS_JSON[0];
+  assert.strictEqual(P.plugCtaLabel(tommy, false), 'NEXT');
+  // not yet recruited → the final press is the recruit
+  assert.strictEqual(P.plugCtaLabel(tommy, true), 'RUN IT');
+});
+
+test('plugs — once recruited, the final press runs the job instead', () => {
+  const P = loadPlugs(['plug-tommy']);
+  const tommy = PLUGS_JSON[0];
+  assert.strictEqual(P.plugRecruited('plug-tommy'), true);
+  assert.strictEqual(P.plugCtaLabel(tommy, true), 'GO');
+  // a different plug is untouched by tommy's recruit
+  assert.strictEqual(P.plugCtaLabel(PLUGS_JSON[1], true), 'RUN IT');
+});
+
+test('plugs — the first commit recruits, later commits run the job', () => {
+  const P = loadPlugs();
+  const first = P.plugCommit('plug-dex');
+  assert.deepStrictEqual(
+    { amount: first.amount, label: first.label, first: first.first },
+    { amount: P.PLUG_XP_RECRUIT, label: 'PLUG RECRUITED', first: true });
+  assert.deepStrictEqual(Array.from(P.G.plugsRecruited), ['plug-dex']);
+
+  const second = P.plugCommit('plug-dex');
+  assert.deepStrictEqual(
+    { amount: second.amount, label: second.label, first: second.first },
+    { amount: P.PLUG_XP_JOB, label: 'JOB DONE', first: false });
+  // still recorded once — the roster is a set, not a tally
+  assert.deepStrictEqual(Array.from(P.G.plugsRecruited), ['plug-dex']);
+  assert.strictEqual(P.saves.length, 2, 'every commit persists');
+});
+
+test('plugs — a save with no plugsRecruited yet does not throw', () => {
+  const P = loadPlugs(null);
+  const a = P.plugCommit('plug-kylie');
+  assert.strictEqual(a.first, true);
+  assert.deepStrictEqual(Array.from(P.G.plugsRecruited), ['plug-kylie']);
+});
+
+test('plugs — plugsRecruited is an additive field, so no SCHEMA_VERSION bump', () => {
+  assert.deepStrictEqual(Array.from(G.plugsRecruited), []);
+  assert.strictEqual(SCHEMA_VERSION, 5);
+});
+
+test('plugs — the name pill has a size for every name in the roster', () => {
+  const P = loadPlugs();
+  for (const plug of PLUGS_JSON) {
+    const px = P.plugNameSize(plug.name);
+    assert.ok(px >= 14 && px <= 21, plug.name + ' sized to ' + px + 'px');
+  }
+});
+
+test('plugs — the screen is built to the 04-plugs.md geometry', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  assert.ok(/\.plugs-grid\s*\{[^}]*gap:\s*12px/.test(css), 'the column gap is 12px');
+  assert.ok(/\.plug-card\s*\{[^}]*border:\s*1px solid var\(--border-gold\)/.test(css),
+    'plugs are the gold-bordered surface');
+  assert.ok(/\.plug-portrait-img\s*\{[^}]*width:\s*146px/.test(css), 'portrait column is 146px');
+  assert.ok(/\.plug-info\s*\{[^}]*min-height:\s*206px/.test(css), 'info column is 206px tall');
+  assert.ok(/\.plug-modal\s*\{[^}]*max-width:\s*330px/.test(css), 'popup is 330px wide');
+  assert.ok(/\.plug-modal-portrait-wrap\s*\{[^}]*height:\s*288px/.test(css), 'popup portrait is 288px');
+  assert.ok(/\.plug-modal-text\s*\{[^}]*min-height:\s*84px/.test(css), 'dialogue holds 84px');
+});
+
+test('plugs — the popup markup carries the ids the renderer writes into', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  for (const id of ['plug-modal-portrait', 'plug-modal-name', 'plug-modal-moniker',
+                    'plug-modal-text', 'plug-modal-count', 'plug-modal-cta',
+                    'plug-quest-panel', 'plugs-grid']) {
+    assert.ok(html.includes('id="' + id + '"'), 'missing #' + id);
+  }
+  // LATER is the dismiss; the old corner X is gone with it
+  assert.ok(html.includes('LATER'), 'the popup has no LATER button');
+  assert.ok(!html.includes('plug-modal-close'), 'the retired close X survived');
+});
+
+test('plugs — no hard-coded v0.1 hexes survive in the plug rules', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const block = css.slice(css.indexOf('/* ── PLUGS (S4, DOM-113)'),
+                          css.indexOf('/* ── COMBAT PORTRAIT ── */'));
+  assert.ok(block.length > 500, 'the plug block was not found');
+  // rgba scrims are allowed (they are alpha, not palette); named hexes are not
+  assert.ok(!/#[0-9a-f]{3,6}/i.test(block), 'a raw hex survived in the plug rules');
+});
+
 console.log('\n' + passed + ' passed' + (process.exitCode ? ', SOME FAILED' : '') + '\n');

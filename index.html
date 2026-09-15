@@ -324,21 +324,28 @@
       <button class="close-combat" id="close-combat" onclick="closeCombat()" style="display:none">CLOSE</button>
     </div>
   </div>
-  <div class="overlay" id="plug-overlay">
+  <!-- Plug dialogue popup (DOM-113). OVERLAYS.md: z 70, centered, max-w 330px,
+       scrim .8, border --border-gold, scale .22s. The name rides in a pill over
+       the portrait; LATER is the dismiss, so there is no separate close X. -->
+  <div class="overlay" id="plug-overlay" onclick="plugScrim(event)">
     <div class="plug-modal">
-      <button class="plug-modal-close" onclick="closePlug()">&#x2715;</button>
       <div class="plug-modal-portrait-wrap">
         <img id="plug-modal-portrait" src="" alt="">
+        <div class="plug-modal-scrim"></div>
+        <div class="plug-modal-namewrap">
+          <span class="plug-modal-name" id="plug-modal-name">NAME</span>
+        </div>
       </div>
       <div class="plug-modal-body">
-        <div class="plug-modal-name" id="plug-modal-name">NAME</div>
         <div class="plug-modal-moniker" id="plug-modal-moniker">TITLE</div>
         <div class="plug-modal-text" id="plug-modal-text"></div>
+        <div class="plug-quest" id="plug-quest-panel" hidden></div>
         <div class="plug-modal-footer">
           <span class="plug-modal-count" id="plug-modal-count">1 / 4</span>
+          <span class="plug-modal-spacer"></span>
+          <button class="plug-later-btn" onclick="closePlug()">LATER</button>
           <button class="plug-modal-cta" id="plug-modal-cta" onclick="advancePlug()">NEXT</button>
         </div>
-        <div class="plug-quest" id="plug-quest-panel" hidden></div>
       </div>
     </div>
   </div>
