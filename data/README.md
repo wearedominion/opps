@@ -242,6 +242,17 @@ Supply rarities use the repo's 6-tier scale, so the prototype's `ELITE` reads as
 the sanctioned DOM-110 deviation. v1's real-money refreshes stay in `monetization.json`; the Store
 renders them as rows in the same SUPPLIES list, marked `REAL MONEY`.
 
+## messages.json
+
+The Messages overlay's threads (DOM-119): contact, role, the authored messages and an
+`unread` count. Placeholder copy from the Chrome Money v0.2 prototype.
+
+**There is no messaging backend** and the Jest SDK exposes none, so a reply the player sends is
+session-only and deliberately not saved — a save field would make an inbox nobody can receive
+from look like a real one. What *does* persist is read state (`G.msgRead`, by thread id): an
+unread badge that came back after a reload would be a lie. A fetch miss leaves the header
+button disabled rather than opening an empty inbox.
+
 ## crew.json
 
 The NPC half of the CREW roster (DOM-114): `HITTERS` and `DEALERS`, each member carrying
@@ -328,8 +339,8 @@ maps one onto the other.
 ## Other files
 
 `jobs.json`, `enemies.json`, `gear.json`, `properties.json`, `ranks.json`,
-`xp-system.json`, `crew.json`, `slots.json`, `storefront.json` — loaded by the client at boot
-(see `js/main.js`). Schemas to be documented here as they're formalized.
+`xp-system.json`, `crew.json`, `slots.json`, `storefront.json`, `messages.json` — loaded by
+the client at boot (see `js/main.js`). Schemas to be documented here as they're formalized.
 
 `gear.json` items carry **`upgradeable`** (bool, required), which gates the unbounded gear
 upgrade track — Cash-priced levels with small hard-capped stat gains, prestige beyond the cap.

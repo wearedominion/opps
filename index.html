@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="css/47-store.css">
   <link rel="stylesheet" href="css/49-hood.css">
   <link rel="stylesheet" href="css/50-motion.css">
+  <link rel="stylesheet" href="css/55-messages.css">
   <link rel="stylesheet" href="css/60-refinements.css">
   <link rel="stylesheet" href="css/70-moves.css">
 </head>
@@ -51,9 +52,9 @@
         <span class="hdr-caret">&#9662;</span>
       </button>
 
-      <!-- Messages ships with DOM-119 (S10); shown disabled, not dead.
-           The unread badge markup is ready for it. -->
-      <button class="hdr-btn" id="btn-msgs" disabled aria-label="Messages — not available yet">
+      <!-- Messages (DOM-119). js/messages.js enables this and wires the badge
+           once the threads are loaded; it stays disabled if they are not. -->
+      <button class="hdr-btn" id="btn-msgs" disabled aria-label="Messages">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.76L3 21l1.86-5.54A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
         <span class="hdr-badge" id="msg-badge" hidden></span>
       </button>
@@ -443,6 +444,9 @@
     <div class="levelup-sub" id="levelup-sub">You are now Rank 2</div>
   </div>
   <div class="toast" id="toast"></div>
+  <!-- Shell-level overlays owned by no screen (DOM-119). -->
+  <div class="xp-toast" id="xp-toast" role="status" aria-live="polite"></div>
+  <div class="messages-overlay" id="messages-overlay"></div>
   <!-- Player Profile overlays: equip picker, confirm allocation, stat info -->
   <div id="pf-overlays"></div>
 
@@ -478,6 +482,7 @@
 <script src="js/notifications.js"></script>
 <script src="js/payments.js"></script>
 <script src="js/map3d.js"></script>
+<script src="js/messages.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

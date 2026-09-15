@@ -60,6 +60,12 @@ const G = {
   // SCHEMA_VERSION bump; an old save simply earns its bonuses again.
   xpFirsts: {},
 
+  // Which messages have been read, by thread id (DOM-119). Only the read
+  // state persists — the threads themselves are content and a reply the
+  // player sends is session-only, because nothing can receive it.
+  // Additive field with a default — no SCHEMA_VERSION bump.
+  msgRead: {},
+
   // MAKE MOVES (DOM-115). Objective index reached on the featured main job.
   // Additive with a default — no SCHEMA_VERSION bump.
   //

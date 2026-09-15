@@ -1,0 +1,142 @@
+/* ── MESSAGES + XP TOAST (DOM-119) ──
+   The two overlays no screen owns. Both are shell-level, which is why they sit
+   in their own file rather than in a screen's. */
+
+.messages-overlay {
+  position: absolute; inset: 0; z-index: 55;
+  display: none;
+  background: var(--bg);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .22s, transform .22s;
+}
+.messages-overlay.open { display: block; opacity: 1; transform: translateY(0); }
+.msg-sheet { display: flex; flex-direction: column; height: 100%; }
+
+/* ── header, shared by both states ── */
+.msg-head {
+  flex: none; display: flex; align-items: center; gap: 12px;
+  padding: 50px 18px 14px;
+  background: #0d0d11; border-bottom: 1px solid var(--track);
+}
+.msg-title {
+  flex: 1; font-family: var(--display); font-size: 19px; letter-spacing: 2px; color: var(--text);
+}
+.msg-head-id { flex: 1; min-width: 0; }
+.msg-head-name {
+  font-family: var(--display); font-size: 16px; letter-spacing: 1px; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.msg-head-role {
+  margin-top: 4px;
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px; color: var(--text-label);
+}
+.msg-x, .msg-back {
+  flex: none; background: var(--surface-raised); border: 1px solid var(--border-strong);
+  color: var(--text-mid); cursor: pointer; padding: 0;
+  transition: border-color .16s, color .16s;
+}
+.msg-x { width: 30px; height: 30px; border-radius: var(--r-pill); font-size: 13px; line-height: 1; }
+.msg-back { width: 32px; height: 32px; border-radius: var(--r-icon); font-size: 19px; line-height: 1; }
+.msg-x:hover, .msg-back:hover { border-color: var(--border-gold); color: var(--gold); }
+
+/* ── list ── */
+.msg-list { flex: 1; overflow-y: auto; }
+.msg-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 14px 18px; text-align: left; font: inherit; color: inherit;
+  background: none; border: 0; border-bottom: 1px solid var(--row-divider);
+  cursor: pointer; transition: background .16s;
+}
+.msg-row:hover { background: rgba(232,201,138,.04); }
+.msg-av {
+  flex: none; width: 42px; height: 42px; border-radius: var(--r-pill);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised); border: 1px solid var(--border-strong);
+  font-family: var(--display); font-size: 15px; letter-spacing: 1px; color: var(--gold);
+}
+.msg-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.msg-row-name { font-family: var(--display); font-size: 14px; letter-spacing: 1px; color: var(--text); }
+.msg-row-snip {
+  font-family: var(--ui); font-size: 12px; color: var(--text-mid);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.msg-row-right { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.msg-row-time { font-family: var(--ui); font-weight: 500; font-size: 10px; color: var(--text-label); }
+.msg-unread {
+  min-width: 16px; padding: 2px 5px; border-radius: var(--r-pill);
+  background: var(--danger); color: var(--ink); text-align: center;
+  font-family: var(--ui); font-weight: 700; font-size: 9px; line-height: 1.3;
+}
+.msg-empty {
+  padding: 40px 18px; text-align: center;
+  font-family: var(--display); font-size: 15px; letter-spacing: 2px; color: var(--text-mid);
+}
+
+/* ── thread ── */
+.msg-thread {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 11px;
+  padding: 16px 18px;
+}
+.msg-b { display: flex; flex-direction: column; align-items: flex-start; max-width: 80%; }
+.msg-b.is-me { align-self: flex-end; align-items: flex-end; }
+.msg-bubble {
+  padding: 11px 14px;
+  font-family: var(--ui); font-size: 13px; line-height: 1.55;
+  background: var(--surface-raised); border: 1px solid var(--border-strong);
+  color: var(--text-bright);
+  border-radius: 16px 16px 16px 4px;
+}
+.msg-b.is-me .msg-bubble {
+  background: rgba(232,201,138,.1); border-color: var(--border-gold);
+  color: var(--text);
+  border-radius: 16px 16px 4px 16px;
+}
+.msg-time {
+  margin-top: 5px;
+  font-family: var(--ui); font-weight: 500; font-size: 10px; color: var(--text-label);
+}
+
+/* ── composer ── */
+.msg-composer {
+  flex: none; display: flex; align-items: center; gap: 9px;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: #0d0d11; border-top: 1px solid var(--track);
+}
+.msg-input {
+  flex: 1; min-width: 0;
+  background: var(--surface-raised); border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill); padding: 11px 16px;
+  font-family: var(--ui); font-size: 13px; color: var(--text);
+  outline: none; transition: border-color .16s;
+}
+.msg-input::placeholder { color: var(--text-label); }
+.msg-input:focus { border-color: var(--border-gold); }
+.msg-send {
+  flex: none;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--ink); background: var(--gold-chrome);
+  border: 0; border-radius: var(--r-pill); padding: 11px 18px;
+  cursor: pointer; transition: filter .16s;
+}
+.msg-send:hover { filter: brightness(1.08); }
+
+/* ── XP toast ── */
+.xp-toast {
+  position: absolute; top: 64px; left: 50%; z-index: 90;
+  transform: translate(-50%, -8px);
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 18px; border-radius: var(--r-pill);
+  border: 1px solid var(--border-gold); background: var(--card-fill);
+  box-shadow: var(--modal-shadow);
+  opacity: 0; pointer-events: none;
+  transition: opacity .28s, transform .28s;
+}
+.xp-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.xpt-amt { font-family: var(--display); font-size: 17px; letter-spacing: 1px; color: var(--gold); }
+.xpt-label {
+  font-family: var(--ui); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; color: var(--text-mid);
+}
+/* A level-up is the loud one: the pill itself goes gold. */
+.xp-toast.is-levelup { background: var(--gold-chrome); border-color: transparent; }
+.xp-toast.is-levelup .xpt-amt, .xp-toast.is-levelup .xpt-label { color: var(--ink); }
