@@ -91,6 +91,11 @@ const G = {
   // migration above deletes a stale `equipped` on old saves. `maxMoves` /
   // `maxStamina` are not added either — those live as moves.max/stamina.max.
   soundOn: true,        // WebAudio click gate; Settings (DOM-111) owns the toggle
+  // Epoch ms of first boot, for Settings' "Member since" (DOM-111). Additive
+  // with a default, so no SCHEMA_VERSION bump — and deliberately NOT invented
+  // by a migration: a save from before the field has no honest answer, so it
+  // stays null and the row renders a dash rather than a fabricated date.
+  createdAt: null,
   handle: null,         // player-chosen tag; Settings/Profile own it
   gold: 0,              // premium currency balance; Store (DOM-116) owns it
   supplies: {},         // consumables by id; Store (DOM-116) owns it

@@ -1,0 +1,170 @@
+/* ═══════════════════════════════════════════════════════════
+   S2 — SETTINGS (DOM-111)
+   The Settings screen and its expanders.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   SETTINGS (DOM-111 — screens/08-settings.md)
+   Preferences + account. Canonical v0.2 tokens only — no legacy
+   aliases, no hard-coded hexes.
+   ═══════════════════════════════════════════════════════════ */
+.st { display: flex; flex-direction: column; gap: 22px; }
+
+/* group heading — label style, 11px below-gap */
+.st-group { display: flex; flex-direction: column; gap: 11px; }
+.st-heading {
+  font: 500 10px/1 var(--ui);
+  letter-spacing: 2px;
+  color: var(--text-label);
+}
+
+.st-card {
+  background: var(--card-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+
+/* ── icon well — 38×38, radius 12 ── */
+.st-well {
+  flex: none;
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-icon);
+  color: var(--text-bright);
+}
+.st-well.gold { color: var(--gold); }
+.st-well svg { width: 18px; height: 18px; }
+
+.st-title { font: 15px/1.15 var(--display); letter-spacing: 1px; color: var(--text); }
+
+/* ── PREFERENCES → sound card ── */
+.st-sound { display: flex; align-items: center; gap: 14px; padding: 16px; }
+.st-sound-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.st-sub { font: 400 11px/1.4 var(--ui); color: var(--text-mid); }
+/* the live state word is the one thing here that is gold */
+.st-state { font: 700 11px/1 var(--ui); color: var(--gold); }
+
+/* toggle — 48×26 track, 20px knob, 22px travel.
+   The track is a sibling of the checkbox rather than its parent so the
+   checked state rides plain `~` combinators; `:has()` would be tidier but
+   is newer than the device range this game targets. */
+.st-toggle {
+  flex: none;
+  position: relative;
+  width: 48px; height: 26px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 44px effective hit target without changing the drawn size */
+.st-toggle::after {
+  content: ''; position: absolute; inset: -9px; border-radius: var(--r-pill);
+}
+.st-toggle input {
+  position: absolute; inset: 0;
+  opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer;
+  z-index: 1;
+}
+.st-track {
+  display: block;
+  width: 100%; height: 100%;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: var(--track);
+  box-sizing: border-box;
+  transition: background .2s, border-color .2s;
+}
+.st-knob {
+  display: block;
+  width: 20px; height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--text-mid);
+  transform: translateX(0);
+  transition: background .2s, transform .2s;
+  pointer-events: none;
+}
+.st-toggle input:checked ~ .st-track {
+  background: var(--gold-chrome);
+  border-color: var(--border-gold);
+}
+.st-toggle input:checked ~ .st-track .st-knob {
+  background: var(--ink);
+  transform: translateX(22px);
+}
+.st-toggle input:focus-visible ~ .st-track {
+  outline: 2px solid var(--gold); outline-offset: 2px;
+}
+
+/* ── ACCOUNT → expanders ── */
+.st-expanders { display: flex; flex-direction: column; gap: 11px; }
+.st-exp { overflow: hidden; }
+.st-exp-head {
+  width: 100%;
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px;
+  background: none; border: 0;
+  text-align: left; cursor: pointer;
+  transition: background .16s;
+}
+.st-exp-head:hover { background: rgba(255,255,255,0.02); }
+.st-exp-head .st-title { flex: 1; min-width: 0; }
+.st-chev {
+  flex: none;
+  font: 15px/1 var(--ui);
+  color: var(--text-label);
+  transition: transform .2s;
+}
+.st-exp.open .st-chev { transform: rotate(90deg); }
+
+/* closed height is 0 and the body is inert; opening reveals it under a rule */
+.st-exp-body {
+  display: none;
+  padding: 4px 16px 16px;
+  border-top: 1px solid var(--track);
+}
+.st-exp.open .st-exp-body { display: block; }
+
+/* label / value rows */
+.st-row {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--row-divider);
+}
+.st-row:last-child { border-bottom: 0; }
+.st-row-k { flex: none; font: 400 12px/1.2 var(--ui); color: var(--text-mid); }
+/* IDs and dates stay in the grotesque; identity values take Anton */
+.st-row-v {
+  flex: 1; min-width: 0;
+  text-align: right;
+  font: 500 12px/1.2 var(--ui);
+  color: var(--text-bright);
+  overflow-wrap: anywhere;
+}
+.st-row-v.display { font: 14px/1.2 var(--display); letter-spacing: 1px; color: var(--text); }
+
+.st-prose {
+  margin: 0 0 4px;
+  font: 400 12px/1.6 var(--ui);
+  color: var(--text-mid);
+  text-wrap: pretty;
+}
+
+/* REPORT A BUG — primary gold pill, deliberately WITHOUT the sheen:
+   the sheen is reserved for CTAs that grant a reward (README §Motion). */
+.st-report {
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  background: var(--gold-chrome);
+  color: var(--ink);
+  border: 0;
+  border-radius: var(--r-pill);
+  font: 13px/1 var(--display);
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: filter .16s;
+}
+.st-report:hover { filter: brightness(1.08); }
