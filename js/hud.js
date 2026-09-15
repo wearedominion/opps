@@ -15,8 +15,9 @@ function updateHUD() {
 
   const rank = rankForLevel(G.level);
 
-  // header pill — rank only; everything else is in the panel
-  set('h-level', rank);
+  // header clout cluster — CLOUT value, rank title, 4px XP mini-bar
+  set('h-clout', G.clout.toLocaleString());
+  set('h-rank', rank);
 
   // metrics panel hero
   set('m-clout', G.clout.toLocaleString());
@@ -32,6 +33,7 @@ function updateHUD() {
   const cp = cloutProgress(G.clout);
   set('xp-label', cp.atCap ? 'MAX' : cp.into.toLocaleString() + ' / ' + cp.need.toLocaleString());
   bar('xp-bar', cp.pct);
+  bar('h-xp-mini', cp.pct);
 
   set('moves-label', G.moves.current + ' / ' + G.moves.max);
   bar('moves-bar', (G.moves.current / G.moves.max) * 100);

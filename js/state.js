@@ -65,6 +65,18 @@ const G = {
   // and staleness rules are an open decision (owner: Bill) — entry-capture is
   // the v1 placeholder. Additive field with a default — no SCHEMA_VERSION bump.
   combatSnapshot: null,
+
+  // ── Chrome Money v0.2 shell (DOM-110) ──
+  // Additive fields with defaults — no SCHEMA_VERSION bump. Of the handoff
+  // README's list, `equipped` is deliberately NOT added here: the slot model
+  // and its migration land together in DOM-120/DOM-121, and the v4→v5
+  // migration above deletes a stale `equipped` on old saves. `maxMoves` /
+  // `maxStamina` are not added either — those live as moves.max/stamina.max.
+  soundOn: true,        // WebAudio click gate; Settings (DOM-111) owns the toggle
+  handle: null,         // player-chosen tag; Settings/Profile own it
+  gold: 0,              // premium currency balance; Store (DOM-116) owns it
+  supplies: {},         // consumables by id; Store (DOM-116) owns it
+  turf: {},             // claimed-turf state; The Hood (DOM-118) owns it
 };
 
 // ─────────────────────────────────────────────

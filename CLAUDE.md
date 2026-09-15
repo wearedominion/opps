@@ -47,11 +47,21 @@ this section.
 
 Where a value is given, use it verbatim. Do not invent new colors, fonts, radii, or shadows.
 
-Visual reference, in the repo: **`docs/design-handoff/chrome-money/`** — `style-guide.html`
-(self-contained, open it in a browser) and `concept-board.png`. Read that directory's `README.md`
-first: it lists the handful of places those artefacts predate the port, where the token table
-below wins. Target: port `css/styles.css` and the renderers in `js/` to this system **without
-changing game logic**.
+Visual reference, in the repo: **`docs/design/chrome-money-v0.2/`** — the Chrome Money **v0.2**
+design handoff (DOM-107/DOM-109). Read its `INDEX.md` and `README.md` first; the runnable
+prototype `OPPS App (standalone).html` is ground truth, and when a doc and the prototype
+disagree, the prototype wins. It supersedes the v0.1 handoff (`docs/design-handoff/chrome-money/`,
+kept for history) for layout, spacing, structure, states, motion, copy, and palette/type.
+Two deliberate exceptions were ruled on DOM-110 (2026-09-14): the **rarity scale** (below) and
+the temporary **LEGACY drawer section** (navigation, below). Target: port `css/styles.css` and
+the renderers in `js/` to this system **without changing game logic**.
+
+Token naming: `css/styles.css` defines the **v0.2 canonical token names** from the handoff
+README (`--gold`, `--surface-raised`, `--border-strong`, `--text-mid`, `--gold-chrome`, …) plus
+legacy v0.1 aliases (`--chrome`, `--control`, `--border-ctrl`, `--muted`, `--chrome-fill`, …)
+that older screen rules still read. New code uses canonical names only; each screen rebuild
+(DOM-111..119) migrates its rules, and the aliases are deleted with the last one. The `:root`
+token table below documents the v0.1 names for those older rules — same hex values throughout.
 
 ## Core idea
 
@@ -146,9 +156,11 @@ Only these use it: the OPPS wordmark, the HUD clout figure, crew stat counters, 
 
 ## Geometry
 
-- Radius: frame 26, HUD/overlays 20–24, cards 14–16, pills and meters 999. Nothing square, no 2–4px.
-- Spacing: 20px side padding on every screen except Map; 9px between list cards (7px dense),
-  14px between sections. Use `gap`, never per-child margins.
+- Radius (v0.2 exact): 999 for ALL buttons, chips, badges, bars, toggles, avatars; 22 centered
+  overlay panels; 24 24 0 0 bottom sheets; 16 cards; 14 small tiles, portrait frames, drawer
+  items; 12 for 38px icon buttons and 36px map controls. Nothing square, no 2–4px.
+- Spacing: 20px side padding in the header, 18px in the scroll body (The Hood excepted: 0);
+  9px between list cards (7px dense), 14px between sections. Use `gap`, never per-child margins.
 - Borders: 1px everywhere. `--border` cards, `--border-ctrl` controls, `--border-gold` chrome-active,
   `--border-red` hostile.
 - Elevation: exactly one shadow, `--modal-shadow`, on modals. Cards lift with `--panel-fill`.
@@ -214,6 +226,12 @@ glow, never chrome-clipped text.
 browner than chrome; Mythic is the only rose in the app. Future tiers must keep clear of all
 four reserved hues.
 
+**v0.2 exception (ruled on DOM-110, 2026-09-14):** the v0.2 prototype's 4-tier scale
+(COMMON/RARE/ELITE/LEGEND with a gold LEGEND) is **not adopted** — this 6-tier reserved-hue
+scale stays. Only the prototype's tier-label *typography* carries over (Space Grotesk 500 10px,
+letter-spacing 1.5px — the `.tier-label` utility). On side-by-side pixel checks against the
+prototype, tier-label color differences are expected and pass.
+
 Data mapping (DOM-18): catalog `rarity` ids are the colour words — `grey` → COMMON, `green` →
 UNCOMMON, `blue` → RARE, `purple` → EPIC, `orange` → LEGENDARY. Mythic is **reserved**: the
 tokens ship, but no v1 item and no drop odds carry it. These are the only sanctioned uses of
@@ -221,9 +239,14 @@ blue/purple/orange/pink ink outside the XP meter.
 
 ## Structural changes to the build
 
-1. **Navigation.** Nine sidebar items → five bottom tabs: Hood, Map, Moves, Opps, Empire.
-   Plugs / Gear / Spots / Stats / Crew move inside Empire behind the chip row. Remove `nav` drawer,
-   `#nav-overlay`, `#nav-toggle` and the `.nav-item` left-border accent.
+1. **Navigation** (rewritten for v0.2, DOM-110, ratified 2026-09-14 — supersedes the v0.1
+   five-bottom-tab decision). A hamburger in the header opens a 262px left **nav drawer**
+   (spec: `docs/design/chrome-money-v0.2/OVERLAYS.md`) with exactly eight items, in order:
+   THE HOOD · MAKE MOVES · OPPS LIST · PLUGS · CREW · STORE · PROFILE · SETTINGS. There is no
+   bottom tab bar and no Empire chip row, and no Inventory item (it is Profile's GEAR tab).
+   *Transition only:* a quiet LEGACY drawer section carries ACTIVITIES / SPOTS / STATS until
+   DOM-115/DOM-117/DOM-118 absorb those screens; each of those tickets deletes its item, and the
+   final drawer is exactly eight.
 2. **No emoji.** Remove every emoji icon — `.nav-icon`, `.item-icon`, `.prop-icon`, `.fighter-icon`,
    `.enemy-avatar` glyphs, gem spend icons. Meaning comes from colour, type and the real portrait art.
 3. **Locked states.** Never dim a card to 40% opacity. Render at full contrast and swap the action for
