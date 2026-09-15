@@ -67,3 +67,29 @@ test('no test file depends on another, so the runner can order them freely', () 
     }
   }
 });
+
+test('no two scripts declare the same top-level name', () => {
+  // Every js/ file is a plain <script> sharing one global scope, so two files
+  // declaring the same `const` is not shadowing — it is an uncaught SyntaxError
+  // that stops the SECOND file loading entirely, silently, at boot.
+  //
+  // DOM-116 hit exactly that: the Store declared `stEsc`, Settings already had
+  // one, and js/settings.js stopped loading. Nothing in the suite noticed,
+  // because each file parses fine on its own.
+  const decl = /^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm;
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const files = Array.from(html.matchAll(/<script src="(js\/[^"]+)"/g)).map(m => m[1]);
+  assert.ok(files.length > 10, 'no scripts found — did the markup change?');
+
+  const owners = new Map();
+  const clashes = [];
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    for (const m of new Set(Array.from(src.matchAll(decl)).map(x => x[1]))) {
+      if (owners.has(m)) clashes.push(m + ': ' + owners.get(m) + ' and ' + f);
+      else owners.set(m, f);
+    }
+  }
+  assert.deepStrictEqual(clashes, []);
+});

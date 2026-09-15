@@ -212,6 +212,36 @@ XP value is duplicated here.
 > taken by the Plug quests (DOM-90) whose ids are save keys in `G.quests`. Repurposing it would
 > have broken saves, so the Make Moves content landed as `moves.json`.
 
+## slots.json
+
+The seven paper-doll gear slots (DOM-121) in display order, with the labels screens print:
+`head` · `torso` · `handR` · `handL` · `legs` · `ride` · `stash`. These keys are the `slot` field
+on every `gear.json` row and the keys of `G.loadout` — renaming one needs a save migration.
+`body` marks the five worn slots as against RIDE and STASH.
+
+The Store (DOM-116) reads the labels for its `{SLOT} · {buff}` meta line; the Profile GEAR tab
+(DOM-130) reads the same map rather than carrying a second copy.
+
+> **`head` and `legs` have no v1 items.** Flagged on DOM-123 and still true: every storefront and
+> drop item sits in the other five. The Store simply lists fewer items; the paper doll on Profile
+> is where two empty slots will show, so re-raise it there.
+
+## storefront.json
+
+What the Store sells that is **not** a `gear.json` row (DOM-116): the featured real-money offer
+(`kit_mp9_full`, its art and its includes list) and the Bread-priced consumables, whose quantities
+live in `G.supplies`.
+
+**There are no GOLD packs here, deliberately.** Jake ruled on 2026-09-15 that v1 ships no hard
+currency, so the GOLD tab, the GOLD wallet tile and the gold-pack confirm are omitted rather than
+stubbed — `oppsDefinitions.md` says "none in v1" in three places and `js/payments.js` removed the
+pack catalogue with the `gems` balance. Re-adding one is its own ticket, and needs a Gold *sink*:
+nothing in the game spends Gold today. A test fails if GOLD reappears on the screen.
+
+Supply rarities use the repo's 6-tier scale, so the prototype's `ELITE` reads as `EPIC` here —
+the sanctioned DOM-110 deviation. v1's real-money refreshes stay in `monetization.json`; the Store
+renders them as rows in the same SUPPLIES list, marked `REAL MONEY`.
+
 ## crew.json
 
 The NPC half of the CREW roster (DOM-114): `HITTERS` and `DEALERS`, each member carrying
@@ -298,8 +328,8 @@ maps one onto the other.
 ## Other files
 
 `jobs.json`, `enemies.json`, `gear.json`, `properties.json`, `ranks.json`,
-`xp-system.json`, `crew.json` — loaded by the client at boot (see `js/main.js`). Schemas to
-be documented here as they're formalized.
+`xp-system.json`, `crew.json`, `slots.json`, `storefront.json` — loaded by the client at boot
+(see `js/main.js`). Schemas to be documented here as they're formalized.
 
 `gear.json` items carry **`upgradeable`** (bool, required), which gates the unbounded gear
 upgrade track — Cash-priced levels with small hard-capped stat gains, prestige beyond the cap.

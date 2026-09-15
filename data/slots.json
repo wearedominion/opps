@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "_note": "The seven paper-doll gear slots (DOM-121), in display order, with the labels screens print. These keys are the `slot` field on every data/gear.json row and the keys of G.loadout — do not rename one without a save migration. DOM-116 (Store) reads the labels for its `{SLOT} · {buff}` meta line; DOM-130 (Profile GEAR tab) reads the same map rather than carrying a second copy. `body` marks the five worn slots, as opposed to RIDE and STASH.",
+  "slots": [
+    { "id": "head",  "label": "HEAD",         "body": true },
+    { "id": "torso", "label": "TORSO",        "body": true },
+    { "id": "handR", "label": "RIGHT HAND",   "body": true },
+    { "id": "handL", "label": "LEFT HAND",    "body": true },
+    { "id": "legs",  "label": "LEGS / KICKS", "body": true },
+    { "id": "ride",  "label": "RIDE",         "body": false },
+    { "id": "stash", "label": "STASH",        "body": false }
+  ]
+}

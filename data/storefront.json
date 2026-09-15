@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "_note": "What the Store sells that is NOT a data/gear.json row (DOM-116): the featured real-money offer, and the Bread-priced consumables. GOLD packs are deliberately absent — Jake ruled 2026-09-15 that v1 ships no hard currency, so the GOLD tab is omitted rather than stubbed; see data/README.md before adding one back.",
+  "offer": {
+    "sku": "kit_mp9_full",
+    "name": "MP9 FULL KIT",
+    "price": "$9.99",
+    "buff": "+32 MUSCLE · +6 SPEED",
+    "includes": ["Optic", "Grip", "Suppressor", "Extended Mag", "Stock"],
+    "art": "assets/mp9-kit.png",
+    "alt": "MP9 full kit — suppressed MP9 with optic, foregrip, folding stock and extended magazine"
+  },
+  "supplies": [
+    { "id": "medkit",     "name": "MEDKIT",     "rarity": "grey",  "price": 250,  "buff": "Restore 40 HEALTH instantly" },
+    { "id": "lean_cup",   "name": "LEAN CUP",   "rarity": "blue",  "price": 600,  "buff": "Refill your MOVES pool" },
+    { "id": "burner_sim", "name": "BURNER SIM", "rarity": "blue",  "price": 850,  "buff": "Wipe your heat · dodge one revenge hit" },
+    { "id": "snitch_tip", "name": "SNITCH TIP", "rarity": "purple", "price": 1900, "buff": "Reveal one opp’s exact THREAT" }
+  ]
+}

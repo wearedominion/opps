@@ -70,8 +70,12 @@ test('the enemy solve and the cash sinks read the buyable floor only (code shape
 });
 
 test('stores never sell a drop tier: render skips and buy refuses (code shape)', () => {
+  // DOM-116 rebuilt the shelves: the per-item `if (item.dropOnly) return;`
+  // became a filter on the list. Same rule, different shape. The behavioural
+  // version of this — render a catalogue and assert no drop tier appears —
+  // lives in tests/store-screen.test.js; this stays a cheap code-shape check.
   const storeSrc = fs.readFileSync(path.join(ROOT, 'js/store.js'), 'utf8');
-  assert.ok(/if \(item\.dropOnly\) return;/.test(storeSrc), 'renderStore lists drop-only gear');
+  assert.ok(/filter\(i => !i\.dropOnly/.test(storeSrc), 'renderStore lists drop-only gear');
   assert.ok(/if \(item\.dropOnly\) \{ toast\(/.test(storeSrc), 'buyItem would sell drop-only gear');
 });
 
