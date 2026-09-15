@@ -204,6 +204,12 @@ function startCombat(enemyId) {
 
   var st = fmStats(_playerFighter(), _enemyFighter(e), _fightCfg(), 300, Math.random);
   var pct = Math.round(st.pWin * 100);
+  // The same Monte Carlo sizes the trace's x-axis: reserving the expected
+  // number of rounds is what makes the well BUILD left to right instead of
+  // refitting itself so round 1 already spans the whole width. A fight that
+  // outlasts the estimate widens the axis from there (see _sparkTarget).
+  _fight.span = Math.max(SPARK_SPAN_MIN,
+                Math.min(SPARK_SPAN_MAX, Math.round(st.meanRounds || 0)));
   var oddsEl = $('c-odds');
   if (oddsEl) {
     // The real number, not the prototype's threat-derived placeholder
@@ -237,6 +243,31 @@ function _drawBars() { /* HP now reads off the trace; see _pushSparkPoint */ }
 // canvas — the lines are stroked by .combat-spark .you / .opp so the palette
 // lives in the stylesheet tokens (chrome = you, --red = opp), exactly as the
 // DOM-42 well worked before the DOM-72 rebuild dropped it.
+//
+// The trace ANIMATES (playthrough feedback): the well is meant to read as a
+// power struggle building left to right, so a landed round extends the line
+// over ~450ms instead of snapping. Two things were making it "shoot to the
+// end point" before:
+//   · the path's `d` was written whole on every round, with no tween;
+//   · x was normalised over `pts.length - 1`, so round 1's two points spanned
+//     the entire well — the line was always already finished.
+// Both are fixed by tweening a rendered state {drawn, span} toward the round
+// history: `drawn` is how many segments are on screen (fractional mid-tween),
+// `span` is how many the well's width represents. Reserving `span` for the
+// EXPECTED fight length is what lets the chart build instead of refit itself.
+
+var SPARK_ROUND_MS = 450;   // one round's draw; a ~4-round fight builds in ~1.8s
+var SPARK_SPAN_MIN = 3;     // never squeeze a short fight into a 1-segment axis
+var SPARK_SPAN_MAX = 8;     // nor stretch the axis past what the well can show
+
+var _spark = null;          // { drawn, span } — what is currently PAINTED
+var _sparkRaf = 0;          // in-flight rAF handle, 0 when settled
+var _sparkGuard = 0;        // watchdog: rAF does not fire while the page is hidden
+var _sparkOnSettle = null;  // fired once when the tween lands (the W/L stamp)
+
+function _reducedMotion() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
 
 function _pushSparkPoint() {
   if (!_fight || !combatEnemy) return;
@@ -248,7 +279,19 @@ function _pushSparkPoint() {
   _drawSpark();
 }
 
-function _drawSpark() {
+// Where the trace is headed: every point drawn, over an axis at least as wide
+// as the expected fight so early rounds occupy their share of the well and no
+// more. A fight that outlasts the estimate widens the axis, and the widening
+// is tweened too — old points slide left rather than jumping.
+function _sparkTarget() {
+  var n = _fight.hist.length - 1;
+  return { drawn: n, span: Math.max(_fight.span || SPARK_SPAN_MIN, n) };
+}
+
+// Paint one frame. `drawn` may be fractional — the whole segments are stroked
+// and the one in flight is cut at the interpolated point, which is also where
+// the head dot sits, so the dot leads the line in.
+function _renderSpark(drawn, span) {
   var well = $('combat-log'), svg = $('combat-spark');
   if (!well || !svg || !_fight) return;
   var w = well.clientWidth, h = well.clientHeight;
@@ -257,6 +300,7 @@ function _drawSpark() {
   svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
   var padX = 4, padY = 6;
   function py(v) { return h - padY - (h - padY * 2) * (v / 100); }
+  function px(i) { return padX + (w - padX * 2) * (i / span); }
   var mid = $('spark-mid');
   if (mid) {
     mid.setAttribute('x1', padX); mid.setAttribute('x2', w - padX);
@@ -264,25 +308,102 @@ function _drawSpark() {
   }
   var pts = _fight.hist;
   if (pts.length < 2) return;
-  function px(i) { return padX + (w - padX * 2) * (i / (pts.length - 1)); }
+  var whole = Math.max(0, Math.min(pts.length - 1, Math.floor(drawn + 1e-9)));
+  var frac = Math.max(0, Math.min(1, drawn - whole));
   function trace(id, dotId, key) {
-    var d = '';
-    for (var i = 0; i < pts.length; i++) {
+    var d = '', i;
+    for (i = 0; i <= whole; i++) {
       d += (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(pts[i][key]).toFixed(1);
+    }
+    var hx = px(whole), hy = py(pts[whole][key]);
+    if (frac > 0 && whole + 1 < pts.length) {
+      hx += (px(whole + 1) - hx) * frac;
+      hy += (py(pts[whole + 1][key]) - hy) * frac;
+      d += 'L' + hx.toFixed(1) + ' ' + hy.toFixed(1);
     }
     var el = $(id);
     if (el) el.setAttribute('d', d);
     var dot = $(dotId);
     if (dot) {
-      dot.setAttribute('cx', px(pts.length - 1).toFixed(1));
-      dot.setAttribute('cy', py(pts[pts.length - 1][key]).toFixed(1));
+      dot.setAttribute('cx', hx.toFixed(1));
+      dot.setAttribute('cy', hy.toFixed(1));
     }
   }
   trace('spark-opp', 'spark-dot-opp', 'opp');
   trace('spark-you', 'spark-dot-you', 'you');
 }
 
+// Retarget the tween at the current history. Clicking again mid-draw does not
+// queue or block — the line just carries on from where it is, and the duration
+// scales with the distance left so a round always draws at the same SPEED
+// (capped, so a spammed fight catches up rather than falling further behind).
+function _drawSpark() {
+  if (!_fight) return;
+  var to = _sparkTarget();
+  if (_fight.hist.length < 2 || _reducedMotion()) {
+    _sparkStop();
+    _spark = to;
+    _renderSpark(to.drawn, to.span);
+    _sparkSettled();
+    return;
+  }
+  var from = _spark || { drawn: 0, span: to.span };
+  var dist = Math.max(0.001, to.drawn - from.drawn);
+  var dur = SPARK_ROUND_MS * Math.min(2, dist);
+  var t0 = 0;
+  _sparkStop();
+  _sparkRaf = requestAnimationFrame(function step(now) {
+    if (!_fight) { _sparkRaf = 0; return; }
+    if (!t0) t0 = now;
+    var t = Math.min(1, (now - t0) / dur);
+    var e = 1 - Math.pow(1 - t, 3);   // ease-out: the line lands, it doesn't stop dead
+    _spark = {
+      drawn: from.drawn + (to.drawn - from.drawn) * e,
+      span:  from.span  + (to.span  - from.span)  * e,
+    };
+    _renderSpark(_spark.drawn, _spark.span);
+    if (t < 1) { _sparkRaf = requestAnimationFrame(step); return; }
+    _sparkFinish(to);
+  });
+  // rAF does not fire while the page is hidden, and the W/L stamp and the
+  // CLOSE button now hang off the tween settling — without this, backgrounding
+  // the app mid-round strands the player in a fight modal with no way out.
+  // setTimeout is throttled when hidden but still fires, so the fight always
+  // resolves; whichever lands first cancels the other.
+  _sparkGuard = setTimeout(function() { _sparkFinish(to); }, dur + 250);
+}
+
+// Land the tween exactly once, from either the rAF or its watchdog.
+function _sparkFinish(to) {
+  _sparkStop();
+  _spark = to;
+  _renderSpark(to.drawn, to.span);
+  _sparkSettled();
+}
+
+function _sparkStop() {
+  if (_sparkRaf) { cancelAnimationFrame(_sparkRaf); _sparkRaf = 0; }
+  if (_sparkGuard) { clearTimeout(_sparkGuard); _sparkGuard = 0; }
+}
+
+// The fight's ECONOMY resolves the moment the round lands — only the W/L stamp
+// waits, so the player watches the killing blow draw instead of having the
+// wash drop over a half-finished line.
+function _sparkSettle(fn) {
+  _sparkOnSettle = fn;
+  if (!_sparkRaf) _sparkSettled();
+}
+
+function _sparkSettled() {
+  var fn = _sparkOnSettle;
+  _sparkOnSettle = null;
+  if (fn) fn();
+}
+
 function _clearSpark() {
+  _sparkStop();
+  _sparkOnSettle = null;
+  _spark = null;
   ['spark-you', 'spark-opp'].forEach(function(id) {
     var el = $(id); if (el) el.removeAttribute('d');
   });
@@ -358,12 +479,19 @@ function _endFight(enemyDead) {
   _setActionButtons(false);
 
   // Stamp the well; the traces stay on screen — the player just watched them.
-  _simState('done');
-  var res = $('spark-result');
-  if (res) {
-    res.textContent = enemyDead ? 'W' : 'L';
-    res.className = 'eng-stamp show ' + (enemyDead ? 'win' : 'loss');
-  }
+  // Deferred until the killing blow has finished drawing: the stamp's wash
+  // covers the trace, so dropping it now would hide the round that won.
+  // Only the presentation waits — the payout below settles immediately.
+  _sparkSettle(function() {
+    if (!_fight || !_fight.over) return;   // closed or restarted mid-draw
+    _simState('done');
+    var res = $('spark-result');
+    if (res) {
+      res.textContent = enemyDead ? 'W' : 'L';
+      res.className = 'eng-stamp show ' + (enemyDead ? 'win' : 'loss');
+    }
+    $('close-combat').style.display = 'inline-block';
+  });
 
   if (enemyDead) {
     var cashWon = rand(enemy.reward.cash[0], enemy.reward.cash[1]);
@@ -397,11 +525,11 @@ function _endFight(enemyDead) {
   }
   updateHUD();
   renderHospital();
-  $('close-combat').style.display = 'inline-block';
   GameState.save();
 }
 
 function closeCombat() {
+  _sparkStop();
   _simState('idle');
   combatEnemy = null;
   _fight = null;
