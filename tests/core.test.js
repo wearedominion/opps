@@ -1728,14 +1728,27 @@ test('city.json — every turf anchor names a faction that exists, and pins are 
 function loadPlugs(saved) {
   const src = fs.readFileSync(path.join(ROOT, 'js/plugs.js'), 'utf8')
     + '\n;globalThis.__t = { plugCtaLabel, plugRecruited, plugCommit, plugNameSize,'
-    + ' PLUG_XP_RECRUIT, PLUG_XP_JOB, G };';
+    + ' PLUG_XP_RECRUIT, G };';
   const saves = [];
+  // A fake canvas with a measureText proportional to px * characters. Without
+  // this `document` is undefined, plugNameSize throws on the first call and
+  // every name returns the minimum — which makes any assertion about sizing
+  // pass even if the measurement loop were deleted.
   const ctx = {
     console, JSON, Object, Math, Array,
     G: { plugsRecruited: saved === undefined ? [] : saved },
     GameState: { save: () => saves.push(1) },
-    // no canvas in the sandbox → plugNameSize takes its fallback path
-    document: undefined,
+    document: {
+      createElement: () => ({
+        getContext: () => ({
+          font: '',
+          measureText(t) {
+            const px = parseInt(/\b(\d+)px/.exec(this.font)[1], 10);
+            return { width: t.length * px * 0.62 };
+          },
+        }),
+      }),
+    },
     questFor: () => null,
     $: () => null,
   };
@@ -1762,21 +1775,45 @@ test('plugs — once recruited, the final press runs the job instead', () => {
   assert.strictEqual(P.plugCtaLabel(PLUGS_JSON[1], true), 'RUN IT');
 });
 
-test('plugs — the first commit recruits, later commits run the job', () => {
+test('plugs — the first commit recruits and pays once', () => {
   const P = loadPlugs();
   const first = P.plugCommit('plug-dex');
   assert.deepStrictEqual(
-    { amount: first.amount, label: first.label, first: first.first },
-    { amount: P.PLUG_XP_RECRUIT, label: 'PLUG RECRUITED', first: true });
+    { amount: first.amount, label: first.label, first: first.first, awarded: first.awarded },
+    { amount: P.PLUG_XP_RECRUIT, label: 'PLUG RECRUITED', first: true, awarded: true });
   assert.deepStrictEqual(Array.from(P.G.plugsRecruited), ['plug-dex']);
+  assert.strictEqual(P.saves.length, 1);
+});
 
-  const second = P.plugCommit('plug-dex');
-  assert.deepStrictEqual(
-    { amount: second.amount, label: second.label, first: second.first },
-    { amount: P.PLUG_XP_JOB, label: 'JOB DONE', first: false });
-  // still recorded once — the roster is a set, not a tally
+test('plugs — pressing again pays NOTHING, however many times it is pressed', () => {
+  // Regression guard for the faucet review caught on #35. Reopening a recruited
+  // plug lands on the commit CTA; if a repeat press paid, that is XP per tap
+  // with no Stamina, cash or cooldown behind it. Inert today only because
+  // awardXp does not exist — and that guard dies when DOM-124 lands.
+  const P = loadPlugs();
+  P.plugCommit('plug-dex');                 // the recruit
+  const savesAfterRecruit = P.saves.length;
+
+  for (let i = 0; i < 25; i++) {
+    const again = P.plugCommit('plug-dex');
+    assert.strictEqual(again.amount, 0, 'press ' + (i + 1) + ' paid XP');
+    assert.strictEqual(again.awarded, false);
+    assert.strictEqual(again.first, false);
+  }
+  // roster is a set, not a tally, and a no-op does not rewrite the save
   assert.deepStrictEqual(Array.from(P.G.plugsRecruited), ['plug-dex']);
-  assert.strictEqual(P.saves.length, 2, 'every commit persists');
+  assert.strictEqual(P.saves.length, savesAfterRecruit,
+    'a press that pays nothing still hit the disk');
+});
+
+test('plugs — finishing the pitch rewinds it, so reopening is not a one-tap loop', () => {
+  // The other half of the faucet: closePlug() left the saved line pinned at the
+  // last index, so reopening showed the commit CTA immediately.
+  const src = fs.readFileSync(path.join(ROOT, 'js/plugs.js'), 'utf8');
+  const advance = src.slice(src.indexOf('function advancePlug('));
+  const commitBranch = advance.slice(0, advance.indexOf('state.line++'));
+  assert.ok(/_plugState\[idx\]\s*=\s*\{\s*line:\s*0\s*\}/.test(commitBranch),
+    'advancePlug does not rewind the dialogue when it commits');
 });
 
 test('plugs — a save with no plugsRecruited yet does not throw', () => {
@@ -1791,12 +1828,22 @@ test('plugs — plugsRecruited is an additive field, so no SCHEMA_VERSION bump',
   assert.strictEqual(SCHEMA_VERSION, 5);
 });
 
-test('plugs — the name pill has a size for every name in the roster', () => {
+test('plugs — the name pill measures, rather than always returning one size', () => {
   const P = loadPlugs();
+  // Every name in the v1 roster fits at the maximum — including BIG HOMIE
+  // MARCO, confirmed in the browser at 21px with no overflow. So the roster
+  // alone cannot prove the measurement loop runs.
   for (const plug of PLUGS_JSON) {
-    const px = P.plugNameSize(plug.name);
-    assert.ok(px >= 14 && px <= 21, plug.name + ' sized to ' + px + 'px');
+    assert.strictEqual(P.plugNameSize(plug.name), 21,
+      plug.name + ' should fit the pill at the max size');
   }
+  // Force the loop with names the pill genuinely cannot hold, and assert it
+  // steps down monotonically rather than jumping straight to the floor.
+  const long  = P.plugNameSize('BIG HOMIE MARCO THE MECHANIC');
+  const huge  = P.plugNameSize('BIG HOMIE MARCO THE MECHANIC OF EAST CALDERO');
+  assert.ok(long < 21, 'an over-long name did not shrink at all (' + long + 'px)');
+  assert.ok(huge <= long, 'a longer name came back larger: ' + huge + ' > ' + long);
+  assert.ok(huge >= 14, 'sizing fell below the 14px floor (' + huge + 'px)');
 });
 
 test('plugs — the screen is built to the 04-plugs.md geometry', () => {

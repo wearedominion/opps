@@ -138,26 +138,41 @@ function plugRecruited(plugId) {
   return (G.plugsRecruited || []).indexOf(plugId) !== -1;
 }
 
-// Default XP awards, used until the XP system lands (DOM-124 is blocked on a
-// ratification). These are the prototype's own fallbacks; once xp-system.json
-// exists, `plugs.recruit` / `plugs.jobBase` replace them here.
-const PLUG_XP_RECRUIT = 35, PLUG_XP_JOB = 50;
+// Recruiting a plug is a one-time event and pays once. Used until the XP system
+// lands (DOM-124); this is the prototype's own fallback figure.
+const PLUG_XP_RECRUIT = 35;
 
-// Committing the last line: first time recruits the plug, later times run the
-// job. Returns the award so the caller (and the tests) can see what happened
-// without reaching into G.
+// Committing the last line of the pitch.
+//
+// ONLY THE FIRST COMPLETION PAYS. The prototype awards a further 50 XP on every
+// later press, and in this codebase that is an unbounded faucet: nothing gates
+// how often the press can happen — no Stamina, no cash, no cooldown. Reopening
+// a recruited plug and pressing once would have paid 50 XP per tap, on all five
+// plugs, as fast as a thumb moves. It is inert today only because `awardXp` does
+// not exist yet, and that guard disappears the moment DOM-124 lands — in a PR
+// thinking about XP, not about plug dialogue state. DOM-74 closed exactly this
+// class of hole; this must not reopen one.
+//
+// Paying nothing is also the more coherent reading. The job a plug offers is
+// already a real mechanic: `data/quests.json` gives each plug a quest whose
+// steps are fights, jobs and items done out in the world, tracked by DOM-90 and
+// paid by COLLECT. The dialogue is where the plug TELLS you the job; the quest
+// panel is where doing it is rewarded. A second payout for re-reading the pitch
+// would be paying for the telling.
+//
+// If DOM-124 decides a repeat press should pay, that is the ticket that owns
+// both the number and the gate.
 function plugCommit(plugId) {
   if (!G.plugsRecruited) G.plugsRecruited = [];
-  const first = !plugRecruited(plugId);
-  if (first) G.plugsRecruited.push(plugId);
-  const award = first
-    ? { amount: PLUG_XP_RECRUIT, label: 'PLUG RECRUITED', first: true }
-    : { amount: PLUG_XP_JOB,     label: 'JOB DONE',       first: false };
+  if (plugRecruited(plugId)) {
+    return { amount: 0, label: 'JOB DONE', first: false, awarded: false };
+  }
+  G.plugsRecruited.push(plugId);
   // DOM-124 defines awardXp and the XP toast. Guarded so Plugs ships and
   // starts persisting recruits now; the award becomes visible when it lands.
-  if (typeof awardXp === 'function') awardXp(award.amount, award.label);
+  if (typeof awardXp === 'function') awardXp(PLUG_XP_RECRUIT, 'PLUG RECRUITED');
   GameState.save();
-  return award;
+  return { amount: PLUG_XP_RECRUIT, label: 'PLUG RECRUITED', first: true, awarded: true };
 }
 
 // The quest panel under the dialog (DOM-90): steps with live progress, the
@@ -219,6 +234,11 @@ function advancePlug() {
   const state = _plugState[idx] || { line: 0 };
   if (state.line >= plug.dialog.length - 1) {
     plugCommit(plug.id);
+    // Rewind on commit. Without this the saved line stays pinned at the last
+    // index, so reopening lands straight on the final line with the commit CTA
+    // already showing — a one-tap loop. Mid-conversation progress is still kept
+    // (see openPlug); it is only finishing that starts the pitch over.
+    _plugState[idx] = { line: 0 };
     closePlug();
     renderPlugs();   // the CTA and any quest chip change once recruited
     return;
