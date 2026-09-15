@@ -193,9 +193,6 @@ function startCombat(enemyId) {
     portraitEl.src = src || '';
     portraitEl.style.display = src ? 'block' : 'none';
   }
-  var iconEl = $('c-enemy-icon');
-  if (iconEl) iconEl.textContent = '';
-
   $('c-enemy-name').textContent = e.name;
   var roleEl = $('c-enemy-role');
   if (roleEl) roleEl.textContent = (e.code ? e.code + ' · ' : '') + (e.role || '');
