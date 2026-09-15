@@ -90,8 +90,13 @@ function mvCompleteObjective() {
     log(f.title + ' — ' + objs[at].text, 'win');
     toast('OBJECTIVE CLEARED');
   }
-  // DOM-124 owns addXP and the XP toast; guarded so this ships without it.
-  if (typeof addXP === 'function') addXP(f.kind);
+  // Pays per objective, plus the card's completion bonus on the last one
+  // (DOM-124, ruling: "pay per objective and completion bonus at the end").
+  // Bounded by the objective count, and G.moveObjective ratchets, so the
+  // card cannot be cleared twice. The Clout log attributes each one by
+  // moveId. jobs.json rows — the "side hustles" — are paid by doJob()
+  // instead of from the spec; see XP_UNPAID in js/xp.js for why.
+  addXP(f.kind, { completed: finished, id: f.id, title: f.title });
 
   updateHUD();
   renderJobs();
@@ -207,16 +212,14 @@ function mvDaily() {
     '</div>';
 }
 
-// The XP number lives in xp-system.json, which DOM-124 owns and is blocked on.
-// Until that file exists this falls back to the figure 02-moves.md itself
-// prints. Worth flagging: the design doc says 20 here while the XP handoff
-// says dailyGrind 30 — reconciling those two is part of what DOM-124 is
-// blocked on, so this deliberately follows the screen spec, not the other one.
-const MV_XP_DAILY_FALLBACK = 20;
+// DOM-124 settled the two numbers this was caught between: 02-moves.md printed
+// XP +20, xp-system.json says dailyGrind 30, and Jake ruled for 30. It also
+// settled the unit — there is no XP, so the card advertises the Clout it
+// actually pays, scaled to the player's level like every other award.
 function mvDailyRewardLabel() {
-  const doc = (typeof XP_SYSTEM !== 'undefined') ? XP_SYSTEM : null;
-  const n = (doc && doc.actionXp && doc.actionXp.dailyGrind) || MV_XP_DAILY_FALLBACK;
-  return 'XP +' + n;
+  const weight = XpAwards.daily();
+  if (weight === null) return '';
+  return '+' + xpToClout(weight, G.level).toLocaleString() + ' CLOUT';
 }
 
 // ---- 4. The Hood --------------------------------------------------------
@@ -285,6 +288,8 @@ const MV_REASON_LABEL = {
   move_payout: 'Ran a move', fight_reward: 'Won a fight', quest_reward: 'Finished a job',
   recruit_bonus: 'Crew recruited', level_up_grant: 'Levelled up', starting_grant: 'Started out',
   iap_grant: 'Bought a pack', admin_adjust: 'Adjusted',
+  objective_cleared: 'Cleared an objective', daily_goal: 'Hit the daily',
+  plug_recruit: 'Recruited a plug',
 };
 
 function mvCloutRows() {

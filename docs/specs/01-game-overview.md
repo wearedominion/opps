@@ -119,8 +119,8 @@ Each feature maps to a tab in the UI (`index.html`) and one or more systems in `
   retunable with no migration. The `×1.6` curve this section used to describe is gone.
   **The curve is decided; do not carry it as open.** See `data/README.md` and
   [`08-economy-schema.md`](./08-economy-schema.md) §3.
-- **Ranks** — 10 names in `data/ranks.json` are **bands** of `tuning.progression.levelsPerRank`
-  (10) levels, layered on the Clout-driven level. Leveling refills all three pools, grants
+- **Ranks** — 100 titles in `data/ranks.json`, **spread** across the 120-level cap (one or two
+  levels each), layered on the Clout-driven level. Leveling refills all three pools, grants
   skill points (`skillPointsPerLevel`), and applies the automatic stat gains in
   `tuning.progression.autoStatGainPerLevel` — all data, no literals.
 - **Three pools** (`G.moves` / `G.stamina` / `G.health`, one shared shape) — **Moves** gates

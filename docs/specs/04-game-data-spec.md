@@ -161,17 +161,18 @@ Spots are **stackable** (`G.properties[id]` is a count). `collectIncome()` sums 
 ["Shorty", "Soldier", "Block Boy", "OG", "Set Leader",
  "Don", "Boss", "Kingpin", "Legend", "Untouchable"]
 ```
-An **ordered array of strings**. Ranks are **bands**: each name covers
-`tuning.progression.levelsPerRank` levels (currently 10), so index `0` is levels 1–10, index `1` is
-11–20, and so on. Resolve with `rankForLevel()` in `js/progression.js` — never index the array
-directly. Add ranks at the **end** to extend progression; do not reorder (it retitles existing
-players).
+An **ordered array of strings**. The list is **spread** across the level cap: index =
+`floor((level - 1) × names.length / tuning.progression.maxLevel)`, so 100 titles over 120 levels
+give each title one or two levels, and level 1 and level 120 land on the first and last. Resolve
+with `rankForLevel()` in `js/progression.js` — never index the array directly. Do not reorder
+(it retitles existing players); changing the list length or the cap re-spreads it and retitles
+them too.
 
-> **Ten names at 10 levels each cover levels 1–90, and the cap is 120.** The last name absorbs
-> everything above its band, so "Untouchable" currently spans levels 91–120 — a 30-level plateau
-> rather than 10. That is a reasonable shape for a top rank, but if you want uniform bands, add
-> **two** names to the end of the list. Nothing in code needs to change: band width is
-> `tuning.progression.levelsPerRank` and the list length does the rest.
+> **Updated by DOM-124.** The sample above is the old ten-name list, kept as a shape example.
+> `ranks.json` now holds the Chrome Money v0.2 handoff's 100 titles (NOBODY → STREET DON),
+> lifted verbatim from `design_reference/xp-system.json`. The previous model — fixed bands of
+> `tuning.progression.levelsPerRank` — could only cover 120 levels by leaving the top name as a
+> 30-level plateau; the spread uses every title instead, and `levelsPerRank` was retired.
 
 ### 3.6 `unlocks.json` — Level gates
 

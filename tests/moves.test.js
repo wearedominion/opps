@@ -1,7 +1,9 @@
 // S6 Make Moves + log modal (DOM-115).
 // Part of the suite; run it all with `node tests/run.js`.
 
-const { fs, path, vm, assert, ROOT, readAllCss, G, test } = require('./harness');
+const {
+  fs, path, vm, assert, ROOT, readAllCss, G, test, TABLE, XP_SPEC,
+} = require('./harness');
 
 // ─────────────────────────────────────────────
 //  DOM-115 — S6 Make Moves + log modal
@@ -11,14 +13,18 @@ const { fs, path, vm, assert, ROOT, readAllCss, G, test } = require('./harness')
 // helpers touch and exports them. doJob() is not exercised here — it is
 // unchanged by DOM-115 and already covered by the economy tests.
 function loadMoves(over) {
-  const src = fs.readFileSync(path.join(ROOT, 'js/jobs.js'), 'utf8')
+  // js/xp.js rides along: the daily card's reward label is the award engine's
+  // answer now, not a constant in this file (DOM-124).
+  const src = fs.readFileSync(path.join(ROOT, 'js/xp.js'), 'utf8') + '\n'
+    + fs.readFileSync(path.join(ROOT, 'js/jobs.js'), 'utf8')
     + '\n;globalThis.__t = { mvJobStatus, mvCountdown, mvAgo, mvTodayKey, mvDailyCash,'
     + ' mvNoteDailyCash, mvDailyRewardLabel, mvLogLabel, mvCloutRows, mvMoney,'
-    + ' MV_XP_DAILY_FALLBACK, G };';
+    + ' xpToClout, XpAwards, G };';
   const ctx = Object.assign({
     console, JSON, Object, Math, Array, Date, Number, String,
-    G: { jobProgress: {}, moveObjective: 0, dailyCash: 0, dailyCashDate: null },
+    G: { jobProgress: {}, moveObjective: 0, dailyCash: 0, dailyCashDate: null, level: 1 },
     JOBS: [], ENEMIES: [], QUESTS: [], MOVES: null,
+    PROGRESSION: TABLE, XP_SYSTEM: XP_SPEC,
     document: { querySelector: () => null, querySelectorAll: () => [] },
     // The screen claims its tab at load (DOM-127); in here there is no showTab
     // to claim it from, so swallow the call and test the pure functions.
@@ -106,13 +112,21 @@ test('make moves — the clout log reads the ledger, newest first, credits only'
   assert.strictEqual(M.mvLogLabel({ reason: 'recruit_bonus', ref: null }), 'Crew recruited');
 });
 
-test('make moves — the daily XP label falls back to the figure 02-moves.md prints', () => {
+test('make moves — the daily card advertises the Clout it actually pays', () => {
+  // DOM-124 settled both halves of what this label was guessing at: the number
+  // (02-moves.md said 20, the spec says 30, Jake ruled 30) and the unit (there
+  // is no XP — Clout is the one currency). The figure has to be the award
+  // engine's own answer, or the card advertises one thing and pays another.
   const M = loadMoves();
-  assert.strictEqual(M.MV_XP_DAILY_FALLBACK, 20);
-  assert.strictEqual(M.mvDailyRewardLabel(), 'XP +20');
-  // once DOM-124 ships xp-system.json, the file wins
-  const M2 = loadMoves({ XP_SYSTEM: { actionXp: { dailyGrind: 30 } } });
-  assert.strictEqual(M2.mvDailyRewardLabel(), 'XP +30');
+  const weight = XP_SPEC.actionXp.missions.daily.dailyGrind;
+  assert.strictEqual(weight, 30, 'the spec is the source of the number');
+  assert.strictEqual(M.mvDailyRewardLabel(), '+30 CLOUT');
+
+  // and it scales with the player, because the payout does
+  const M50 = loadMoves({ G: { jobProgress: {}, dailyCash: 0, dailyCashDate: null, level: 50 } });
+  assert.strictEqual(M50.mvDailyRewardLabel(),
+    '+' + M50.xpToClout(weight, 50).toLocaleString() + ' CLOUT');
+  assert.notStrictEqual(M50.mvDailyRewardLabel(), M.mvDailyRewardLabel());
 });
 
 test('make moves — the DONE state derives from jobProgress, with no second list', () => {

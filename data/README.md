@@ -233,17 +233,52 @@ to the current tokens on extraction and a test asserts neither survives.
 > contract's map palette (buildings `#1f1f28`). The Hood must reconcile the two — five distinct
 > greys are needed, and the contract gives one.
 
+## ranks.json
+
+`ranks.json` is an ordered list of **100 rank titles**, one per entry, **spread** across the
+120-level cap by `rankForLevel()` in `js/progression.js`: index = `floor((level - 1) ×
+names.length / maxLevel)`, so each title lasts one or two levels and level 1 and level 120
+always land on the first and last. Never reorder the list — it is positional, and reordering
+retitles existing players. Changing its length, or the cap, re-spreads it and retitles them too.
+
+The titles are the Chrome Money v0.2 handoff's, lifted verbatim from the `levels[]` of
+`docs/design/chrome-money-v0.2/design_reference/xp-system.json` (DOM-124). A test asserts they
+still match that source, so the way to change one is to change it there. This replaced the
+earlier ten band names (Shorty → Untouchable), which covered 120 levels by leaving the top name
+as a 30-level plateau; `tuning.progression.levelsPerRank` retired with them.
+
+## xp-system.json
+
+What each player action is worth, as **weights** — the relative value of one action against
+another. Harvested from the handoff's XP spec (DOM-124); `js/xp.js` turns a weight into Clout
+against the curve below, and `awardXp()` pays it through `addClout()` like every other grant.
+
+**It is not a curve.** The source file shipped a complete 1–100 levelling system with its own
+currency, a 100 level cap and a 2,245,525 lifetime total — 41× cheaper than this repo's. Jake
+ruled on 2026-09-15 (DOM-124, option (a)) to keep one currency and the 1.10 curve and take the
+award tables only, so the `levels` block did not come across. `progression.json` below remains
+the single authority for levels; a test fails if a curve field reappears here.
+
+Two of its categories are recorded but **deliberately not paid** — `opps` and
+`missions.sideHustles`. `enemies.json` and `jobs.json` already price those two actions,
+level-scaled and calibrated by DOM-67 ("side hustles" in Make Moves *are* `jobs.json` rows;
+DOM-115 re-skinned the job loop rather than replacing it). Paying the spec on top would pay
+twice for one action; paying it instead would replace a calibrated economy with a flat table.
+`XP_UNPAID` in `js/xp.js` names them and a test pins that nothing calls them to pay.
+
+**Open, for DOM-67:** how a weight scales. It is denominated at level 1 and grown by
+`cloutToNext(L) / cloutToNext(1)`, which makes an award the same fraction of a level at 120 as
+at 1. That is a choice — the repo's own grants grow more slowly than the curve, so the late
+game gets harder, and these awards as written do not. It is one function (`xpScale()`) with one
+constant so that ruling is a single edit. It could not be a flat multiplier: the repo's grants
+are geometric (jobs 7 → 22,950) and the spec's tables are flat (opps 12 → 65), and no constant
+maps one onto the other.
+
 ## Other files
 
-`ranks.json` is an ordered list of **band** names, not one name per level: each covers
-`tuning.progression.levelsPerRank` levels (currently 10), resolved by `rankForLevel()` in
-`js/progression.js`. Ten names at 10 levels each reach level 90, and the last name absorbs
-everything to the level-120 cap — so the top rank spans 30 levels. Add two names to the **end** for
-uniform bands; never reorder, it retitles existing players.
-
-`jobs.json`, `enemies.json`, `gear.json`, `properties.json`, `ranks.json` —
-loaded by the client at boot (see `js/main.js`). Schemas to be documented here
-as they're formalized.
+`jobs.json`, `enemies.json`, `gear.json`, `properties.json`, `ranks.json`,
+`xp-system.json` — loaded by the client at boot (see `js/main.js`). Schemas to be
+documented here as they're formalized.
 
 `gear.json` items carry **`upgradeable`** (bool, required), which gates the unbounded gear
 upgrade track — Cash-priced levels with small hard-capped stat gains, prestige beyond the cap.

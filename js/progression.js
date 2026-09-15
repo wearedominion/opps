@@ -64,24 +64,26 @@ function cloutProgress(clout, table) {
   };
 }
 
-// Rank title for a level. Ranks are BANDS: each name covers
-// tuning.progression.levelsPerRank levels, and the last name absorbs everything
-// above the list — so the top rank is a long plateau rather than a title nobody
-// holds for more than one level.
+// Rank title for a level. The list is SPREAD across the level cap: 100 titles
+// over 120 levels gives each title one or two levels, and level 1 and level 120
+// always land on the first and last title. That replaces the old fixed-width
+// bands (10 names × 10 levels), which could only cover the list by leaving the
+// top name as a 20-level plateau (DOM-124, Jake's option (a) — "the 100 rank
+// titles remapped across the existing 120 levels").
 //
-// `names` is ordered and positional: ranks.json index 0 is the first band. Do not
-// reorder it (that retitles existing players), and note that widening or narrowing
-// levelsPerRank retitles everyone too — it is flavour, not a grant, so nothing is
+// `names` is ordered and positional: ranks.json index 0 is the first title. Do
+// not reorder it, and note that changing the cap or the length of the list
+// retitles every existing player — it is flavour, not a grant, so nothing is
 // lost, but it is visible.
-function rankForLevel(level, names, levelsPerRank) {
+function rankForLevel(level, names, maxLevel) {
   const list = names || (typeof RANK_NAMES !== 'undefined' ? RANK_NAMES : null);
   if (!list || !list.length) return '';
-  const span = levelsPerRank
+  const cap = maxLevel
     || (typeof TUNING !== 'undefined' && TUNING && TUNING.progression
-        && TUNING.progression.levelsPerRank)
-    || 10;
-  const idx = Math.floor((Math.max(1, level || 1) - 1) / Math.max(1, span));
-  return list[Math.min(idx, list.length - 1)];
+        && TUNING.progression.maxLevel)
+    || list.length;
+  const idx = Math.floor((Math.max(1, level || 1) - 1) * list.length / Math.max(1, cap));
+  return list[Math.min(Math.max(0, idx), list.length - 1)];
 }
 
 if (typeof module !== 'undefined' && module.exports) {

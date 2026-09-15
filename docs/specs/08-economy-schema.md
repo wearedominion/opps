@@ -456,10 +456,11 @@ to **all zeroes** — recording the intended answer (all stat growth is player-a
 tunable rather than leaving it as an argument in a comment. Flipping the code to read it is a
 balance change and belongs to DOM-66, not here.
 
-**Rank was one name per level — now a band.** `RANK_NAMES[Math.min(level - 1, 9)]` meant everyone
-from level 10 up was "Untouchable". Ranks are now bands of `tuning.progression.levelsPerRank`
-levels (10), resolved by `rankForLevel()`. With ten names that covers levels 1–90 and the top rank
-runs 91–120; two more names would make every band uniform. See
+**Rank was one name per level, then a band, now a spread.** `RANK_NAMES[Math.min(level - 1, 9)]`
+meant everyone from level 10 up was "Untouchable". That became fixed bands of
+`tuning.progression.levelsPerRank` levels — which still left the top name holding 30 of the 120
+levels. DOM-124 replaced both: `ranks.json` carries 100 titles and `rankForLevel()` spreads them
+across the cap, one or two levels each. `levelsPerRank` was retired with the bands. See
 [`04-game-data-spec.md`](./04-game-data-spec.md) §3.5.
 
 ### 6.3 Still open in DOM-65

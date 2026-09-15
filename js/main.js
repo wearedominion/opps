@@ -23,6 +23,11 @@ let PLUGS = [];
 // MAKE MOVES content (data/moves.json): featured job, side hustles, daily,
 // turf, hood ops, sightings. Placeholder content — see the file's _note.
 let MOVES = null;
+
+// data/xp-system.json — what each action is worth, as WEIGHTS (DOM-124).
+// Not a curve: data/progression.json is still the only authority on levels.
+// js/xp.js turns a weight into Clout.
+let XP_SYSTEM = null;
 // City configuration (data/city.json): seed + parameters for THE HOOD. The
 // city is generated from the seed, never stored building-by-building.
 let CITY = null;
@@ -153,12 +158,12 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 17) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 18) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, leaderboard, platform, portraits] = await Promise.all([
+    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, leaderboard, platform, portraits, xpSystem] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/gear.json').then(r => r.json())),
@@ -182,6 +187,10 @@ async function loadGameData() {
       track(fetch('data/platform.json').then(r => r.json()).catch(() => ({}))),
       // Optional art map — a miss degrades to placeholder circles, not a dead app.
       track(fetch('data/portraits.json').then(r => r.json()).catch(() => null)),
+      // Action award weights (DOM-124). A miss means actions pay no Clout bonus
+      // — the job and fight grants in jobs.json/enemies.json are unaffected, so
+      // this degrades to a quieter game, not a dead one.
+      track(fetch('data/xp-system.json').then(r => r.json()).catch(() => null)),
     ]);
 
     JOBS        = jobs;
@@ -201,6 +210,7 @@ async function loadGameData() {
     CITY         = city || null;
     LEADERBOARD  = leaderboard || null;
     PLATFORM    = platform || {};
+    XP_SYSTEM   = xpSystem || null;
     PORTRAITS   = {
       enemies: (portraits && portraits.enemies) || {},
       plugs:   (portraits && portraits.plugs)   || {},

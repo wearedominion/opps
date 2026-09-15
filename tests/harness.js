@@ -21,7 +21,16 @@ const TABLE = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/progression.json'
 const RANKS = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ranks.json'), 'utf8'));
 const TUNE  = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tuning.json'), 'utf8'));
 const { tune, missingTuningPaths, TUNING_REQUIRED } = require(path.join(ROOT, 'js/tuning.js'));
-const PER_RANK = TUNE.progression.levelsPerRank;
+// The level cap is what spreads ranks.json across the curve now — rankForLevel
+// takes it where it used to take levelsPerRank (DOM-124).
+const MAX_LEVEL = TUNE.progression.maxLevel;
+
+// The action award spec and the engine that prices it (DOM-124). XP_SPEC is
+// shared read-only like the other catalogs below; REASON comes from the ledger
+// so a sandbox can hand screens the real codes rather than invented strings.
+const XP_SPEC = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/xp-system.json'), 'utf8'));
+const XP = require(path.join(ROOT, 'js/xp.js'));
+const { REASON: REASON_CODES_BY_NAME } = require(path.join(ROOT, 'js/ledger.js'));
 
 // state.js is a plain script, not a module — run it in a sandbox and export the
 // bindings we need. Top-level const/let live in the context's lexical scope, so
@@ -120,7 +129,8 @@ const plain = o => JSON.parse(JSON.stringify(o));
 module.exports = {
   fs, path, vm, assert, ROOT,
   levelFromClout, cloutToReach, cloutProgress, rankForLevel,
-  TABLE, RANKS, TUNE, tune, missingTuningPaths, TUNING_REQUIRED, PER_RANK,
+  TABLE, RANKS, TUNE, tune, missingTuningPaths, TUNING_REQUIRED, MAX_LEVEL,
+  XP_SPEC, XP, REASON_CODES_BY_NAME,
   loadState, loadLoadout, readAllCss, cssFiles, migrate, SCHEMA_VERSION, G,
   STORE_DATA, ENEMIES_DATA, JOBS_DATA, QUESTS_DATA, CITY_DATA,
   FIXTURE, FIXTURE_V2, FIXTURE_V3, clone, plain,

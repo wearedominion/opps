@@ -88,7 +88,10 @@ const Notify = {
   // cancelling the previous session's so the timer resets each visit.
   async reEngage() {
     if (!this._canNotify()) return;
-    const rank = rankForLevel(G.level) || 'Soldier';
+    // Fallback for a boot where ranks.json missed: the list's own first title
+    // would be a lie about the player's level, and a hardcoded name goes stale
+    // the way 'Soldier' did when DOM-124 replaced the band names wholesale.
+    const rank = rankForLevel(G.level) || 'Boss';
     try {
       await JestSDK.notifications.unscheduleNotification({ identifier: 're_engage' });
       await JestSDK.notifications.scheduleNotification({

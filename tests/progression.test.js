@@ -3,7 +3,7 @@
 
 const {
   assert, levelFromClout, cloutToReach, cloutProgress, rankForLevel, TABLE, RANKS, TUNE,
-  tune, PER_RANK, test,
+  tune, MAX_LEVEL, test,
 } = require('./harness');
 
 console.log('\nclout -> level derivation');
@@ -59,37 +59,59 @@ test('at the cap, progress reads as maxed instead of dividing by null', () => {
 });
 
 
-console.log('\nrank bands');
+console.log('\nrank titles');
 
-test('a rank covers exactly levelsPerRank levels', () => {
-  assert.strictEqual(PER_RANK, tune('progression.levelsPerRank', TUNE));
-  for (let L = 1; L <= 10; L++) assert.strictEqual(rankForLevel(L, RANKS, 10), RANKS[0], 'L' + L);
-  for (let L = 11; L <= 20; L++) assert.strictEqual(rankForLevel(L, RANKS, 10), RANKS[1], 'L' + L);
+// DOM-124 replaced fixed-width bands with a SPREAD: ranks.json now holds the
+// handoff's 100 titles and they are distributed across the 120-level cap, so a
+// title lasts one or two levels instead of ten. These four pin the properties
+// that make a spread a spread — the old band tests could not survive it, and
+// weakening them to "some title comes back" would have pinned nothing.
+
+test('the ends are anchored: level 1 and the cap take the first and last title', () => {
+  // The failure this rules out is a mapping that runs out of levels early and
+  // leaves the top of the list unreachable, or one that overshoots and clamps a
+  // stretch of the end game onto the final title.
+  assert.strictEqual(rankForLevel(1, RANKS, MAX_LEVEL), RANKS[0]);
+  assert.strictEqual(rankForLevel(MAX_LEVEL, RANKS, MAX_LEVEL), RANKS[RANKS.length - 1]);
+  assert.strictEqual(RANKS.length, 100, 'the handoff ships 100 titles');
+  assert.strictEqual(MAX_LEVEL, 120);
+  assert.strictEqual(TABLE.length, MAX_LEVEL, 'the curve prices every level up to the cap');
 });
 
-test('every band boundary lands on the right name', () => {
-  for (let i = 0; i < RANKS.length; i++) {
-    assert.strictEqual(rankForLevel(i * 10 + 1, RANKS, 10), RANKS[i], 'first of band ' + i);
-    assert.strictEqual(rankForLevel(i * 10 + 10, RANKS, 10), RANKS[i], 'last of band ' + i);
+test('every title is reachable — none is spread past', () => {
+  // The point of the change. Under the old 10x10 bands the list ran out at 90
+  // and the last name held the remaining 30 levels; a spread has to use all of
+  // them, and with 100 titles over 120 levels each one owns one or two.
+  const seen = new Set();
+  const widths = new Map();
+  for (let L = 1; L <= MAX_LEVEL; L++) {
+    const title = rankForLevel(L, RANKS, MAX_LEVEL);
+    seen.add(title);
+    widths.set(title, (widths.get(title) || 0) + 1);
+  }
+  assert.strictEqual(seen.size, RANKS.length, 'every title is held by some level');
+  const spans = Array.from(widths.values());
+  assert.strictEqual(Math.min.apply(null, spans), 1);
+  assert.strictEqual(Math.max.apply(null, spans), 2, 'no title plateaus');
+});
+
+test('titles only ever move forwards', () => {
+  // Levelling up must never hand back an earlier title. Guards the arithmetic
+  // itself: an off-by-one in the index would show up here before a player saw it.
+  let prev = -1;
+  for (let L = 1; L <= MAX_LEVEL; L++) {
+    const idx = RANKS.indexOf(rankForLevel(L, RANKS, MAX_LEVEL));
+    assert.ok(idx >= prev, 'L' + L + ' went backwards in the list');
+    prev = idx;
   }
 });
 
-test('the top rank absorbs everything above the list', () => {
-  // The last name's band starts at level 91 and the cap is 120, so the top rank
-  // spans 30 levels rather than 10. Deliberate: 12 names would make every band
-  // uniform. Add them to the END of ranks.json — never reorder.
-  const top = RANKS[RANKS.length - 1];
-  assert.strictEqual(rankForLevel(90, RANKS, 10), RANKS[RANKS.length - 2]);  // band below
-  assert.strictEqual(rankForLevel(91, RANKS, 10), top);                      // top band starts
-  assert.strictEqual(rankForLevel(120, RANKS, 10), top);                     // and runs to the cap
-  assert.strictEqual(RANKS.length * 10, 100);
-  assert.strictEqual(TABLE.length, 120);
-});
-
-test('the band width is data, not a literal', () => {
-  assert.strictEqual(rankForLevel(12, RANKS, 12), RANKS[0]);   // 12-level bands
-  assert.strictEqual(rankForLevel(13, RANKS, 12), RANKS[1]);
-  assert.strictEqual(rankForLevel(2, RANKS, 1), RANKS[1]);     // 1-level bands = old behaviour
+test('the cap is data, not a literal', () => {
+  // Same list, different cap: the spread has to re-derive rather than assume
+  // 120. A hard-coded divisor passes the tests above and fails this one.
+  assert.strictEqual(rankForLevel(100, RANKS, 100), RANKS[RANKS.length - 1]);
+  assert.strictEqual(rankForLevel(50, RANKS, 100), RANKS[49]);
+  assert.strictEqual(rankForLevel(50, RANKS, MAX_LEVEL), RANKS[40]);
 });
 
 test('rank degrades to empty rather than undefined when names are missing', () => {

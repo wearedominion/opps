@@ -56,6 +56,7 @@ it that way:
 | styles | add `css/<nn>-<screen>.css` + one `<link>` in `index.html` | append to `20-legacy.css` |
 | a screen renderer | call `registerScreen('<tab>', render<Screen>)` at the foot of that screen's own `js/` file | add a branch to `showTab()` |
 | a screen's `display` | scope it: `.tab.<screen>.active { display: flex }` | declare `display` on the bare screen class |
+| an action that pays | resolve a weight from `XpAwards`, pay it with `awardXp()` | write a number into the screen, or pay an action `jobs.json` / `enemies.json` already prices |
 
 `showTab()` dispatches through `SCREEN_RENDERERS` and calls whatever the screen
 registered for itself; a tab that is static markup registers nothing. Screen
@@ -72,6 +73,27 @@ DOM-129. `tests/tabs.test.js` parses the cascade and fails if it comes back.
 The one remaining shared line is the `<link>` in `index.html`. Stylesheets are
 numbered with gaps so two screens in flight pick different slots; there is no way
 to drop that line entirely without a build step.
+
+### What an action pays (DOM-124)
+
+**Clout is the only currency.** There is no XP, however much the v0.2 handoff
+talks about it — a screen that wants to show progress shows Clout, and the
+level derives from it (`js/progression.js`).
+
+`data/xp-system.json` holds what each action is worth as a **weight**, and
+`js/xp.js` converts a weight to Clout against the curve at the player's level.
+So a screen never writes a number: it calls `XpAwards.<thing>()` for the weight
+and `awardXp(weight, label, { reason, ref })` to pay it, which goes through
+`addClout()` — still the one place `G.level` moves and the level-up toast fires.
+Give every award its own `REASON`; the Clout log is built from them.
+
+**Do not pay an action twice.** `opps` and `missions.sideHustles` are in the
+spec but deliberately unpaid from it — `enemies.json` and `jobs.json` already
+price those, level-scaled and calibrated by DOM-67. (Make Moves' "side hustles"
+*are* `jobs.json` rows; DOM-115 re-skinned the job loop rather than replacing
+it.) `XP_UNPAID` names them and `tests/xp.test.js` fails if a screen reaches for
+them. How a weight scales with level is still open for DOM-67 — it is one
+function, `xpScale()`, so that ruling is a single edit.
 
 ---
 
