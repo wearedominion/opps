@@ -21,11 +21,12 @@ Same city in WebGL. **Lazy-loaded, pinned, 2D fallback** — `js/map3d.js` alrea
 
 ## Overview mode
 
-Full-screen illustrated raster: `assets/el-caldero-overview.jpg` (1200×2150), `object-fit:cover`, `transform-origin:center`, on `background:#0b0b0c`.
+Full-screen illustrated raster: `assets/el-caldero-overview.jpg` (1200×2150), **sized to its cover-fit box and centred** in the wrapper, `transform-origin:center`, on `background:#0b0b0c`.
 
 - **Drag to pan, pinch to zoom** via pointer events (track a pointer map; 2+ pointers = pinch by distance ratio).
 - Zoom clamps: **min 1, max 1.8** (raster goes soft beyond 1.8×).
 - Pan clamps so the image never shows its edge: max offset = (rendered size − viewport)/2 per axis, recomputed against the cover-fit size on every apply.
+- **Not `object-fit:cover`** (DOM-134). That crops the raster *inside* the element box, so translating a wrapper-sized img reveals the wrapper's `#0b0b0c` and never the cropped raster — the clamp above would be looser than the truth by `(cover − wrap) × s / 2`, and would allow a pan at 1.0× that shows only background. Sizing the element to the cover box makes the clamp exact and lets pan reach the crop instead of hiding it.
 - Transform applied directly to the `<img>` (`translate(x,y) scale(s)`), `will-change:transform`, `draggable=false`, `pointer-events:none` on the img (handlers on the wrapper).
 
 ## Controls
