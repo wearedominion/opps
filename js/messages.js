@@ -111,11 +111,27 @@ function msgRenderThread(t) {
     '</div>';
 }
 
+// Matches the .22s in css/55-messages.css. The sheet outlives the close by
+// exactly one animation.
+const MSG_ANIM_MS = 220;
+
 function renderMessages() {
   const host = $('messages-overlay');
   if (!host) return;
   host.classList.toggle('open', msgOpen);
-  if (!msgOpen) { host.innerHTML = ''; msgRenderBadge(); return; }
+  if (!msgOpen) {
+    // Emptying the sheet here would blank it mid-close and there would be
+    // nothing left to animate out, which is half of why the .22s never read as
+    // an animation. Wait it out instead — and re-check msgOpen, because
+    // reopening inside those 220ms must not be wiped by a stale timer.
+    clearTimeout(renderMessages._clear);
+    renderMessages._clear = setTimeout(() => {
+      if (!msgOpen) host.innerHTML = '';
+    }, MSG_ANIM_MS);
+    msgRenderBadge();
+    return;
+  }
+  clearTimeout(renderMessages._clear);
   const t = msgThread ? msgThreadById(msgThread) : null;
   host.innerHTML = '<div class="msg-sheet">' + (t ? msgRenderThread(t) : msgRenderList()) + '</div>';
   const scroll = $('msg-thread-scroll');

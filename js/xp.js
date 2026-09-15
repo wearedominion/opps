@@ -202,15 +202,28 @@ function awardXp(weight, label, opts) {
 
   const reason = o.reason
     || (typeof REASON !== 'undefined' ? REASON.QUEST_REWARD : 'quest_reward');
+  // Read the level either side of the credit: addClout is where the boundary is
+  // detected, and it fires the loud pill itself for the direct callers that
+  // never come through here (jobs, fights). Knowing whether it did is what
+  // stops the quiet pill below from immediately replacing it (DOM-136) —
+  // xpToast replaces rather than queues, so the gold variant used to survive
+  // ~0ms on exactly the awards most likely to level you up.
+  const levelBefore = (g && g.level) || 1;
   if (typeof addClout === 'function') addClout(clout, reason, o.ref || null);
+  const levelAfter = (g && g.level) || 1;
+  const leveled = levelAfter > levelBefore;
   if (label && typeof log === 'function') {
     log(label + ' — +' + clout.toLocaleString() + ' Clout', 'gold');
   }
   // The v0.2 XP pill (DOM-119) when it is loaded, the plain toast otherwise —
   // an award must never be silent just because the shell overlay is missing.
   if (o.toast) {
-    if (typeof xpToast === 'function') xpToast(clout, label, o.levelUp);
-    else if (typeof toast === 'function') toast('+' + clout.toLocaleString() + ' CLOUT');
+    const loud = leveled || !!o.levelUp;
+    if (typeof xpToast === 'function') {
+      xpToast(clout, leveled ? 'LEVEL ' + levelAfter : label, loud);
+    } else if (typeof toast === 'function') {
+      toast('+' + clout.toLocaleString() + ' CLOUT');
+    }
   }
   return clout;
 }

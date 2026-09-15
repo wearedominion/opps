@@ -11,6 +11,7 @@ function loadMessages(over) {
   const o = over || {};
   const els = {};
   const saves = [];
+  const timers = [];
   const G = Object.assign({ msgRead: {}, level: 1, clout: 0 }, o.G || {});
   function stubEl(id) {
     if (!els[id]) {
@@ -31,7 +32,10 @@ function loadMessages(over) {
     G,
     $: stubEl,
     GameState: { save: () => saves.push(1) },
-    setTimeout: () => 0, clearTimeout: () => {},
+    // A real enough clock: the close now defers its innerHTML clear by one
+    // animation, and a stub that never fires would hide whether it lands.
+    setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
+    clearTimeout: id => { if (timers[id - 1]) timers[id - 1].dead = true; },
     toast: () => {},
   };
   const src = fs.readFileSync(path.join(ROOT, 'js/messages.js'), 'utf8')
@@ -42,7 +46,12 @@ function loadMessages(over) {
   // defineProperty, not a getter through Object.assign — that copies the
   // getter's VALUE, so `html` would freeze as the empty string it was at
   // load time and every markup assertion would read nothing.
-  const api = Object.assign({}, ctx.__t, { els: stubEl, saves });
+  // Fire every pending timer, in order, skipping the cleared ones.
+  const tick = () => {
+    const due = timers.splice(0, timers.length);
+    due.forEach(t => { if (!t.dead) t.fn(); });
+  };
+  const api = Object.assign({}, ctx.__t, { els: stubEl, saves, tick, timers });
   Object.defineProperty(api, 'html', { get: () => stubEl('messages-overlay').innerHTML });
   return api;
 }
@@ -199,9 +208,120 @@ test('the award engine reaches for the pill, and still speaks without it', () =>
 
 test('the overlay sits above the app and never traps a tap when closed', () => {
   const css = readAllCss();
-  assert.ok(/\.messages-overlay\s*\{[^}]*z-index:\s*55/.test(css));
-  assert.ok(/\.messages-overlay\s*\{[^}]*display:\s*none/.test(css), 'a closed inbox still covers the app');
-  assert.ok(/\.messages-overlay\.open\s*\{[^}]*display:\s*block/.test(css));
+  const shut = /\.messages-overlay\s*\{([^}]*)\}/.exec(css)[1];
+  const open = /\.messages-overlay\.open\s*\{([^}]*)\}/.exec(css)[1];
+  assert.ok(/z-index:\s*55/.test(shut));
+  // display:none cannot animate, so the closed state is inert by visibility
+  // and pointer-events instead — the box is always laid out now, and
+  // pointer-events is the whole of what keeps it from eating a tap.
+  assert.ok(/visibility:\s*hidden/.test(shut), 'a closed inbox is still visible');
+  assert.ok(/pointer-events:\s*none/.test(shut), 'a closed inbox still traps taps');
+  assert.ok(!/display:\s*none/.test(shut), 'display:none is back, and the .22s cannot run');
+  assert.ok(/visibility:\s*visible/.test(open) && /pointer-events:\s*auto/.test(open));
   assert.ok(/\.xp-toast\s*\{[^}]*pointer-events:\s*none/.test(css), 'the toast would eat a tap');
   assert.ok(/\.xp-toast\s*\{[^}]*z-index:\s*90/.test(css));
+});
+
+test('the open and close both have something to animate', () => {
+  const css = readAllCss();
+  const shut = /\.messages-overlay\s*\{([^}]*)\}/.exec(css)[1];
+  const open = /\.messages-overlay\.open\s*\{([^}]*)\}/.exec(css)[1];
+  // Both states carry the transition, or the close plays at full speed.
+  assert.ok(/transition:[^;]*opacity\s*\.22s/.test(shut) && /transform\s*\.22s/.test(shut));
+  assert.ok(/transition:[^;]*opacity\s*\.22s/.test(open) && /transform\s*\.22s/.test(open));
+  // visibility is discrete: it must flip at 0s on open and be held back the
+  // full .22s on close, or the sheet is yanked out from under its own fade.
+  assert.ok(/visibility\s+0s\s+\.22s/.test(shut), 'close hides the sheet before it has faded');
+  assert.ok(/visibility\s+0s(?!\s+\.)/.test(open), 'open delays visibility and shows nothing');
+  assert.ok(/opacity:\s*0/.test(shut) && /translateY\(8px\)/.test(shut));
+  assert.ok(/opacity:\s*1/.test(open) && /translateY\(0\)/.test(open));
+});
+
+test('closing keeps the sheet up for exactly one animation, then empties it', () => {
+  const m = loadMessages();
+  m.openMessages();
+  assert.ok(/msg-sheet/.test(m.html), 'nothing opened');
+
+  m.closeMessages();
+  assert.ok(/msg-sheet/.test(m.html), 'the sheet was emptied mid-close, so nothing animates out');
+  assert.strictEqual(m.timers[m.timers.length - 1].ms, 220, 'the clear must match the .22s');
+
+  m.tick();
+  assert.strictEqual(m.html, '', 'the sheet never got cleared');
+});
+
+test('reopening inside the close window is not wiped by the stale timer', () => {
+  const m = loadMessages();
+  m.openMessages();
+  m.closeMessages();
+  m.openMessages();     // back inside the 220ms
+  m.tick();             // the close's timer comes due anyway
+  assert.ok(/msg-sheet/.test(m.html), 'a stale close timer blanked a reopened inbox');
+});
+
+// ─────────────────────────────────────────────
+//  DOM-136 — one award, one pill
+// ─────────────────────────────────────────────
+
+// awardXp credits through addClout, and addClout is where the level boundary
+// is detected and the loud pill fired. Both then wanted to speak. Because
+// xpToast REPLACES rather than queues, the last word won — and the last word
+// was awardXp's quiet one, so the gold variant lived ~0ms on exactly the
+// awards most likely to level you up.
+//
+// The real xpToast from js/messages.js, the real awardXp from js/xp.js, and an
+// addClout shaped like the one in js/main.js. Asserted on the pill's final
+// state, which is what a player actually sees.
+function awardThrough(opts) {
+  const o = opts || {};
+  const m = loadMessages();
+  const XPM = require(path.join(ROOT, 'js/xp.js'));
+  const state = { level: o.level || 3, clout: 0 };
+  const fired = [];
+  const saved = { xpToast: global.xpToast, addClout: global.addClout, log: global.log, toast: global.toast };
+
+  global.xpToast = (amt, label, loud) => { fired.push({ amt, label, loud: !!loud }); m.xpToast(amt, label, loud); };
+  global.log = () => {};
+  global.toast = () => {};
+  global.addClout = (amt, reason, ref) => {
+    state.clout += amt;
+    if (o.levels) {                       // the js/main.js level-up branch
+      state.level += 1;
+      global.xpToast(amt, 'LEVEL ' + state.level, true);
+    }
+  };
+  try {
+    const clout = XPM.awardXp(o.weight || 40, o.label || 'TURF CLAIMED',
+      { state, table: TABLE, toast: true });
+    return { fired, pill: m.els('xp-toast'), clout, state };
+  } finally { Object.assign(global, saved); }
+}
+
+test('a levelling award ends on the loud pill, not the quiet one', () => {
+  const r = awardThrough({ levels: true, label: 'TURF CLAIMED' });
+  assert.ok(r.clout > 0, 'nothing was awarded, so nothing was announced');
+  const last = r.fired[r.fired.length - 1];
+  assert.ok(last.loud, 'the quiet award pill replaced the level-up pill');
+  assert.strictEqual(last.label, 'LEVEL ' + r.state.level);
+  // and the pill actually left standing says so
+  assert.ok(r.pill.classList.contains('is-levelup'), 'the gold ground is gone');
+  assert.ok(/LEVEL /.test(r.pill.innerHTML), r.pill.innerHTML);
+});
+
+test('an award that levels nobody still names what was done', () => {
+  const r = awardThrough({ levels: false, label: 'TURF CLAIMED' });
+  const last = r.fired[r.fired.length - 1];
+  assert.strictEqual(last.loud, false);
+  assert.strictEqual(last.label, 'TURF CLAIMED');
+  assert.ok(!r.pill.classList.contains('is-levelup'));
+  assert.ok(/TURF CLAIMED/.test(r.pill.innerHTML), r.pill.innerHTML);
+});
+
+test('addClout still speaks for itself on the paths that never reach awardXp', () => {
+  // Jobs and fights credit Clout directly. That hook is what announces a level
+  // to them, so awardXp must not be where it lives.
+  const src = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
+  const fn = /function addClout[\s\S]*?\n}/.exec(src)[0];
+  assert.ok(/xpToast\(amt, 'LEVEL ' \+ G\.level, true\)/.test(fn),
+    'addClout no longer fires the level-up pill, and the test above is testing a fiction');
 });
