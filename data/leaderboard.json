@@ -1,0 +1,325 @@
+{
+  "version": 1,
+  "_note": "LEADERBOARD stub (DOM-122). Ship-stubbed for v1 per the ticket default: saves are per-user blobs and server/ is purchase-verification only, so there is no source to read. Every row here is ALREADY a public projection — the exact shape pfPublicProjection() returns, plus `pos` and `faction`. A live source replaces this file and nothing in the screen changes. Handles and numbers are invented; they are not real players.",
+  "_contract": "A row may carry ONLY: pos, handle, level, clout, rank, faction, gear[]. Never attack, defense, health, moves, stamina, cash, skillPts, inventory, loadout or a combat snapshot. tests/core.test.js enforces this against the file and against the projection function.",
+  "filters": [
+    {
+      "id": "clout",
+      "label": "CLOUT",
+      "default": true
+    },
+    {
+      "id": "week",
+      "label": "WEEK"
+    },
+    {
+      "id": "crew",
+      "label": "CREW"
+    }
+  ],
+  "rows": [
+    {
+      "pos": 1,
+      "handle": "KING_TUT",
+      "level": 28,
+      "clout": 412500,
+      "rank": "Block Boy",
+      "faction": "rival",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "M134 Minigun",
+          "tier": "LEGEND",
+          "level": 4
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "Mobile Fortress",
+          "tier": "LEGEND",
+          "level": 3
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Private Helo",
+          "tier": "LEGEND",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "pos": 2,
+      "handle": "SOSA",
+      "level": 26,
+      "clout": 358900,
+      "rank": "Block Boy",
+      "faction": "rival",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "Barrett .50 Cal",
+          "tier": "LEGEND",
+          "level": 3
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "Titanium Weave",
+          "tier": "LEGEND",
+          "level": 2
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Private Jet",
+          "tier": "LEGEND",
+          "level": 1
+        }
+      ]
+    },
+    {
+      "pos": 3,
+      "handle": "BIG_SLIME",
+      "level": 24,
+      "clout": 291400,
+      "rank": "Block Boy",
+      "faction": "player",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "M249 SAW",
+          "tier": "LEGEND",
+          "level": 2
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "EOD Suit",
+          "tier": "LEGEND",
+          "level": 2
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Harbor Gunboat",
+          "tier": "LEGEND",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "pos": 4,
+      "handle": "LIL_MANE",
+      "level": 21,
+      "clout": 204700,
+      "rank": "Block Boy",
+      "faction": "neutral",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "Remington 700",
+          "tier": "ELITE",
+          "level": 1
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "FBI Raid Vest",
+          "tier": "ELITE",
+          "level": 1
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Low-Key Limo",
+          "tier": "ELITE",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "pos": 5,
+      "handle": "TRE_EIGHT",
+      "level": 19,
+      "clout": 158200,
+      "rank": "Soldier",
+      "faction": "rival",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "M4 Carbine",
+          "tier": "ELITE",
+          "level": 0
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "Full Kevlar Suit",
+          "tier": "ELITE",
+          "level": 1
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Stash Sprinter",
+          "tier": "ELITE",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "pos": 6,
+      "handle": "DOUBLE_R",
+      "level": 17,
+      "clout": 121900,
+      "rank": "Soldier",
+      "faction": "player",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "Drum-Fed AR-15",
+          "tier": "ELITE",
+          "level": 0
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "Dragon Skin",
+          "tier": "ELITE",
+          "level": 0
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Armored Sedan",
+          "tier": "ELITE",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "pos": 7,
+      "handle": "MAC_DUB",
+      "level": 15,
+      "clout": 94300,
+      "rank": "Soldier",
+      "faction": "neutral",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "Mossberg 500",
+          "tier": "RARE",
+          "level": 0
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "AR500 Plates",
+          "tier": "RARE",
+          "level": 0
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "AMG Coupe",
+          "tier": "RARE",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "pos": 8,
+      "handle": "YOUNG_C",
+      "level": 13,
+      "clout": 71600,
+      "rank": "Soldier",
+      "faction": "rival",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "Draco",
+          "tier": "RARE",
+          "level": 0
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "Kevlar Hoodie",
+          "tier": "RARE",
+          "level": 0
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Box Chevy",
+          "tier": "RARE",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "pos": 9,
+      "handle": "SMOKE",
+      "level": 11,
+      "clout": 52800,
+      "rank": "Soldier",
+      "faction": "player",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "MAC-11",
+          "tier": "RARE",
+          "level": 0
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "Stab Vest",
+          "tier": "RARE",
+          "level": 0
+        },
+        {
+          "type": "vehicle",
+          "slot": 0,
+          "name": "Dirt Bike",
+          "tier": "RARE",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "pos": 10,
+      "handle": "NEPHEW",
+      "level": 9,
+      "clout": 38100,
+      "rank": "Shorty",
+      "faction": "neutral",
+      "gear": [
+        {
+          "type": "weapon",
+          "slot": 0,
+          "name": "Glock 19",
+          "tier": "COMMON",
+          "level": 0
+        },
+        {
+          "type": "armor",
+          "slot": 0,
+          "name": "Bulletproof Vest",
+          "tier": "COMMON",
+          "level": 0
+        }
+      ]
+    }
+  ]
+}

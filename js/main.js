@@ -26,6 +26,11 @@ let MOVES = null;
 // City configuration (data/city.json): seed + parameters for THE HOOD. The
 // city is generated from the seed, never stored building-by-building.
 let CITY = null;
+// Leaderboard rows (data/leaderboard.json). STUB for v1 (DOM-122): there is no
+// source to read from — saves are per-user blobs and server/ only verifies
+// purchases. Every row is ALREADY a public projection, so a live source can
+// replace the file without the screen changing. See the file's _contract.
+let LEADERBOARD = null;
 // Economy tunables (data/tuning.json). Object, not an array — see 04-game-data-spec §3.6.
 // Null until loadGameData() resolves; economy callers must guard (`TUNING?.loot`).
 let TUNING = null;
@@ -147,12 +152,12 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 16) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 17) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, platform, portraits] = await Promise.all([
+    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, leaderboard, platform, portraits] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/gear.json').then(r => r.json())),
@@ -171,6 +176,7 @@ async function loadGameData() {
       track(fetch('data/plugs.json').then(r => r.json()).catch(() => [])),
       track(fetch('data/moves.json').then(r => r.json()).catch(() => null)),
       track(fetch('data/city.json').then(r => r.json()).catch(() => null)),
+      track(fetch('data/leaderboard.json').then(r => r.json()).catch(() => null)),
       // Optional config — a miss must not block core data or the loader (T5).
       track(fetch('data/platform.json').then(r => r.json()).catch(() => ({}))),
       // Optional art map — a miss degrades to placeholder circles, not a dead app.
@@ -192,6 +198,7 @@ async function loadGameData() {
     PLUGS        = plugs || [];
     MOVES        = moves || null;
     CITY         = city || null;
+    LEADERBOARD  = leaderboard || null;
     PLATFORM    = platform || {};
     PORTRAITS   = {
       enemies: (portraits && portraits.enemies) || {},

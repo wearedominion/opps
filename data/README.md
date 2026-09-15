@@ -280,3 +280,45 @@ prototype copy. The SIDE HUSTLES section renders `data/jobs.json` instead — th
 `side` is kept rather than deleted because it is the design's statement of what
 a hustle card can show — the TIMED countdown state in particular has no v1 job
 behind it. A job gains that state by carrying an `expiresAt`; none do yet.
+
+## leaderboard.json
+
+The Profile LEADERBOARD tab's rows. **A stub, and it says so** (DOM-122).
+
+There is no source to read: saves are per-user blobs and `server/` only verifies
+purchases. The ticket's own default was to ship stubbed, so that is what this is —
+10 invented players, ranked by Clout. They are not real people.
+
+### The shape is the point
+
+Every row is **already a public projection** — the exact object
+`pfPublicProjection()` returns, plus `pos` (ladder position) and `faction`:
+
+```
+{ pos, handle, level, clout, rank, faction, gear: [{ type, slot, name, tier, level }] }
+```
+
+That is what makes the stub swappable. A live source — a platform leaderboard, or
+a `server/` endpoint — returns the same rows and the screen does not change. A test
+asserts the stub row and a freshly-projected save differ by exactly `pos` and
+`faction`, so the two cannot drift apart unnoticed.
+
+Note `rank` is the **rank title** (`Shorty`, `Soldier`, …), not the ladder position.
+Position is `pos`. They were deliberately given different names because the design
+doc calls the position column `#`.
+
+### The privacy contract
+
+A row may carry **only** the seven keys above. It must never carry `attack`,
+`defense`, `health`, `moves`, `stamina`, `cash`, `gold`, `skillPts`, `inventory`,
+`loadout`, a combat snapshot, or `playerId`.
+
+This is a combat-intel rule, not a preference: knowing an opponent's exact Attack
+and current Health before choosing to engage would decide the fight outside the
+fight. Owned-but-benched gear is private for the same reason — what you are
+*carrying* is public, what you *have* is not.
+
+Three tests hold the line: the file is scanned for every private key, the
+projection is handed a save carrying **all** of them at once and must drop every
+one, and the benched-item case is asserted directly. Verified by deliberately
+leaking `cash` from the projection — three tests fail.
