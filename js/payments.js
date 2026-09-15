@@ -205,25 +205,7 @@ function closeOffer() {
   $('offer-overlay').classList.remove('open');
 }
 
-function renderIapSection() {
-  const el = $('iap-section');
-  if (!el) return;
-  if (!IAP_PRODUCTS.length) { el.innerHTML = ''; return; }
-
-  el.innerHTML = `
-    <div class="card">
-      <div class="card-title">SKIP THE WAIT</div>
-      <div class="iap-grid">
-        ${IAP_PRODUCTS.map(p => `
-          <div class="iap-card${p.badge ? ' iap-featured' : ''}">
-            ${p.badge ? `<div class="iap-badge">${p.badge}</div>` : ''}
-            <div class="iap-name">${p.name}</div>
-            <div class="iap-desc">${p.desc}</div>
-            <div class="iap-price">${Payments.getPrice(p.sku)}</div>
-            <button class="buy-btn" onclick="Payments.buy('${p.sku}')">BUY</button>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-}
+// The IAP catalogue renders as rows in the Store's SUPPLIES tab now
+// (DOM-116). renderIapSection() and its SKIP THE WAIT card are gone:
+// they were a second place to buy a consumable, on a card the v0.2
+// design has no slot for. renderStore() below is what refreshes them.

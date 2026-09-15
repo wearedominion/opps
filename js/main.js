@@ -32,6 +32,11 @@ let XP_SYSTEM = null;
 // data/crew.json — the NPC half of the CREW roster (DOM-114). MY ROSTER is not
 // in here: it is the player's real Lieutenants, built from the referral feed.
 let CREW_DATA = null;
+
+// data/slots.json — the seven paper-doll gear slots and their labels.
+// data/storefront.json — what the Store sells that is not a gear.json row.
+let SLOTS = null;
+let STOREFRONT = null;
 // City configuration (data/city.json): seed + parameters for THE HOOD. The
 // city is generated from the seed, never stored building-by-building.
 let CITY = null;
@@ -162,12 +167,12 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 19) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 21) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, leaderboard, platform, portraits, xpSystem, crewData] = await Promise.all([
+    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, leaderboard, platform, portraits, xpSystem, crewData, slots, storefront] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/gear.json').then(r => r.json())),
@@ -198,6 +203,10 @@ async function loadGameData() {
       // NPC roster for CREW. A miss leaves HITTERS/DEALERS empty and MY ROSTER
       // — the real Lieutenants and the invite CTA — still rendering.
       track(fetch('data/crew.json').then(r => r.json()).catch(() => null)),
+      // Gear-slot labels and the Store's own shelves. A miss leaves the Store
+      // showing gear by raw slot key and no supplies, not a dead app.
+      track(fetch('data/slots.json').then(r => r.json()).catch(() => null)),
+      track(fetch('data/storefront.json').then(r => r.json()).catch(() => null)),
     ]);
 
     JOBS        = jobs;
@@ -219,6 +228,8 @@ async function loadGameData() {
     PLATFORM    = platform || {};
     XP_SYSTEM   = xpSystem || null;
     CREW_DATA   = crewData || null;
+    SLOTS       = slots || null;
+    STOREFRONT  = storefront || null;
     PORTRAITS   = {
       enemies: (portraits && portraits.enemies) || {},
       plugs:   (portraits && portraits.plugs)   || {},
@@ -287,7 +298,6 @@ async function init() {
   renderJobs();
   renderEnemies();
   renderStore();
-  renderIapSection();
   renderProps();
   renderHospital();   // releases lazily if the timer ran out while away (DOM-72)
   updateHUD();

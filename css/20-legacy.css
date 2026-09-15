@@ -115,46 +115,6 @@
 }
 .attack-btn:hover { filter: brightness(1.15); }
 
-/* ── STORE ── */
-.store-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--gap-list);
-}
-.store-item {
-  background: var(--panel-fill);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-}
-.item-name { font-family: var(--display); font-size: 14px; letter-spacing: 1px; color: var(--text); margin-bottom: 4px; }
-.item-desc { font-size: 11px; color: var(--faint); margin-bottom: 10px; line-height: 1.4; }
-.item-price { color: var(--chrome); font-family: var(--ui); font-weight: 500; font-size: 13px; margin-bottom: 10px; }
-.buy-btn {
-  width: 100%;
-  margin-top: auto;
-  background: var(--control);
-  border: 1px solid var(--border-ctrl);
-  color: var(--text);
-  font-family: var(--display);
-  font-size: 12px;
-  letter-spacing: 1px;
-  padding: 10px;
-  border-radius: var(--r-pill);
-  cursor: pointer;
-  transition: filter .16s;
-}
-.buy-btn:hover { border-color: var(--border-gold); }
-.buy-btn:disabled {
-  background: var(--chip-locked-bg);
-  border: 1px solid var(--chip-locked-border);
-  color: var(--disabled);
-  cursor: not-allowed;
-  filter: none;
-}
-
 /* ── PROPERTIES ── */
 .prop-grid {
   display: grid;
@@ -584,87 +544,6 @@
    (--panel-fill + --border-gold + chrome text), and red is combat-only.
    Refusals read from the copy; the .bad class stays as a semantic marker
    only (DOM-98). */
-
-/* ── IN-APP PURCHASES ── */
-.iap-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--gap-list);
-  margin-bottom: 4px;
-}
-.iap-card {
-  background: var(--panel-fill);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  padding: 14px 10px;
-  text-align: center;
-  position: relative;
-}
-.iap-card.iap-featured { border-color: var(--border-gold); }
-/* the badge overhangs the top edge by 9px */
-.iap-badge {
-  position: absolute;
-  top: -9px; left: 50%; transform: translateX(-50%);
-  background: var(--chrome-fill);
-  color: var(--chrome-ink);
-  font-family: var(--display);
-  font-size: 12px;
-  letter-spacing: 1px;
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-  white-space: nowrap;
-}
-/* pack NAME is a title, not money — the clip sanction covers gem pack
-   AMOUNTS, and v1 sells no gems; price below stays --chrome (DOM-99) */
-.iap-name {
-  font-family: var(--display);
-  font-size: 22px;
-  letter-spacing: 1px;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.iap-price {
-  color: var(--chrome);
-  font-family: var(--ui);
-  font-weight: 500;
-  font-size: 12px;
-  margin-bottom: 10px;
-}
-.iap-balance-inline {
-  color: var(--chrome);
-  font-family: var(--ui);
-  font-size: 13px;
-  font-weight: 500;
-  margin-left: 8px;
-}
-.iap-spend-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--gap-list);
-}
-.iap-spend-card {
-  background: var(--panel-fill);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  padding: 14px 10px;
-  text-align: center;
-}
-/* locked spends render at full contrast — the action names the gate */
-.iap-spend-card.iap-spend-locked { border-color: var(--border); }
-.iap-spend-label {
-  font-family: var(--display);
-  font-size: 13px;
-  letter-spacing: 1px;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.iap-spend-cost {
-  color: var(--chrome);
-  font-family: var(--ui);
-  font-weight: 500;
-  font-size: 11px;
-  margin-bottom: 10px;
-}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }

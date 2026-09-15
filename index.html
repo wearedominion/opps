@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/35-settings.css">
   <link rel="stylesheet" href="css/40-profile.css">
   <link rel="stylesheet" href="css/45-crew.css">
+  <link rel="stylesheet" href="css/47-store.css">
   <link rel="stylesheet" href="css/50-motion.css">
   <link rel="stylesheet" href="css/60-refinements.css">
   <link rel="stylesheet" href="css/70-moves.css">
@@ -156,13 +157,7 @@
     </div>
 
     <!-- STORE TAB -->
-    <div class="tab" id="tab-store">
-      <div class="card">
-        <div class="card-title">THE PLUG — GEAR UP</div>
-        <div class="store-grid" id="store-list"></div>
-      </div>
-      <div id="iap-section"></div>
-    </div>
+    <div class="tab" id="tab-store"></div>
 
     <!-- PROPS TAB -->
     <div class="tab" id="tab-props">
@@ -391,6 +386,29 @@
             <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg>SEE ON MAP
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+  <!-- Purchase confirm (DOM-116). The real-money kit only: v1 ships no hard
+       currency, so there are no Gold packs to confirm. UI only — Payments.buy()
+       hands off to the platform and the server grants after verification. -->
+  <div class="overlay" id="store-confirm" onclick="storeConfirmScrim(event)">
+    <div class="st-confirm">
+      <div class="st-confirm-k">CONFIRM PURCHASE</div>
+      <div class="st-confirm-name" id="st-confirm-name"></div>
+      <div class="st-confirm-row">
+        <span class="st-confirm-sku" id="st-confirm-sku"></span>
+        <span class="st-confirm-price" id="st-confirm-price"></span>
+      </div>
+      <!-- 06-store.md gives this note verbatim as "Gold is granted once the
+           purchase is verified". That sentence was written for the gold packs,
+           and v1 has no Gold — this confirm only ever buys the kit, so the
+           verbatim copy would promise a currency the game does not have. The
+           shape and the meaning are the doc's; the noun is the truth. -->
+      <p class="st-confirm-note">Billed through your app store. The kit is granted once the purchase is verified — this can take a moment.</p>
+      <div class="st-confirm-actions">
+        <button class="st-confirm-cancel" onclick="closeOfferConfirm()">CANCEL</button>
+        <button class="st-confirm-buy sheen" id="st-confirm-buy" onclick="confirmOffer()"></button>
       </div>
     </div>
   </div>

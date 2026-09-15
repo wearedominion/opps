@@ -1,0 +1,226 @@
+/* ── STORE (DOM-116) ──
+   S7 of Chrome Money v0.2: wallet, featured real-money offer, GEAR/SUPPLIES
+   filter, item rows and the purchase confirm. Geometry from screens/06-store.md.
+
+   NO GOLD. Jake ruled 2026-09-15 that v1 ships no hard currency, so the GOLD
+   tab, the GOLD wallet tile and the gold-pack confirm are omitted rather than
+   stubbed — see data/README.md. The confirm panel below is for the real-money
+   kit, which is a direct purchase.
+
+   Tier label COLOURS come from the repo's 6-tier reserved-hue scale, not the
+   prototype's 4-tier gold-LEGEND one (ruled on DOM-110); the typography is the
+   prototype's. That is the one expected difference in the side-by-side check. */
+
+.store { display: flex; flex-direction: column; gap: 14px; }
+
+/* ── wallet ── */
+.st-wallet { display: flex; gap: 9px; }
+.st-wallet-tile {
+  flex: 1;
+  border: 1px solid var(--border-gold); border-radius: var(--r-tile);
+  background: var(--card-fill);
+  padding: 12px 14px;
+}
+.st-wallet-k {
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  color: var(--text-label);
+}
+.st-wallet-v {
+  margin-top: 3px;
+  font-family: var(--display); font-size: 24px; letter-spacing: .5px;
+  color: var(--gold); line-height: 1.05;
+}
+
+/* ── featured offer ── */
+.st-offer {
+  position: relative; width: 100%; aspect-ratio: 3 / 2;
+  border: 1px solid var(--border-gold); border-radius: var(--r-card);
+  overflow: hidden; background: #0d0d11;
+}
+.st-offer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.st-offer-scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(8,8,10,.62), rgba(8,8,10,0) 34%, rgba(8,8,10,0) 46%, rgba(8,8,10,.78));
+}
+.st-offer-top {
+  position: absolute; top: 13px; left: 15px; right: 15px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.st-offer-name {
+  font-family: var(--display); font-size: 26px; letter-spacing: 2px;
+  color: var(--text); line-height: 1;
+}
+.st-offer-chip {
+  flex: none; margin-left: auto;
+  font-family: var(--ui); font-weight: 700; font-size: 9px; letter-spacing: .5px;
+  color: var(--ink); background: var(--gold-chrome);
+  padding: 4px 9px; border-radius: var(--r-pill);
+}
+.st-offer-bottom {
+  position: absolute; left: 15px; right: 15px; bottom: 14px;
+  display: flex; align-items: flex-end; gap: 12px;
+}
+.st-offer-copy { flex: 1; min-width: 0; }
+.st-offer-buff {
+  font-family: var(--ui); font-weight: 700; font-size: 10px; letter-spacing: 1px;
+  color: var(--success); margin-bottom: 7px;
+}
+.st-offer-includes {
+  display: grid; grid-template-columns: auto auto; gap: 5px 14px; justify-content: start;
+}
+.st-offer-includes span {
+  font-family: var(--ui); font-weight: 500; font-size: 11px;
+  color: var(--text-bright); white-space: nowrap;
+}
+.st-offer-buy {
+  flex: none;
+  font-family: var(--display); font-size: 22px; letter-spacing: 1px;
+  color: var(--ink); background: var(--gold-chrome);
+  border: none; border-radius: var(--r-pill);
+  padding: 11px 24px; cursor: pointer;
+}
+.st-offer-owned {
+  flex: none;
+  font-family: var(--display); font-size: 14px; letter-spacing: 1px;
+  color: var(--success); border: 1px solid rgba(79,211,154,.45);
+  border-radius: var(--r-pill); padding: 12px 20px;
+}
+
+/* ── category filter ── */
+.st-cats { display: flex; gap: 7px; }
+.st-cat {
+  flex: 1;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  border-radius: var(--r-pill); padding: 10px 0; cursor: pointer;
+  background: var(--surface-raised); border: 1px solid var(--border-strong);
+  color: var(--text-mid);
+  transition: color .16s, border-color .16s;
+}
+.st-cat:hover { color: var(--text); border-color: var(--border-gold); }
+.st-cat.is-active {
+  color: var(--ink); background: var(--gold-chrome); border-color: transparent;
+}
+
+/* ── item rows ── */
+.st-list { display: flex; flex-direction: column; gap: 9px; }
+.st-row {
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--border); border-radius: var(--r-card);
+  background: var(--card-fill); padding: 14px;
+}
+.st-row-main { flex: 1; min-width: 0; }
+.st-row-head { display: flex; align-items: baseline; gap: 9px; }
+.st-row-name {
+  font-family: var(--display); font-size: 15px; letter-spacing: 1px;
+  color: var(--text); line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.st-row-tier {
+  flex: none;
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 1.5px;
+}
+.st-row-meta {
+  margin-top: 5px;
+  font-family: var(--ui); font-size: 11px; line-height: 1.5;
+  color: var(--success);
+}
+.st-row.is-locked .st-row-meta { color: var(--text-mid); }
+.st-gate {
+  margin-top: 7px; display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  padding: 4px 10px;
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: .5px;
+  color: var(--text-mid);
+}
+.st-row-right { flex: none; text-align: right; }
+.st-price {
+  font-family: var(--display); font-size: 16px; letter-spacing: .5px;
+  color: var(--gold); line-height: 1;
+}
+.st-row.is-locked .st-price { color: var(--text-mid); }
+
+/* One CTA, four states. The disabled recipe is shared by LV n and BROKE. */
+.st-cta {
+  display: inline-block; margin-top: 8px;
+  font-family: var(--display); font-size: 12px; letter-spacing: 1px;
+  border-radius: var(--r-pill); padding: 14px 16px;
+  color: var(--ink); background: var(--gold-chrome);
+  border: 1px solid transparent; cursor: pointer;
+  transition: filter .16s;
+}
+.st-cta:hover { filter: brightness(1.08); }
+.st-cta.is-owned {
+  color: var(--success); background: var(--bg-disabled);
+  border-color: rgba(79,211,154,.45); cursor: default;
+}
+.st-cta.is-blocked {
+  color: var(--text-disabled); background: var(--bg-disabled);
+  border-color: var(--border-disabled); cursor: default;
+}
+.st-cta.is-owned:hover, .st-cta.is-blocked:hover { filter: none; }
+
+/* ── empty state ── */
+.st-empty {
+  border: 1px dashed var(--border-strong); border-radius: var(--r-card);
+  padding: 28px 18px; text-align: center;
+}
+.st-empty-title {
+  font-family: var(--display); font-size: 16px; letter-spacing: 2px; color: var(--text-mid);
+}
+.st-empty-sub {
+  margin-top: 7px;
+  font-family: var(--ui); font-size: 11px; color: var(--text-label);
+}
+
+/* ── purchase confirm ── */
+.st-confirm {
+  width: 100%;
+  border: 1px solid var(--border-gold); border-radius: var(--r-panel);
+  background: var(--overlay-fill); box-shadow: var(--modal-shadow);
+  padding: 20px 18px 18px;
+  transform: scale(.94); transition: transform .2s;
+}
+.overlay.open .st-confirm { transform: scale(1); }
+.st-confirm-k {
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  color: var(--text-label);
+}
+.st-confirm-name {
+  margin-top: 9px;
+  font-family: var(--display); font-size: 30px; letter-spacing: 1px;
+  color: var(--gold); line-height: 1;
+}
+.st-confirm-row {
+  margin-top: 13px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 11px 0;
+  border-top: 1px solid var(--track); border-bottom: 1px solid var(--track);
+}
+.st-confirm-sku {
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  color: var(--text-mid);
+}
+.st-confirm-price {
+  font-family: var(--display); font-size: 18px; letter-spacing: .5px; color: var(--text);
+}
+.st-confirm-note {
+  margin: 13px 0 16px;
+  font-family: var(--ui); font-size: 11px; line-height: 1.6; color: var(--text-mid);
+}
+.st-confirm-actions { display: flex; gap: 9px; }
+.st-confirm-cancel {
+  flex: 1;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--text-mid); background: var(--surface-raised);
+  border: 1px solid var(--border-strong); border-radius: var(--r-pill);
+  padding: 13px 0; cursor: pointer; transition: color .16s, border-color .16s;
+}
+.st-confirm-cancel:hover { color: var(--text); border-color: var(--border-gold); }
+.st-confirm-buy {
+  flex: 1.3;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--ink); background: var(--gold-chrome);
+  border: none; border-radius: var(--r-pill);
+  padding: 13px 0; cursor: pointer; transition: filter .16s;
+}
+.st-confirm-buy:hover { filter: brightness(1.08); }
