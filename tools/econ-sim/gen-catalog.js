@@ -529,12 +529,17 @@ function buildCatalogs(E, M, K) {
         hp: nice(STAT_ANCHOR.hp * STAT_RATIO_PER_10.hp ** steps),
       };
     }),
-  ].map(e => {
+  ].sort((a, b) => a.levelReq - b.levelReq || a.id.localeCompare(b.id)).map((e, i) => {
     const R = rewardCash(e.band) * e.weight;
     const L = loadoutAt(gear, e.band);
     const m = enemyStatMult(gear, e);
     return {
       id: e.id, name: e.name, role: e.role,
+      // Dossier code shown on the Opps List portrait (DOM-112): the id's first
+      // letter plus the roster index, in level order. Mechanical on purpose —
+      // the number disambiguates repeated letters, and sorting before the map
+      // keeps a code pinned to the same enemy across regenerations.
+      code: e.id[0].toUpperCase() + '-' + String(i + 1).padStart(2, '0'),
       hp: e.hp,
       atk: Math.max(1, Math.round(m * L.atk)),
       def: Math.max(1, Math.round(m * L.def)),

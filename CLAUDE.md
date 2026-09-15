@@ -224,7 +224,11 @@ the rest go secondary — e.g. hood activities: COLLECT primary, REST and LAUNDE
 Fixed fills: XP `--xp`, energy `--energy-fill`, health `--green`, enemy HP `--red`,
 mastery `--energy-fill`.
 
-**Threat** — block meter out of 8 (`█`/`░`), `--red` on `--ghost`. A rating, never animated.
+**Threat** — an 8-segment gauge (v0.2, DOM-112; supersedes the v0.1 `█`/`░` block meter).
+Eight `flex:1` segments, 7px tall, 3px gaps, pill. Severity encodes by **position**, not just
+count: segments 1–2 `--text-mid`, 3–5 `--gold`, 6–8 `--danger`; unfilled `--track`. It is the
+only severity signal on an opp card — there is no risk chip. `transition: background .4s` so a
+changed rating animates its colour; the gauge itself still never loops or pulses.
 
 **Portraits** — circular, `object-position: top center`. Allies (you): 62px with a 2px chrome
 ring. Opps: 58px with a 1px `--border-ctrl` edge. No filters.
@@ -323,8 +327,8 @@ blue/purple/orange/pink ink outside the XP meter.
 | `.bar-track`, `.bar-fill` | 6px/radius 2 → 7px/radius 999, track `--track`. |
 | `.store-item`, `.prop-card` | Two-column grid, no icon, full-width action pill. |
 | `.gem-card` | `#b388ff` retired; amounts render chrome-clipped. Badge overhangs the top edge 9px. |
-| `.combat-box` | radius 24, 1px `--border-gold`, `--modal-shadow`. Title chrome-clipped Anton 22. |
-| `.combat-log` | Monospace log → 74px sparkline well on `--well`: chrome line = you, `--red` = opp. |
+| `.combat-box` | **Replaced by the engage modal** (v0.2, DOM-112): `.eng-box`, radius 22, 1px `--border-danger`, `--modal-shadow`. Target row + 96px sim window + DIP / HIT 'EM footer. |
+| `.combat-log` | Monospace log → the fight trace inside the engage modal's 96px sim window: chrome line = you, `--red` = opp, one point per round (DOM-103, restyled by DOM-112). |
 | `.levelup-banner`, `.toast` | Keep geometry; switch to `--panel-fill` + `--border-gold` + chrome text. |
 | `::-webkit-scrollbar` | Track `--bg`, thumb `#2a2a34`, width 4px. |
 
