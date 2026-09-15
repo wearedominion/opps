@@ -206,7 +206,12 @@ function awardXp(weight, label, opts) {
   if (label && typeof log === 'function') {
     log(label + ' — +' + clout.toLocaleString() + ' Clout', 'gold');
   }
-  if (o.toast && typeof toast === 'function') toast('+' + clout.toLocaleString() + ' CLOUT');
+  // The v0.2 XP pill (DOM-119) when it is loaded, the plain toast otherwise —
+  // an award must never be silent just because the shell overlay is missing.
+  if (o.toast) {
+    if (typeof xpToast === 'function') xpToast(clout, label, o.levelUp);
+    else if (typeof toast === 'function') toast('+' + clout.toLocaleString() + ' CLOUT');
+  }
   return clout;
 }
 

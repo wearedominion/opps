@@ -37,6 +37,9 @@ let CREW_DATA = null;
 // data/storefront.json — what the Store sells that is not a gear.json row.
 let SLOTS = null;
 let STOREFRONT = null;
+
+// data/messages.json — the Messages overlay's threads (DOM-119).
+let MESSAGES = null;
 // City configuration (data/city.json): seed + parameters for THE HOOD. The
 // city is generated from the seed, never stored building-by-building.
 let CITY = null;
@@ -139,6 +142,9 @@ function addClout(amt, reason, ref) {
   credit('clout', amt, reason, { ref: ref || null });
   const leveledUp = syncLevel() > 0;
   if (leveledUp) {
+    // The level-up variant of the XP pill (DOM-119): same component, gold
+    // ground. The banner stays — it is the bigger, slower celebration.
+    if (typeof xpToast === 'function') xpToast(amt, 'LEVEL ' + G.level, true);
     showLevelUp();
     renderJobs();
     renderEnemies();
@@ -167,12 +173,12 @@ async function loadGameData() {
   let done = 0;
   const track = async (promise) => {
     const result = await promise;
-    setProgress(Math.round((++done / 21) * 80)); // files cover 0→80%
+    setProgress(Math.round((++done / 22) * 80)); // files cover 0→80%
     return result;
   };
 
   try {
-    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, leaderboard, platform, portraits, xpSystem, crewData, slots, storefront] = await Promise.all([
+    const [jobs, enemies, gear, properties, ranks, tuning, progression, monetization, unlocks, quests, skills, plugs, moves, city, leaderboard, platform, portraits, xpSystem, crewData, slots, storefront, messages] = await Promise.all([
       track(fetch('data/jobs.json').then(r => r.json())),
       track(fetch('data/enemies.json').then(r => r.json())),
       track(fetch('data/gear.json').then(r => r.json())),
@@ -207,6 +213,9 @@ async function loadGameData() {
       // showing gear by raw slot key and no supplies, not a dead app.
       track(fetch('data/slots.json').then(r => r.json()).catch(() => null)),
       track(fetch('data/storefront.json').then(r => r.json()).catch(() => null)),
+      // Messages content. A miss leaves the header button disabled rather
+      // than opening an empty inbox.
+      track(fetch('data/messages.json').then(r => r.json()).catch(() => null)),
     ]);
 
     JOBS        = jobs;
@@ -230,6 +239,7 @@ async function loadGameData() {
     CREW_DATA   = crewData || null;
     SLOTS       = slots || null;
     STOREFRONT  = storefront || null;
+    MESSAGES    = messages || null;
     PORTRAITS   = {
       enemies: (portraits && portraits.enemies) || {},
       plugs:   (portraits && portraits.plugs)   || {},
@@ -298,6 +308,7 @@ async function init() {
   renderJobs();
   renderEnemies();
   renderStore();
+  if (typeof msgRenderBadge === 'function' && MESSAGES) msgRenderBadge();
   renderProps();
   renderHospital();   // releases lazily if the timer ran out while away (DOM-72)
   updateHUD();

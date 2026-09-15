@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "_note": "Messages content (DOM-119). Placeholder threads from the Chrome Money v0.2 prototype — there is no messaging backend, and the Jest SDK exposes none. Replies the player sends are session-only and deliberately not persisted: a save field would make this look like a real inbox. `role` is the line under the contact name in the thread header.",
+  "threads": [
+    {
+      "id": "theresa",
+      "name": "THERESA",
+      "role": "THE CONNECT",
+      "time": "12:04",
+      "unread": 2,
+      "messages": [
+        { "from": "them", "text": "Mijo. That re-up landed heavier than I thought.", "time": "11:58" },
+        { "from": "them", "text": "Half price stands, but I need that favor handled before the week turns.", "time": "12:04" }
+      ]
+    },
+    {
+      "id": "malik",
+      "name": "MALIK ‘TRIGGA’",
+      "role": "HITTER",
+      "time": "10:41",
+      "unread": 1,
+      "messages": [
+        { "from": "them", "text": "Posted up on 7th like you said. Nothing moving yet.", "time": "10:39" },
+        { "from": "me", "text": "Hold it. I'll come through.", "time": "10:40" },
+        { "from": "them", "text": "Say less.", "time": "10:41" }
+      ]
+    },
+    {
+      "id": "tommy",
+      "name": "TOMMY",
+      "role": "THE FENCE",
+      "time": "YESTERDAY",
+      "unread": 0,
+      "messages": [
+        { "from": "them", "text": "Buyer's out back of the pawn shop on 5th till sunrise.", "time": "22:15" },
+        { "from": "me", "text": "Bet.", "time": "22:20" }
+      ]
+    },
+    {
+      "id": "dex",
+      "name": "DEX",
+      "role": "THE TWEAKER",
+      "time": "YESTERDAY",
+      "unread": 0,
+      "messages": [
+        { "from": "them", "text": "Downtown play is still open. Bigger than the last one.", "time": "19:02" }
+      ]
+    }
+  ]
+}
