@@ -2,14 +2,26 @@
    The two overlays no screen owns. Both are shell-level, which is why they sit
    in their own file rather than in a screen's. */
 
+/* Gated on visibility, not display (DOM-136). A transition cannot run from an
+   unrendered box, so display:none -> block in the same style recalc as the
+   opacity/translateY change meant the sheet popped in and vanished instantly.
+   visibility is discrete but transitionable: opening flips it at 0s and the
+   .22s plays; closing holds it until the .22s has finished. pointer-events is
+   what keeps a closed inbox from eating a tap, since the box is now always laid
+   out. js/messages.js defers emptying the sheet to match. */
 .messages-overlay {
   position: absolute; inset: 0; z-index: 55;
-  display: none;
+  display: block;
+  visibility: hidden; pointer-events: none;
   background: var(--bg);
   opacity: 0; transform: translateY(8px);
-  transition: opacity .22s, transform .22s;
+  transition: opacity .22s, transform .22s, visibility 0s .22s;
 }
-.messages-overlay.open { display: block; opacity: 1; transform: translateY(0); }
+.messages-overlay.open {
+  visibility: visible; pointer-events: auto;
+  opacity: 1; transform: translateY(0);
+  transition: opacity .22s, transform .22s, visibility 0s;
+}
 .msg-sheet { display: flex; flex-direction: column; height: 100%; }
 
 /* ── header, shared by both states ── */
