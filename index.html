@@ -9,7 +9,17 @@
   <!-- The only two permitted families (CLAUDE.md, UI Implementation Contract).
        Anton ships a single weight; its weight comes from the typeface. -->
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- Stylesheets load in this order and the cascade depends on it: tokens,
+       shared chrome, then screens. A new screen adds css/<nn>-<name>.css and
+       one line here — it never appends to someone else's file (DOM-127). -->
+  <link rel="stylesheet" href="css/00-base.css">
+  <link rel="stylesheet" href="css/10-chrome.css">
+  <link rel="stylesheet" href="css/20-legacy.css">
+  <link rel="stylesheet" href="css/30-plugs.css">
+  <link rel="stylesheet" href="css/40-profile.css">
+  <link rel="stylesheet" href="css/50-motion.css">
+  <link rel="stylesheet" href="css/60-refinements.css">
+  <link rel="stylesheet" href="css/70-moves.css">
 </head>
 <body>
 

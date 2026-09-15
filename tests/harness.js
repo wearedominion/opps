@@ -63,6 +63,29 @@ function loadLoadout(over) {
   return S;
 }
 
+// Every stylesheet the app loads, concatenated in index.html's link order.
+// Tests that grep the CSS are asking "does the app declare this?", not "is it in
+// this particular file?", so they should not have to track how css/ is split.
+function readAllCss() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const hrefs = [];
+  const re = /<link[^>]+rel="stylesheet"[^>]+href="(css\/[^"]+)"/g;
+  let m;
+  while ((m = re.exec(html))) hrefs.push(m[1]);
+  if (!hrefs.length) throw new Error('index.html links no local stylesheet');
+  return hrefs.map(h => fs.readFileSync(path.join(ROOT, h), 'utf8')).join('\n');
+}
+
+// The same list as paths, for tests that scan source files rather than rules.
+function cssFiles() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const out = [];
+  const re = /<link[^>]+rel="stylesheet"[^>]+href="(css\/[^"]+)"/g;
+  let m;
+  while ((m = re.exec(html))) out.push(m[1]);
+  return out;
+}
+
 // `passed` counts successes, as it always has — it is what the summary prints.
 // `ran` counts registrations whatever the outcome, which is what the runner
 // checks against each file's `test(` call sites to catch a silent drop.
@@ -98,7 +121,7 @@ module.exports = {
   fs, path, vm, assert, ROOT,
   levelFromClout, cloutToReach, cloutProgress, rankForLevel,
   TABLE, RANKS, TUNE, tune, missingTuningPaths, TUNING_REQUIRED, PER_RANK,
-  loadState, loadLoadout, migrate, SCHEMA_VERSION, G,
+  loadState, loadLoadout, readAllCss, cssFiles, migrate, SCHEMA_VERSION, G,
   STORE_DATA, ENEMIES_DATA, JOBS_DATA, QUESTS_DATA, CITY_DATA,
   FIXTURE, FIXTURE_V2, FIXTURE_V3, clone, plain,
   test, enterFile, results,

@@ -1,7 +1,9 @@
 // S4 Plugs + dialogue popup (DOM-113).
 // Part of the suite; run it all with `node tests/run.js`.
 
-const { fs, path, vm, assert, ROOT, SCHEMA_VERSION, G, test } = require('./harness');
+const {
+  fs, path, vm, assert, ROOT, readAllCss, SCHEMA_VERSION, G, test,
+} = require('./harness');
 
 // ─────────────────────────────────────────────
 //  DOM-113 — S4 Plugs + plug dialogue popup
@@ -132,7 +134,7 @@ test('plugs — the name pill measures, rather than always returning one size', 
 });
 
 test('plugs — the screen is built to the 04-plugs.md geometry', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const css = readAllCss();
   assert.ok(/\.plugs-grid\s*\{[^}]*gap:\s*12px/.test(css), 'the column gap is 12px');
   assert.ok(/\.plug-card\s*\{[^}]*border:\s*1px solid var\(--border-gold\)/.test(css),
     'plugs are the gold-bordered surface');
@@ -156,7 +158,7 @@ test('plugs — the popup markup carries the ids the renderer writes into', () =
 });
 
 test('plugs — no hard-coded v0.1 hexes survive in the plug rules', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const css = readAllCss();
   const block = css.slice(css.indexOf('/* ── PLUGS (S4, DOM-113)'),
                           css.indexOf('/* ── COMBAT PORTRAIT ── */'));
   assert.ok(block.length > 500, 'the plug block was not found');

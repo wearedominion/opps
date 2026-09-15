@@ -1,7 +1,7 @@
 // The asset inventory (DOM-125).
 // Part of the suite; run it all with `node tests/run.js`.
 
-const { fs, path, assert, ROOT, test } = require('./harness');
+const { fs, path, assert, ROOT, cssFiles, test } = require('./harness');
 
 // ─────────────────────────────────────────────
 //  DOM-125 — FW6 asset inventory
@@ -59,7 +59,7 @@ test('assets — a new roster entry cannot ship faceless without being recorded'
 test('assets — no emoji and no data-URI art in production code', () => {
   // The contract is inline stroked SVG only. Typographic glyphs are fine;
   // pictographs are not, and neither is art inlined as base64.
-  const files = ['index.html', 'css/styles.css']
+  const files = ['index.html'].concat(cssFiles())
     .concat(fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js')).map(f => 'js/' + f));
   const emoji = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
   const allowed = new Set(['\u2713', '\u2715', '\u203a', '\u2039']);

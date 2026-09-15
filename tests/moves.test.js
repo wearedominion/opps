@@ -1,7 +1,7 @@
 // S6 Make Moves + log modal (DOM-115).
 // Part of the suite; run it all with `node tests/run.js`.
 
-const { fs, path, vm, assert, ROOT, G, test } = require('./harness');
+const { fs, path, vm, assert, ROOT, readAllCss, G, test } = require('./harness');
 
 // ─────────────────────────────────────────────
 //  DOM-115 — S6 Make Moves + log modal
@@ -146,7 +146,7 @@ test('make moves — doJob still spends Moves and feeds quests and drops', () =>
 });
 
 test('make moves — the screen is built to the 02-moves.md geometry', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const css = readAllCss();
   assert.ok(/\.mv\s*\{[^}]*gap:\s*18px/.test(css), 'the screen column is an 18px gap');
   assert.ok(/\.mv-feat\s*\{[^}]*border:\s*1px solid var\(--border-gold\)/.test(css));
   assert.ok(/\.mv-feat-band\s*\{[^}]*height:\s*118px/.test(css), 'the header band is 118px');
@@ -159,7 +159,7 @@ test('make moves — the screen is built to the 02-moves.md geometry', () => {
 });
 
 test('make moves — XP rewards are blue and cash rewards are gold', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const css = readAllCss();
   assert.ok(/\.mv-xp-reward\s*\{[^}]*color:\s*var\(--xp\)/.test(css), 'XP reward is --xp');
   assert.ok(/\.mv-reward\s*\{[^}]*color:\s*var\(--gold\)/.test(css), 'cash reward is --gold');
   assert.ok(/\.mv-hus-reward\s*\{[^}]*color:\s*var\(--gold\)/.test(css));

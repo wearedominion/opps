@@ -1,0 +1,591 @@
+/* ═══════════════════════════════════════════════════════════
+   PLAYER PROFILE (DOM-49)
+   Opens with the one .fighter-portrait-wrap rule that has always sat at this
+   point in the cascade. 60-refinements.css redefines the selector further
+   down, so the rule is left exactly where it was rather than tidied into the
+   combat block — this split changes order for nothing.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ── COMBAT PORTRAIT ── */
+.fighter-portrait-wrap { position: relative; }
+
+/* ═══════════════════════════════════════════════════════════
+   PLAYER PROFILE
+   docs/tdds/2026-09-09-player-profile.md — the TDD is being
+   re-issued against Chrome Money (DOM-49). These rules consume
+   the global tokens; the screen no longer declares its own set.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── shared primitives ── */
+.pf-eyebrow {
+  font-family: var(--ui);
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--faint);
+}
+.pf-seg-row { display: flex; gap: 3px; }
+.pf-seg { flex: 1; height: 4px; border-radius: var(--r-pill); background: var(--track); }
+.pf-seg.on { background: var(--energy-fill); }
+.pf-i-btn {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--control); border: 1px solid var(--border-ctrl);
+  color: var(--chrome); font-family: var(--ui);
+  font-size: 11px; font-weight: 700; line-height: 1; padding: 0;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: border-color .16s;
+}
+.pf-i-btn:hover { border-color: var(--border-gold); }
+.pf-x {
+  flex: none; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--control); border: 1px solid var(--border-ctrl);
+  color: var(--text); font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .16s;
+}
+.pf-x:hover { border-color: var(--border-gold); }
+
+/* rarity name inks (DOM-18): authored tiers grey→orange, labels from
+   RARITY_LABELS in js/drops.js. Built dynamically in js/profile.js and
+   js/store.js as 'tier-' + label — not dead code. Mythic reserved. */
+.tier-COMMON    { color: var(--rarity-common); }
+.tier-UNCOMMON  { color: var(--rarity-uncommon); }
+.tier-RARE      { color: var(--rarity-rare); }
+.tier-EPIC      { color: var(--rarity-epic); }
+.tier-LEGENDARY { color: var(--rarity-legendary); }
+.tier-MYTHIC    { color: var(--rarity-mythic); }
+
+/* ── screen container ── */
+#tab-profile.tab.active { display: block; }
+.pf {
+  display: flex; flex-direction: column; gap: var(--gap-section);
+  font-family: var(--ui); color: var(--body);
+}
+
+/* ── 1. identity header (unboxed — sits on the base layer) ── */
+.pf-id { position: relative; display: flex; gap: 12px; }
+/* you are an ally: 62px circle, 2px chrome ring */
+.pf-avatar {
+  flex: none; width: 62px; height: 62px; position: relative;
+  border-radius: 50%; overflow: hidden;
+  border: 2px solid var(--chrome); background: var(--well);
+}
+.pf-avatar img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top center; display: block;
+}
+.pf-avatar-ph {
+  width: 100%; height: 100%;
+  background: repeating-linear-gradient(45deg,#1f1f28 0 7px,#17171c 7px 14px);
+}
+.pf-lv {
+  margin-top: 6px; text-align: center;
+  font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--chrome);
+}
+.pf-id-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pf-name {
+  padding-right: 82px;
+  font-family: var(--display);
+  font-size: 19px; letter-spacing: 2px; color: var(--text); line-height: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pf-rank-row { display: flex; align-items: center; gap: 8px; }
+.pf-rank {
+  font-family: var(--display);
+  font-size: 14px; letter-spacing: 1px; color: var(--text);
+}
+.pf-clout-row { display: flex; align-items: baseline; gap: 7px; }
+.pf-clout {
+  font-family: var(--ui); font-weight: 500; font-size: 20px;
+  color: var(--chrome); line-height: 1;
+}
+.pf-clout-tag {
+  font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.pf-xp-wrap { margin-top: auto; }
+.pf-xp-labels {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 5px;
+  font-family: var(--ui);
+}
+.pf-xp-labels .l {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.pf-xp-labels .r { font-size: 11px; color: var(--muted); }
+.pf-xp-track { height: 7px; border-radius: var(--r-pill); background: var(--track); overflow: hidden; }
+.pf-xp-fill { height: 100%; background: var(--xp); border-radius: var(--r-pill); transition: width .4s; }
+.pf-stats-btn {
+  position: absolute; top: -1px; right: 0;
+  font-family: var(--display); font-size: 12px;
+  letter-spacing: 1px; border-radius: var(--r-pill); padding: 9px 14px;
+  cursor: pointer; transition: border-color .16s, filter .16s;
+  color: var(--text); background: var(--control); border: 1px solid var(--border-ctrl);
+}
+.pf-stats-btn:hover { border-color: var(--border-gold); }
+.pf-stats-btn.open {
+  color: var(--chrome-ink); background: var(--chrome-fill); border-color: transparent;
+}
+
+/* ── 2. tab bar ── */
+.pf-tabs { display: flex; gap: 6px; }
+.pf-tab {
+  position: relative; flex: 1;
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+  border-radius: var(--r-pill); padding: 7px 9px; cursor: pointer;
+  transition: border-color .16s, color .16s;
+  color: var(--muted); background: transparent;
+  border: 1px solid var(--border);
+}
+.pf-tab:hover { color: var(--text); border-color: var(--border-ctrl); }
+.pf-tab.active {
+  color: var(--chrome-ink); background: var(--chrome-fill);
+  border-color: transparent; font-weight: 700;
+}
+.pf-tab-badge {
+  position: absolute; top: -6px; left: -5px; border-radius: var(--r-pill);
+  background: var(--green); border: 1px solid var(--chrome-ink);
+  padding: 1px 6px;
+  font-family: var(--ui); font-weight: 700; font-size: 10px;
+  line-height: 1.4; color: var(--chrome-ink);
+}
+
+/* ── 3. SKILLS tab ── */
+.pf-skills { display: flex; flex-direction: column; gap: 11px; }
+.pf-ledger {
+  display: flex; align-items: stretch; overflow: hidden;
+  border: 1px solid var(--border); border-radius: var(--r-card); background: var(--panel-fill);
+}
+.pf-ledger-cell { flex: 1; padding: 11px 13px; }
+.pf-ledger-div { width: 1px; background: var(--border); }
+.pf-ledger-val {
+  font-family: var(--ui); font-weight: 500;
+  font-size: 17px; line-height: 1.15; color: var(--text);
+}
+.pf-ledger-val.avail { color: var(--green); }
+.pf-ledger-val.spending { color: var(--faint); }
+.pf-ledger-val.spending.on { color: var(--green); }
+
+.pf-skill {
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--panel-fill); padding: 11px 13px;
+}
+.pf-skill.staged { border-color: var(--border-gold); }
+.pf-skill-top { display: flex; align-items: center; gap: 11px; }
+.pf-skill-id { flex: 1; min-width: 0; }
+.pf-skill-name-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.pf-skill-name {
+  font-family: var(--display); font-size: 15px;
+  letter-spacing: 1px; color: var(--text); line-height: 1;
+}
+.pf-skill-cost {
+  margin-top: 6px; font-family: var(--ui);
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.pf-skill-cost.afford { color: var(--green); }
+.pf-skill-val-wrap { flex: none; text-align: right; min-width: 52px; }
+.pf-skill-val {
+  font-family: var(--ui); font-weight: 500; font-size: 22px;
+  line-height: 1; color: var(--text);
+}
+.pf-skill-val.staged { color: var(--green); }
+.pf-skill-delta {
+  font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--faint); margin-top: 4px;
+}
+.pf-steps { flex: none; display: flex; gap: 5px; }
+.pf-step {
+  width: 34px; height: 34px; border-radius: 50%; background: var(--control);
+  border: 1px solid var(--border-ctrl); color: var(--text);
+  font-size: 16px; line-height: 1; cursor: pointer; padding: 0;
+  transition: border-color .16s;
+}
+.pf-step:hover:not(:disabled) { border-color: var(--border-gold); }
+.pf-step.inc { border-color: var(--border-gold); color: var(--chrome); }
+.pf-step.inc:hover:not(:disabled) { border-color: var(--chrome); }
+.pf-step:disabled {
+  color: var(--disabled); background: var(--chip-locked-bg);
+  border-color: var(--chip-locked-border); cursor: not-allowed;
+}
+.pf-skill .pf-seg-row { margin-top: 11px; }
+.pf-seg.staged { background: var(--chrome-fill); }
+
+.pf-warn { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
+.pf-warn-text { font-size: 11px; color: var(--faint); line-height: 1.4; text-wrap: pretty; }
+.pf-actions { display: flex; gap: 10px; }
+.pf-btn-reset {
+  flex: 1; font-family: var(--display);
+  font-size: 13px; letter-spacing: 1px; color: var(--text);
+  background: var(--control); border: 1px solid var(--border-ctrl);
+  border-radius: var(--r-pill); padding: 12px; cursor: pointer;
+  transition: border-color .16s;
+}
+.pf-btn-reset:hover:not(:disabled) { border-color: var(--border-gold); }
+.pf-btn-confirm {
+  flex: 1.5; font-family: var(--display);
+  font-size: 13px; letter-spacing: 1px; border-radius: var(--r-pill); padding: 12px;
+  cursor: pointer; transition: filter .16s;
+  color: var(--chrome-ink); background: var(--chrome-fill); border: none;
+}
+.pf-btn-confirm:hover:not(:disabled) { filter: brightness(1.06); }
+.pf-btn-reset:disabled, .pf-btn-confirm:disabled {
+  color: var(--disabled); background: var(--chip-locked-bg);
+  border: 1px solid var(--chip-locked-border); cursor: not-allowed; filter: none;
+}
+
+/* ── 4. GEAR tab ── */
+.pf-gear { display: flex; flex-direction: column; gap: 13px; }
+.pf-typerow { display: flex; flex-direction: column; gap: 0; }
+.pf-slots-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.pf-slot {
+  border: 1px solid var(--border); border-radius: 14px; background: var(--panel-fill);
+  padding: 11px 13px; cursor: pointer; transition: border-color .16s;
+  text-align: left; width: 100%;
+}
+.pf-slot:hover { border-color: var(--border-gold); }
+.pf-slot.empty { border-style: dashed; border-color: var(--border-ctrl); }
+.pf-slot.primary { border-color: var(--border-gold); }
+/* locked slots state the gate at full contrast (contract: never dim) */
+.pf-slot.locked { background: #141419; border: 1px solid #22222a; cursor: default; }
+.pf-slot.locked .pf-slot-buff { color: var(--disabled); }
+.pf-slot-label {
+  font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.pf-slot-name {
+  margin-top: 3px; font-family: var(--display);
+  font-size: 13px; letter-spacing: 1px; line-height: 1.1; color: var(--text);
+}
+.pf-slot-name.is-empty { color: var(--disabled); }
+/* tier colours need the extra specificity to beat .pf-slot-name's own colour */
+.pf-slot-name.tier-COMMON    { color: var(--rarity-common); }
+.pf-slot-name.tier-UNCOMMON  { color: var(--rarity-uncommon); }
+.pf-slot-name.tier-RARE      { color: var(--rarity-rare); }
+.pf-slot-name.tier-EPIC      { color: var(--rarity-epic); }
+.pf-slot-name.tier-LEGENDARY { color: var(--rarity-legendary); }
+.pf-slot-name.tier-MYTHIC    { color: var(--rarity-mythic); }
+/* .pf-inv-name declares its own color later in the file, which ties the bare
+   .tier-* ink at (0,1,0) and wins on order — the same specificity trap as the
+   primary slot's edge. Explicit (0,2,0) pairs so stash/picker/teaser names
+   actually carry their rarity ink (DOM-102). */
+.pf-inv-name.tier-COMMON    { color: var(--rarity-common); }
+.pf-inv-name.tier-UNCOMMON  { color: var(--rarity-uncommon); }
+.pf-inv-name.tier-RARE      { color: var(--rarity-rare); }
+.pf-inv-name.tier-EPIC      { color: var(--rarity-epic); }
+.pf-inv-name.tier-LEGENDARY { color: var(--rarity-legendary); }
+.pf-inv-name.tier-MYTHIC    { color: var(--rarity-mythic); }
+.pf-slot-buff {
+  margin-top: 2px; font-family: var(--ui); font-size: 10px;
+  color: var(--faint); line-height: 1.3;
+}
+.pf-sec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.pf-sec-head h4 {
+  margin: 0; font-family: var(--display);
+  font-size: 15px; letter-spacing: 1px; color: var(--text);
+}
+.pf-sec-rule { flex: 1; height: 1px; background: var(--border); }
+.pf-sec-count {
+  font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.pf-inv { border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; }
+.pf-inv-row {
+  display: flex; align-items: center; gap: 11px; padding: 11px 13px;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: background .16s; background: transparent; width: 100%; text-align: left;
+}
+.pf-inv-row:last-child { border-bottom: none; }
+.pf-inv-row:hover { background: var(--control); }
+.pf-inv-row.equipped { background: var(--control); }
+.pf-inv-main { flex: 1; min-width: 0; }
+.pf-inv-name {
+  font-family: var(--display); font-size: 14px;
+  letter-spacing: 1px; color: var(--text); line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pf-inv-meta {
+  margin-top: 3px; font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.pf-inv-tier {
+  flex: none; font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.pf-inv-status {
+  flex: none; font-family: var(--ui); font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  border-radius: var(--r-pill); padding: 4px 9px;
+  color: var(--faint); border: 1px solid var(--border);
+}
+.pf-inv-status.on { color: var(--green); border-color: var(--border-ctrl); }
+
+/* ── 5. empty state ── */
+.pf-empty {
+  border: 1px dashed var(--border-ctrl); border-radius: var(--r-card);
+  padding: 22px 16px; text-align: center;
+}
+.pf-empty-label {
+  font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--disabled);
+}
+.pf-empty-hint {
+  margin-top: 7px; font-size: 12px; color: var(--muted);
+  line-height: 1.5; text-wrap: pretty;
+}
+.pf-board-hint {
+  text-align: center; font-family: var(--ui);
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--faint); padding-top: 4px;
+}
+
+/* ── 6. overlays ── */
+.pf-scrim {
+  position: absolute; inset: 0; z-index: 66; display: none;
+  background: rgba(6,6,8,.72); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center;
+  padding: 24px 18px;
+}
+.pf-scrim.open { display: flex; }
+.pf-scrim.sheet { align-items: flex-end; padding: 0; }
+.pf-scrim.confirm { z-index: 67; }
+.pf-scrim.info { z-index: 68; }
+
+.pf-panel {
+  width: 100%; max-width: 340px; border-radius: var(--r-panel);
+  border: 1px solid var(--border-gold); background: var(--panel-fill);
+  box-shadow: var(--modal-shadow); overflow: hidden;
+  animation: pfscale .2s cubic-bezier(.4,0,.2,1);
+}
+.pf-panel.sheet {
+  max-width: none; max-height: 76vh; display: flex; flex-direction: column;
+  border-radius: var(--r-panel) var(--r-panel) 0 0; border-bottom: none;
+  animation: pfsheet .24s cubic-bezier(.4,0,.2,1);
+}
+@keyframes pfscale { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+@keyframes pfsheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.pf-panel-head {
+  display: flex; align-items: center; gap: 10px; padding: var(--gap-section) var(--gap-section) 12px;
+  border-bottom: 1px solid var(--border);
+}
+.pf-panel-title {
+  font-family: var(--display); font-size: 16px;
+  letter-spacing: 1px; color: var(--text); line-height: 1.1;
+}
+.pf-panel-sub {
+  margin-top: 2px; font-family: var(--ui); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.pf-panel-body { padding: var(--gap-section); overflow-y: auto; scrollbar-width: none; }
+.pf-panel-body::-webkit-scrollbar { width: 0; height: 0; }
+.pf-panel-foot { display: flex; gap: 10px; padding: 12px var(--gap-section) var(--gap-section); }
+
+/* plain secondary — unequipping your own gear isn't hostile (DOM-98) */
+.pf-unequip {
+  flex: none; font-family: var(--display); font-size: 12px;
+  letter-spacing: 1px; color: var(--text); background: var(--control);
+  border: 1px solid var(--border-ctrl); border-radius: var(--r-pill); padding: 9px 14px;
+  cursor: pointer; transition: filter .16s;
+}
+.pf-unequip:hover { filter: brightness(1.15); }
+
+.pf-pick-row {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--panel-fill);
+  padding: 11px 13px; cursor: pointer; transition: border-color .16s;
+}
+.pf-pick-row:hover { border-color: var(--border-gold); }
+/* locked rows render at full contrast — the chip names the gate */
+.pf-pick-row.locked { cursor: default; }
+.pf-pick-row.locked:hover { border-color: var(--border); }
+/* Profile layout modifiers — these were inline style="" attributes in
+   js/profile.js. Static styling belongs here; the only inline styles left in
+   that file are genuinely dynamic (bar width %, grid-area per slot). */
+.pf-fill { flex: 1; min-width: 0; }
+.pf-empty.bare { border: none; }
+.pf-inv-name.lg { font-size: 15px; }
+.pf-panel-body.flush { padding: 0; }
+.pf-warn.spaced { margin-top: 12px; }
+
+.pf-pick-list { display: flex; flex-direction: column; gap: var(--gap-list); padding: 12px var(--gap-section) 20px; }
+
+.pf-conf-line {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-family: var(--ui); font-size: 11px;
+}
+.pf-conf-line:last-child { border-bottom: none; }
+.pf-conf-line .k { color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.pf-conf-line .v { color: var(--chrome); }
+.pf-body-copy {
+  font-family: var(--ui); font-size: 15px;
+  color: var(--body); line-height: 1.5; text-wrap: pretty;
+}
+.pf-build-tag {
+  display: inline-block; font-family: var(--ui); font-weight: 700;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  border-radius: var(--r-pill); padding: 4px 9px;
+  background: var(--control); border: 1px solid var(--border-gold);
+  color: var(--chrome); margin-bottom: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   METRICS / CURRENCIES PANEL
+   The header's clout cluster opens this. It carries the stats the
+   design moved out of the header (BAG, MOVES, HEALTH, STAMINA).
+   ═══════════════════════════════════════════════════════════ */
+#metrics-overlay {
+  display: none;
+  position: absolute; inset: 0; z-index: 55;
+  background: rgba(6,6,8,.72);
+  backdrop-filter: blur(3px);
+}
+#metrics-overlay.open { display: block; }
+.metrics-panel {
+  position: absolute; top: 76px; left: 12px; right: 12px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-panel);
+  background: var(--panel-fill);
+  box-shadow: var(--modal-shadow);
+  overflow: hidden;
+  padding: 15px 16px 18px;
+}
+.metrics-head { display: flex; align-items: center; gap: 8px; margin-bottom: var(--gap-section); }
+.metrics-head .caret { color: var(--chrome); font-size: 13px; }
+.metrics-head .ttl {
+  font-family: var(--ui);
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+}
+.metrics-close {
+  flex: none; margin-left: auto;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--control); border: 1px solid var(--border-ctrl);
+  color: var(--text); font-size: 12px; cursor: pointer; transition: border-color .16s;
+}
+.metrics-close:hover { border-color: var(--border-gold); }
+
+.metrics-hero {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+  padding-bottom: 15px; border-bottom: 1px solid var(--border);
+}
+/* the HUD bread figure — the only money rendered at display size */
+.metrics-hero .hero-val {
+  font-family: var(--display);
+  font-size: 36px; letter-spacing: 0.5px; line-height: .9;
+  background: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+.metrics-hero .hero-sub {
+  font-family: var(--ui); font-size: 11px; color: var(--faint);
+}
+.metrics-hero .hero-right { text-align: right; }
+.metrics-hero .hero-lv {
+  font-family: var(--ui); font-size: 11px; color: var(--faint);
+}
+.metrics-hero .hero-rank {
+  font-family: var(--display);
+  font-size: 15px; letter-spacing: 1px; color: var(--text); margin-top: 3px;
+  text-transform: uppercase;
+}
+
+.metric-row { margin-top: 15px; }
+.metric-row:first-of-type { margin-top: 16px; }
+.metric-top {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px;
+}
+.metric-label {
+  font-family: var(--ui);
+  font-size: 10px; letter-spacing: 2px; color: var(--faint);
+  text-transform: uppercase;
+}
+.metric-val { font-family: var(--ui); font-weight: 500; font-size: 12px; color: var(--text); }
+.metric-track { height: 7px; border-radius: var(--r-pill); background: var(--track); overflow: hidden; }
+.metric-fill { height: 100%; border-radius: var(--r-pill); transition: width .4s; }
+/* fills are fixed per meter (contract: XP --xp, energy --energy-fill, health --green) */
+.metric-fill.xp     { background: var(--xp); }
+.metric-fill.energy { background: var(--energy-fill); }
+.metric-fill.health { background: var(--green); }
+
+/* ═══════════════════════════════════════════════════════════
+   SHARED OVERLAY INFRASTRUCTURE (v0.2 OVERLAYS.md)
+   Individual overlays ship with their screens; this is the shared
+   machinery. All overlays render inside the app frame, never as
+   browser dialogs. Hidden overlays stay mounted (opacity 0,
+   pointer-events none) so open/close always animates. Scrim tap
+   closes; the panel stopPropagation()s.
+
+   z-ladder: drawer 50/51 · metrics 55 · messages 55 · ranks 58 ·
+   engage 60 · log 60 · public profile 64 · confirm alloc 66 ·
+   stat info 67 · equip picker 68 · stats 69 · dialogue 70 ·
+   gold confirm 71 · XP toast 90.
+   ═══════════════════════════════════════════════════════════ */
+.ov-scrim {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px 18px;
+  background: rgba(0,0,0,0.78); /* per-overlay scrims override (0.55–0.84) */
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s;
+}
+.ov-scrim.open { opacity: 1; pointer-events: auto; }
+.ov-scrim.sheet { align-items: flex-end; padding: 0; }
+/* centered panel: radius 22, scale 0.94–0.95 → 1 */
+.ov-panel {
+  width: 100%; max-width: 340px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-panel);
+  background: var(--overlay-fill);
+  box-shadow: var(--modal-shadow);
+  overflow: hidden;
+  transform: scale(0.94);
+  transition: transform .22s;
+}
+.ov-scrim.open .ov-panel { transform: scale(1); }
+/* bottom sheet: radius 24 24 0 0, translateY(100% → 0) */
+.ov-panel.sheet {
+  max-width: none; max-height: 82%;
+  display: flex; flex-direction: column;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0; border-bottom: none;
+  transform: translateY(100%);
+  transition: transform .26s;
+}
+.ov-scrim.open .ov-panel.sheet { transform: translateY(0); }
+/* panel header: title (Anton 19–21 ls 2) over an eyebrow, rule, circular ✕ */
+.ov-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid var(--track);
+}
+.ov-head .fill { flex: 1; min-width: 0; }
+.ov-eyebrow {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
+}
+.ov-title {
+  font-family: var(--display); font-size: 19px; letter-spacing: 2px;
+  color: var(--text); line-height: 1.1;
+}
+
+/* circular ✕ — 28px, invisible ::after extends the hit target */
+.btn-x {
+  flex: none; position: relative;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised); border: 1px solid var(--border-strong);
+  color: var(--text); font-size: 13px; line-height: 1; padding: 0;
+  cursor: pointer; transition: border-color .16s, color .16s;
+}
+.btn-x:hover { border-color: var(--border-gold); color: var(--gold); }
+.btn-x::after { content: ''; position: absolute; inset: -8px; }
+
+/* 4px mini-bars (header XP, skill rows, objective progress) */
+.bar-mini { height: 4px; border-radius: var(--r-pill); background: var(--track); overflow: hidden; }
+.bar-mini > * { display: block; height: 100%; border-radius: var(--r-pill); transition: width .4s; }
+
+/* tier label typography (v0.2) — colors stay the 6-tier .tier-* inks */
+.tier-label {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+}

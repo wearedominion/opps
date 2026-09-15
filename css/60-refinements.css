@@ -1,0 +1,100 @@
+/* ═══════════════════════════════════════════════════════════
+   LATER CROSS-SCREEN PASSES
+   Combat fighters (DOM-42), plug quests (DOM-90), rarity edges and the drop
+   teaser (DOM-18). Each deliberately overrides something declared earlier, so
+   this file has to keep loading after the screens it refines — it is not a
+   dumping ground, and new work belongs in its own screen file.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+/* ── COMBAT: fighters ──
+   You are an ally (62px, 2px chrome ring); the opp is 58px on --border-ctrl. */
+.fighter-portrait-wrap {
+  position: relative; margin: 0 auto 6px;
+  border-radius: 50%; overflow: hidden; background: var(--well);
+}
+.fighter-portrait-wrap.ally { width: 62px; height: 62px; border: 2px solid var(--chrome); }
+.fighter-portrait-wrap.opp  { width: 58px; height: 58px; border: 1px solid var(--border-ctrl); }
+.fighter-portrait-wrap img {
+  width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block;
+}
+.fighter-icon { position: absolute; inset: 0; }
+
+.combat-odds { text-align: center; margin: 6px 0 10px; font-family: var(--ui); }
+.combat-odds-k {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--faint); margin-right: 6px;
+}
+#c-odds { font-size: 13px; font-weight: 500; color: var(--text); }
+.attack-btn.wide { width: 100%; margin-left: 0; }
+
+
+/* ── Plug quests (DOM-90) ── */
+.plug-quest-chip {
+  display: inline-block; margin-top: 6px; padding: 3px 9px; border-radius: 999px;
+  font-family: var(--ui); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  background: var(--control); border: 1px solid var(--border-ctrl); color: var(--muted);
+}
+.plug-quest-chip.locked { background: #141419; border-color: #22222a; color: var(--disabled); }
+.plug-quest-chip.claim  { border-color: var(--border-gold); color: var(--chrome); }
+.plug-quest-chip.done   { color: var(--green); }
+
+.plug-quest {
+  margin-top: 12px; padding: 12px 13px; border-radius: 14px;
+  background: var(--well); border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.plug-quest-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.plug-quest-head .plug-quest-chip { margin-top: 0; }
+.plug-quest-title { font-family: var(--display); font-size: 14px; letter-spacing: 1px; color: var(--text); }
+.plug-quest-desc { font-family: var(--ui); font-size: 12px; color: var(--muted); line-height: 1.45; }
+.plug-quest-step {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--ui); font-size: 12px; color: var(--body);
+  font-variant-numeric: tabular-nums;
+}
+.plug-quest-step .pq-dot {
+  width: 7px; height: 7px; border-radius: 999px; flex: none;
+  background: var(--track); border: 1px solid var(--border-ctrl);
+}
+.plug-quest-step.on .pq-dot { background: var(--green); border-color: var(--green); }
+.plug-quest-step .pq-label { flex: 1; }
+.plug-quest-step .pq-count { color: var(--faint); }
+.plug-quest-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; }
+.pq-reward { font-family: var(--ui); font-size: 12px; color: var(--faint); }
+.pq-reward .pq-cash { color: var(--chrome); }
+.pq-claim {
+  border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  font-family: var(--display); font-size: 12px; letter-spacing: 1px;
+  background: #141419; border: 1px solid #22222a; color: var(--disabled);
+}
+.pq-claim.ready { background: var(--chrome-fill); border: none; color: var(--chrome-ink); }
+
+/* ── Rarity edges (DOM-18) ──
+   The 1px border tint half of the CLAUDE.md Rarity rule — the name ink is
+   the tier-* classes above. Last in the file on purpose: it wins the
+   same-specificity TIE against .store-item / .pf-inv-row / .pf-pick-row
+   borders. .pf-slot.primary is (0,2,0) and needs the explicit overrides
+   below. Never a fill, never a glow. Mythic reserved. */
+.rar-COMMON    { border-color: var(--rarity-common-edge); }
+.rar-UNCOMMON  { border-color: var(--rarity-uncommon-edge); }
+.rar-RARE      { border-color: var(--rarity-rare-edge); }
+.rar-EPIC      { border-color: var(--rarity-epic-edge); }
+.rar-LEGENDARY { border-color: var(--rarity-legendary-edge); }
+.rar-MYTHIC    { border-color: var(--rarity-mythic-edge); }
+/* the primary slot: the PRIMARY label marks the slot, the fielded item's
+   rarity owns the edge — autoFieldGear lands fresh drops exactly here */
+.pf-slot.primary.rar-COMMON    { border-color: var(--rarity-common-edge); }
+.pf-slot.primary.rar-UNCOMMON  { border-color: var(--rarity-uncommon-edge); }
+.pf-slot.primary.rar-RARE      { border-color: var(--rarity-rare-edge); }
+.pf-slot.primary.rar-EPIC      { border-color: var(--rarity-epic-edge); }
+.pf-slot.primary.rar-LEGENDARY { border-color: var(--rarity-legendary-edge); }
+.pf-slot.primary.rar-MYTHIC    { border-color: var(--rarity-mythic-edge); }
+
+/* ── The drop teaser (DOM-18 "visible as aspirational") ──
+   Unowned drop-tier rows in the Profile gear tab: full contrast per the
+   locked-state rule, inert (no hover affordance), chip names the gate. */
+.pf-inv-row.static { pointer-events: none; }
+.pf-inv-status.locked {
+  background: #141419; border-color: #22222a; color: var(--disabled);
+}

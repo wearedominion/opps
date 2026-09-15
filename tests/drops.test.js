@@ -1,7 +1,9 @@
 // Rarity and drops (DOM-18).
 // Part of the suite; run it all with `node tests/run.js`.
 
-const { fs, path, vm, assert, ROOT, TUNE, tune, STORE_DATA, test } = require('./harness');
+const {
+  fs, path, vm, assert, ROOT, TUNE, tune, readAllCss, STORE_DATA, test,
+} = require('./harness');
 
 console.log('\nRarity & drops — DOM-18 order-of-magnitude loot contract');
 
@@ -85,7 +87,7 @@ test('drop tiers surface as aspirational, and the primary slot keeps its rarity 
   assert.ok(/i\.dropOnly && !ownsGear\(i\.id\)/.test(pfSrc), 'no aspirational drop surface');
   assert.ok(/VAULTED/.test(pfSrc), 'oranges need the VAULTED chip');
   assert.ok(/DROP ONLY/.test(pfSrc), 'blue/purple need the DROP ONLY chip');
-  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const css = readAllCss();
   ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC'].forEach(t => {
     assert.ok(css.includes('.pf-slot.primary.rar-' + t),
       'primary slot loses the ' + t + ' rarity edge to the gold border');
@@ -96,7 +98,7 @@ test('rarity name ink survives .pf-inv-name (code shape)', () => {
   // DOM-102, third strike of the same specificity disease: .pf-inv-name
   // declares color at (0,1,0) after the bare .tier-* block, so without the
   // explicit pairs the stash/picker/teaser names render plain --text.
-  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const css = readAllCss();
   ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC'].forEach(t => {
     assert.ok(css.includes('.pf-inv-name.tier-' + t),
       'inventory names lose the ' + t + ' rarity ink to .pf-inv-name');
