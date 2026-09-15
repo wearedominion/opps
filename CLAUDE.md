@@ -195,8 +195,11 @@ mastery `--energy-fill`.
 
 **Threat** — block meter out of 8 (`█`/`░`), `--red` on `--ghost`. A rating, never animated.
 
-**Portraits** — circular, `object-position: top center`. Allies (plugs, you): 62px with a 2px chrome
+**Portraits** — circular, `object-position: top center`. Allies (you): 62px with a 2px chrome
 ring. Opps: 58px with a 1px `--border-ctrl` edge. No filters.
+**Plugs are the exception** (v0.2, DOM-113): not a circle at all — a 146px full-height rectangular
+column filling the left of the card, and a 288px header inside the dialogue popup. Both carry a
+bottom scrim (`--portrait-scrim-soft` 30px on the card, `--portrait-scrim` 80px in the popup).
 
 **Chips (Empire sub-nav)** — 10px, padding 7px/9px, radius 999. Active = `--chrome-fill` +
 `--chrome-ink`; inactive = 1px `--border` + `--muted`. Five fit a 390pt screen; do not add a sixth.
@@ -205,7 +208,9 @@ ring. Opps: 58px with a 1px `--border-ctrl` edge. No filters.
 older lines drop to `--ghost`. The dot carries the colour, the text never does.
 
 **Overlays** — backdrop `rgba(6,6,8,.72)` with the screen behind at `blur(3px)` / opacity .3.
-Combat centres; the plug dialog rises from the bottom edge. Border `--border-gold`, `--modal-shadow`.
+Combat centres; the plug dialogue **also centres** (v0.2, DOM-113 — it used to rise from the bottom
+edge), max-width 330px, radius `--r-panel`, scaling `0.94 → 1` over .22s like the engage modal.
+Border `--border-gold`, `--modal-shadow`.
 
 ## Rarity
 
@@ -277,7 +282,8 @@ blue/purple/orange/pink ink outside the XP meter.
 | `.do-job-btn` | Full-width orange → right-aligned chrome pill. |
 | `.attack-btn` | Solid red → `--control` + `--border-red` + `--red` label. |
 | `.enemy-avatar`, `.enemy-portrait` | 48px square → 58px circle, no `saturate(.7)`. |
-| `.plug-card` | 110px side image → 62px chrome-ringed circle. `.plug-line` loses its italic. |
+| `.plug-card` | **Rebuilt again in v0.2 (DOM-113):** horizontal card, 12px column gap, radius 16, 1px `--border-gold` — plugs are the one list gold-bordered at rest. 146px portrait column; 206px-tall info column padded 17/15/13. Name Anton 22, gold moniker, `.plug-line` 13px/1.6 `--text-mid`. LETS GO is a gold pill (11px/22px, no sheen) floated to the bottom by `margin-top:auto`, and is the only click target on the card. |
+| `.plug-modal` | Bottom sheet → centered 330px panel. 288px portrait header with the name in a floating pill (Anton 21px, JS-shrunk toward 14px for long names). Body 17/18/18: gold moniker → 84px-min dialogue → footer of `1 / 4` + LATER + a 104px-min CTA. The corner ✕ is retired — LATER and the scrim are the dismiss. |
 | `.bar-track`, `.bar-fill` | 6px/radius 2 → 7px/radius 999, track `--track`. |
 | `.store-item`, `.prop-card` | Two-column grid, no icon, full-width action pill. |
 | `.gem-card` | `#b388ff` retired; amounts render chrome-clipped. Badge overhangs the top edge 9px. |

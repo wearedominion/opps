@@ -50,6 +50,10 @@ const G = {
   // { questId: { p: [count per step], claimed } } — Plug quest progress
   // (DOM-90). Additive field with a default — no SCHEMA_VERSION bump.
   quests: {},
+  // Plug ids whose dialogue has been run to the end at least once
+  // (DOM-113). First completion recruits the plug; later ones run the job
+  // they offer. Additive field with a default — no SCHEMA_VERSION bump.
+  plugsRecruited: [],
   playerId: null,
   lastSeen: 0,
   crewMemberCount: 0,
