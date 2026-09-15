@@ -512,6 +512,16 @@ const GameMap = (() => {
   // The illustrated raster. Its own pan/zoom, clamped so an edge of the image
   // can never come into view — the clamp is recomputed from the cover-fit size
   // on every apply, because that size depends on the container.
+  //
+  // The <img> is SIZED to that cover box by ovApply() and centred, rather than
+  // being wrapper-sized with object-fit: cover (DOM-134). The two are not
+  // interchangeable: object-fit crops inside the element box, so a wrapper-sized
+  // img translated by tx reveals tx pixels of the wrapper's own background and
+  // never the cropped raster. Clamping that against the cover size — which is
+  // what this did — is looser than the truth by (cover - wrap) * s / 2, which is
+  // how a black sliver got to the edge of the frame, and how a pan was allowed
+  // at 1.0x where none should be. Sizing the element to the cover box makes the
+  // clamp below exact, and lets pan reach the crop the raster was hiding.
 
   const OV_MIN = 1, OV_MAX = 1.8;
   let _ov = { s: 1, tx: 0, ty: 0 };
@@ -532,6 +542,12 @@ const GameMap = (() => {
     const { wrap, img } = ovEls();
     if (!wrap || !img) return;
     const cover = ovCoverSize(wrap);
+    // Give the element the cover box and centre it, so transform-origin:center
+    // scales it about the wrapper's centre and the clamp below is the real one.
+    img.style.width  = cover.w + 'px';
+    img.style.height = cover.h + 'px';
+    img.style.left   = (wrap.clientWidth  - cover.w) / 2 + 'px';
+    img.style.top    = (wrap.clientHeight - cover.h) / 2 + 'px';
     _ov.s = Math.max(OV_MIN, Math.min(OV_MAX, _ov.s));
     const maxX = Math.max(0, (cover.w * _ov.s - wrap.clientWidth) / 2);
     const maxY = Math.max(0, (cover.h * _ov.s - wrap.clientHeight) / 2);
@@ -669,7 +685,18 @@ const GameMap = (() => {
   // Put a city-coordinate point in the middle of the viewport. apply() still
   // clamps to the map edges, so a point near a corner lands as close as the
   // map allows rather than panning empty space into view.
+  //
+  // Takes the map to 2D first (DOM-134). Centering only means anything on the
+  // 2D layer, and callers arrive from other screens — a show-on-map button
+  // pressed while the map was left in Overview or 3D used to centre a hidden
+  // layer and look like it had done nothing. Doing it here rather than in each
+  // caller is what makes every show-on-map affordance self-sufficient.
+  //
+  // Before reading _el, deliberately: leaving 3D re-runs init(), which captures
+  // the container afresh and nulls _mv. Setting _mv after that is what makes it
+  // win over the default fit init() queues for the next frame.
   function centerOn(x, y, scale) {
+    if (_mode !== '2d') setMode('2d');
     if (!_el) return;
     const s = scale || 1;
     _mv = { s: s, tx: _el.clientWidth / 2 - x * s, ty: _el.clientHeight / 2 - y * s };

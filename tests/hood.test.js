@@ -197,3 +197,138 @@ test('the hood is the one screen with no padding, and its vignette never eats a 
   assert.ok(/\.map-vignette\s*\{[^}]*pointer-events:\s*none/.test(css), 'the vignette would swallow taps');
   assert.ok(/\.map-hint\s*\{[^}]*pointer-events:\s*none/.test(css), 'the hint would swallow taps');
 });
+
+// ─────────────────────────────────────────────
+//  DOM-134 — the Overview clamp, and centering that is visible
+// ─────────────────────────────────────────────
+
+// The clamp is geometry, so it is worth running rather than grepping. This
+// stub is a real enough DOM for the overview: a wrapper with a size that
+// collects its own listeners, and an img whose style object we can read back.
+function loadOverview(W, H) {
+  const handlers = {};
+  const attrs = {};
+  const wrap = {
+    clientWidth: W, clientHeight: H,
+    addEventListener: (ev, fn) => { (handlers[ev] = handlers[ev] || []).push(fn); },
+    setPointerCapture: () => {},
+  };
+  const img = { style: {} };
+  const outer = { setAttribute: (k, v) => { attrs[k] = v; } };
+  const ctx = {
+    console, JSON, Object, Math, Array, String, Number, Date, Map, Set,
+    CITY: CITY_DATA, XP_SYSTEM: XP_SPEC, PROGRESSION: TABLE,
+    G: { level: 1, clout: 0, turf: {}, xpFirsts: {} },
+    toast: () => {}, log: () => {}, GameState: { save: () => {} },
+    registerScreen: () => {},
+    document: {
+      getElementById: id => (id === 'map-overview' ? wrap : id === 'map-overview-img' ? img : null),
+      querySelector: sel => (sel === '.map-outer' ? outer : sel === '.map-hint' ? { textContent: '' } : null),
+      querySelectorAll: () => [],
+      addEventListener: () => {},
+      createElement: () => ({ style: {}, setAttribute() {}, appendChild() {} }),
+    },
+    requestAnimationFrame: () => {},
+    window: {},
+  };
+  const src = fs.readFileSync(path.join(ROOT, 'js/map.js'), 'utf8')
+    + '\n;globalThis.__t = { GameMap };';
+  vm.runInNewContext(src, ctx);
+  const map = ctx.__t.GameMap;
+
+  const fire = (ev, e) => (handlers[ev] || []).forEach(fn => fn(e));
+  // One finger down, one move, one up — the pan path, not a synthetic setter.
+  const drag = (dx, dy) => {
+    fire('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 });
+    fire('pointermove', { pointerId: 1, clientX: dx, clientY: dy });
+    fire('pointerup', { pointerId: 1 });
+  };
+  const xf = () => {
+    const m = /translate\(([-\d.]+)px,([-\d.]+)px\) scale\(([\d.]+)\)/.exec(img.style.transform);
+    assert.ok(m, 'no transform written: ' + img.style.transform);
+    return { tx: +m[1], ty: +m[2], s: +m[3] };
+  };
+  const px = v => parseFloat(v);
+  return { map, img, attrs, drag, xf, px, W, H };
+}
+
+// 1200x2150 raster in a 402-wide frame: the height is the binding dimension,
+// so the cover box is wider than the frame and exactly as tall.
+const COVER = (W, H) => {
+  const s = Math.max(W / 1200, H / 2150);
+  return { w: 1200 * s, h: 2150 * s };
+};
+
+test('the overview raster is given its cover box, not cropped inside the wrapper', () => {
+  const o = loadOverview(402, 780);
+  o.map.setMode('overview');
+  const c = COVER(402, 780);
+  assert.ok(Math.abs(o.px(o.img.style.width) - c.w) < 0.01, o.img.style.width);
+  assert.ok(Math.abs(o.px(o.img.style.height) - c.h) < 0.01, o.img.style.height);
+  // and centred, so transform-origin:center scales about the frame's centre
+  assert.ok(Math.abs(o.px(o.img.style.left) - (402 - c.w) / 2) < 0.01, o.img.style.left);
+  assert.ok(Math.abs(o.px(o.img.style.top) - (780 - c.h) / 2) < 0.01, o.img.style.top);
+
+  // The CSS must not also be cropping: object-fit would put the raster back
+  // inside a box the clamp no longer describes.
+  const css = readAllCss();
+  const rule = /\.map-overview img\s*\{([^}]*)\}/.exec(css);
+  assert.ok(rule, 'the overview img rule is gone');
+  assert.ok(!/object-fit/.test(rule[1]), 'object-fit is back, and the clamp is a lie again');
+  assert.ok(/position:\s*absolute/.test(rule[1]));
+});
+
+test('pan stops with the raster edge flush to the frame, never past it', () => {
+  const o = loadOverview(402, 780);
+  o.map.setMode('overview');
+  const c = COVER(402, 780);
+
+  // Drag far right at 1.0x. The cover box is wider than the frame, so there IS
+  // room — bounded by exactly the overhang on one side.
+  o.drag(5000, 0);
+  const v = o.xf();
+  assert.ok(Math.abs(v.tx - (c.w - 402) / 2) < 0.01, 'tx clamp: ' + v.tx);
+  // The edge of the raster lands exactly on the edge of the frame: left offset
+  // plus pan is zero, so no wrapper background shows. This is the invariant the
+  // doc states, and the one the old clamp broke.
+  assert.ok(Math.abs(o.px(o.img.style.left) + v.tx) < 0.01, 'a background sliver is showing');
+});
+
+test('at 1.0x there is no pan along the axis the cover box does not overhang', () => {
+  // 402x780 against 1200x2150: height binds, so the cover box is exactly 780
+  // tall and vertical pan must be zero. The old clamp allowed it, and what it
+  // revealed was #0b0b0c.
+  const o = loadOverview(402, 780);
+  o.map.setMode('overview');
+  o.drag(0, 5000);
+  assert.strictEqual(o.xf().ty, 0, 'panned into the wrapper background');
+});
+
+test('zooming in opens up pan on both axes, still bounded by the raster', () => {
+  const o = loadOverview(402, 780);
+  o.map.setMode('overview');
+  o.map.ovZoom(100);                 // clamped to OV_MAX
+  const v0 = o.xf();
+  assert.strictEqual(v0.s, 1.8, 'the zoom clamp moved');
+  o.drag(-5000, -5000);
+  const c = COVER(402, 780), v = o.xf();
+  assert.ok(Math.abs(v.tx + (c.w * 1.8 - 402) / 2) < 0.01, 'tx: ' + v.tx);
+  assert.ok(Math.abs(v.ty + (c.h * 1.8 - 780) / 2) < 0.01, 'ty: ' + v.ty);
+  o.map.ovReset();
+  assert.deepStrictEqual(o.xf(), { tx: 0, ty: 0, s: 1 });
+});
+
+test('centering the map takes it to 2D first, whatever mode it was left in', () => {
+  // crewGoToMap and the opp card both land here. Centering the hidden 2D layer
+  // while Overview or 3D is on screen looks exactly like a dead button.
+  const o = loadOverview(402, 780);
+  o.map.setMode('overview');
+  assert.strictEqual(o.attrs['data-mode'], 'overview');
+  o.map.centerOn(381, 866);
+  assert.strictEqual(o.attrs['data-mode'], '2d', 'centred a layer nobody can see');
+
+  // and centerBase goes through the same door
+  o.map.setMode('overview');
+  o.map.centerBase();
+  assert.strictEqual(o.attrs['data-mode'], '2d');
+});
