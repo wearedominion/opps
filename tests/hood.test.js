@@ -29,7 +29,7 @@ function loadMap(over) {
       G.clout += c;
       return c;
     },
-    REASON: { QUEST_REWARD: 'quest_reward' },
+    REASON: { TERRITORY_CLAIM: 'territory_claim' },
     toast: () => {}, log: () => {},
     GameState: { save: () => {} },
     registerScreen: () => {},
