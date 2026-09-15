@@ -7,6 +7,13 @@ const Sound = (() => {
   let _ctx = null;
   let _on = true;
 
+  // The persisted setting wins (G.soundOn, DOM-110); _on is the fallback for
+  // contexts where state.js isn't loaded. Settings (DOM-111) owns the toggle.
+  function _enabled() {
+    if (typeof G !== 'undefined' && typeof G.soundOn === 'boolean') return G.soundOn;
+    return _on;
+  }
+
   function _getCtx() {
     if (_ctx) return _ctx;
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -20,7 +27,7 @@ const Sound = (() => {
   }
 
   function click() {
-    if (!_on) return;
+    if (!_enabled()) return;
     try {
       const ctx = _getCtx();
       if (!ctx) return;
@@ -41,7 +48,7 @@ const Sound = (() => {
   }
 
   function win() {
-    if (!_on) return;
+    if (!_enabled()) return;
     try {
       const ctx = _getCtx();
       if (!ctx) return;
@@ -64,7 +71,7 @@ const Sound = (() => {
   }
 
   function loss() {
-    if (!_on) return;
+    if (!_enabled()) return;
     try {
       const ctx = _getCtx();
       if (!ctx) return;
@@ -84,8 +91,11 @@ const Sound = (() => {
     } catch (_) {}
   }
 
-  function setEnabled(v) { _on = !!v; }
-  function isEnabled() { return _on; }
+  function setEnabled(v) {
+    _on = !!v;
+    if (typeof G !== 'undefined') G.soundOn = !!v;
+  }
+  function isEnabled() { return _enabled(); }
 
   // Wire click sound to all buttons globally
   document.addEventListener('pointerdown', (e) => {

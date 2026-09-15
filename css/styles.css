@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
-   OPPS — CHROME MONEY
-   Implements the UI Implementation Contract in CLAUDE.md.
+   OPPS — CHROME MONEY v0.2
+   Implements the UI Implementation Contract in CLAUDE.md and the
+   v0.2 design handoff (docs/design/chrome-money-v0.2/README.md).
    Cold near-black panels. One warm metal gradient reserved for
    money and the single primary action. Anton display over
    Space Grotesk UI. No emoji, no red outside combat.
@@ -8,39 +9,65 @@
    Do not add values from the retired amber/highlighter guide.
    ═══════════════════════════════════════════════════════════ */
 :root {
+  /* ── Chrome Money v0.2 tokens — canonical (README §Design tokens) ── */
   /* surfaces */
-  --app:        #08080a;   /* outside the app frame */
-  --bg:         #0b0b0c;   /* screen surface, carries the weave */
-  --well:       #0d0d11;   /* insets: combat log, code, sparkline */
-  --panel-top:  #181820;   /* card gradient start */
-  --panel:      #111116;   /* card gradient end */
-  --control:    #1b1b22;   /* secondary buttons, active tab */
-  --track:      #1f1f27;   /* meter tracks */
+  --app:            #08080a;  /* outside the app frame */
+  --bg:             #0b0b0c;  /* app background, always with the pinstripe */
+  --surface-deep:   #0d0d11;  /* header wells, image backdrops, log container */
+  --surface:        #111116;  /* card gradient end, portrait backdrops */
+  --surface-raised: #1b1b22;  /* buttons, icon wells, inputs, avatars */
+  --track:          #1f1f27;  /* meter tracks, hairline section rules */
+  --row-divider:    #1d1c22;  /* hairline between list rows */
 
   /* borders — always 1px */
-  --border:      #26262e;  /* cards */
-  --border-ctrl: #33333d;  /* controls, portraits */
-  --border-gold: #3d3627;  /* chrome-active, overlays */
-  --border-red:  #5a2b24;  /* hostile actions */
+  --border:          #26262e;  /* default card border, header rule */
+  --border-strong:   #33333d;  /* control borders (buttons, inputs, portraits) */
+  --border-gold:     #3d3627;  /* gold-tinted: accent cards, hover, overlays */
+  --border-danger:   #5a2b24;  /* engage / opp borders */
+  --border-disabled: #22222a;  /* disabled buttons/chips (with --bg-disabled) */
+  --bg-disabled:     #141419;
 
   /* ink */
-  --text:     #f2f0ec;  /* titles, primary values */
-  --body:     #d8d6d0;  /* dialogue, running copy */
-  --muted:    #8e8e9a;  /* descriptions, inactive tabs */
-  --faint:    #7a7a86;  /* meta rows, bar labels */
-  --ghost:    #55555f;  /* status strip, captions */
-  --disabled: #4f4f59;  /* locked / mastered text */
+  --gold:          #e8c98a;  /* flat gold: values, icons, active labels */
+  --gold-deep:     #a8873f;  /* end of gold bar-fill gradient */
+  --ink:           #161208;  /* text on gold — never white */
+  --text:          #f2f0ec;  /* primary text */
+  --text-bright:   #d8d6d0;  /* body copy, message bubbles, icons */
+  --text-mid:      #8e8e9a;  /* secondary text, inactive labels */
+  --text-label:    #7a7a86;  /* eyebrow labels, timestamps */
+  --text-disabled: #4f4f59;  /* disabled labels, "/ cap" halves */
+  --xp:            #6f8cff;  /* XP/level bars, skill-point badge */
+  --danger:        #e0523f;  /* opps, HP bars, unread badges, timers */
+  --success:       #4fd39a;  /* owned/completed/positive, working dots */
 
-  /* signal */
-  --chrome:     #e8c98a;  /* money, active chip ink source */
-  --chrome-ink: #161208;  /* text ON chrome — never white */
-  --red:        #e0523f;  /* threat, enemy HP, combat only */
-  --green:      #4fd39a;  /* health, income, drop pins */
-  --xp:         #6f8cff;  /* XP meter only */
+  /* gradients (exact strings) */
+  --gold-chrome:   linear-gradient(135deg,#f3e0b4,#e8c98a 40%,#c9a55c);
+  --card-fill:     linear-gradient(180deg,#181820,#111116);
+  --overlay-fill:  linear-gradient(180deg,#181820,#0d0d11);
+  --warm-card:     linear-gradient(110deg,#1d1b16,#111116);
+  --gold-bar:      linear-gradient(90deg,#e8c98a,#a8873f);
+  --portrait-scrim: linear-gradient(0deg,rgba(8,8,10,0.9),transparent);
 
-  /* rarity (DOM-18, CLAUDE.md "Rarity") — item NAME ink + 1px border tint,
-     never a card fill, never a glow, never chrome-clipped. Mythic is
-     reserved: tokens ship, no v1 item or drop odds carry it. */
+  --modal-shadow: 0 30px 80px rgba(0,0,0,.6);
+
+  /* shape — everything is a pill or a soft card */
+  --r-pill: 999px;  /* ALL buttons, chips, badges, bars, avatars */
+  --r-panel: 22px;  /* centered overlay panels */
+  --r-sheet: 24px;  /* bottom sheets: 24px 24px 0 0 */
+  --r-card: 16px;   /* cards, list containers */
+  --r-tile: 14px;   /* small tiles, portrait frames, drawer items */
+  --r-icon: 12px;   /* 38px icon buttons, 36px map controls */
+
+  --pad-screen: 20px;  --gap-list: 9px;  --gap-section: 14px;
+
+  --display: 'Anton', sans-serif;
+  --ui:      'Space Grotesk', sans-serif;
+
+  /* rarity (DOM-18, CLAUDE.md "Rarity") — v0.2 KEEPS this 6-tier
+     reserved-hue scale (ruled on DOM-110, 2026-09-14): the prototype's
+     4-tier gold-LEGEND scale is NOT adopted; gold stays money-only.
+     Item NAME ink + 1px border tint, never a fill, never a glow.
+     Mythic reserved. */
   --rarity-common:    #a6a6b2;  --rarity-common-edge:    #33333d;
   --rarity-uncommon:  #8fbf78;  --rarity-uncommon-edge:  #33412f;
   --rarity-rare:      #56b3c9;  --rarity-rare-edge:      #24404a;
@@ -48,20 +75,30 @@
   --rarity-legendary: #d99a4e;  --rarity-legendary-edge: #4a3823;
   --rarity-mythic:    #cf6f9e;  --rarity-mythic-edge:    #48293a;
 
-  --chrome-fill:  linear-gradient(135deg,#f3e0b4,#e8c98a 40%,#c9a55c);
-  --panel-fill:   linear-gradient(180deg,#181820,#111116);
-  --energy-fill:  linear-gradient(90deg,#e8c98a,#a8873f);
-  --modal-shadow: 0 30px 80px rgba(0,0,0,.6);
-
-  --r-card: 16px;  --r-panel: 20px;  --r-pill: 999px;
-  --pad-screen: 20px;  --gap-list: 9px;  --gap-section: 14px;
-
-  --display: 'Anton', sans-serif;
-  --ui:      'Space Grotesk', sans-serif;
-
-  /* disabled / locked chip — the only place these two values appear */
-  --chip-locked-bg:     #141419;
-  --chip-locked-border: #22222a;
+  /* ── Legacy v0.1 aliases ──
+     The pre-v0.2 rules below still read these. Each screen rebuild
+     (DOM-111..119) moves its rules onto the canonical names; delete the
+     aliases with the last one. Do not use them in new code. */
+  --well:        var(--surface-deep);
+  --panel-top:   #181820;
+  --panel:       var(--surface);
+  --control:     var(--surface-raised);
+  --border-ctrl: var(--border-strong);
+  --border-red:  var(--border-danger);
+  --body:        var(--text-bright);
+  --muted:       var(--text-mid);
+  --faint:       var(--text-label);
+  --ghost:       #55555f;
+  --disabled:    var(--text-disabled);
+  --chrome:      var(--gold);
+  --chrome-ink:  var(--ink);
+  --red:         var(--danger);
+  --green:       var(--success);
+  --chrome-fill: var(--gold-chrome);
+  --panel-fill:  var(--card-fill);
+  --energy-fill: var(--gold-bar);
+  --chip-locked-bg:     var(--bg-disabled);
+  --chip-locked-border: var(--border-disabled);
 }
 
 ::selection { background: var(--chrome); color: var(--chrome-ink); }
@@ -98,10 +135,10 @@ body {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg);
-  /* the weave — screen surface only, replaces the old body scanline */
+  /* the pinstripe — screen surface only (v0.2 exact string) */
   background-image: repeating-linear-gradient(45deg,
-    rgba(255,255,255,.012), rgba(255,255,255,.012) 1px,
-    transparent 1px, transparent 2px);
+    rgba(255,255,255,0.012), rgba(255,255,255,0.012) 1px,
+    transparent 1px, transparent 7px);
 }
 
 /* ── HEADER ── */
@@ -119,63 +156,88 @@ header {
   font-size: 27px;
   line-height: 1;
   letter-spacing: 4px;
-  background: linear-gradient(135deg,#f3e0b4,#e8c98a 45%,#a8873f);
+  background: var(--gold-chrome);
   -webkit-background-clip: text;
           background-clip: text;
   color: transparent;
 }
 
-/* header pills */
-.hdr-pills { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.hdr-pill {
-  display: flex; align-items: center; gap: 5px;
-  padding: 7px 12px; border-radius: var(--r-pill);
-  background: var(--control); border: 1px solid var(--border-ctrl);
-  color: var(--chrome);
-  font-family: var(--ui); font-weight: 500; font-size: 12px;
-  cursor: pointer; transition: border-color .16s;
+/* ── clout cluster (v0.2 README §Header) — tap opens the metrics panel ──
+   CLOUT label over the value; rank title over a 4px XP mini-bar; a 9px ▾ */
+.hdr-cluster {
+  display: flex; align-items: center; gap: 10px;
+  margin-left: auto;
+  background: none; border: none; padding: 0;
+  cursor: pointer; text-align: left;
+  transition: opacity .16s;
 }
-.hdr-pill:hover { border-color: var(--border-gold); }
-.hdr-pill-k {
-  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint);
+.hdr-cluster:hover { opacity: .82; }
+.hdr-cluster-col { display: flex; flex-direction: column; gap: 3px; }
+.hdr-cluster-k {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
 }
+.hdr-cluster-v {
+  font-family: var(--display); font-size: 15px; letter-spacing: 1px;
+  line-height: 1; color: var(--text);
+}
+.hdr-xp-mini {
+  display: block; min-width: 58px; height: 4px;
+  border-radius: var(--r-pill); background: var(--track); overflow: hidden;
+}
+.hdr-xp-fill {
+  display: block; height: 100%; background: var(--xp);
+  border-radius: var(--r-pill); transition: width .4s;
+}
+.hdr-caret { font-size: 9px; color: var(--text-label); }
 
-/* 38x38 header buttons — 44px effective target via padding on the row */
+/* 38x38 icon buttons — radius 12 (v0.2 icon-button recipe) */
 .hdr-btn {
   flex: none; position: relative;
   width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--control);
-  border: 1px solid var(--border-ctrl);
-  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-icon);
+  color: var(--text-bright);
   cursor: pointer;
   transition: border-color .16s;
 }
 .hdr-btn:hover:not(:disabled) { border-color: var(--border-gold); }
 .hdr-btn:disabled {
-  background: var(--chip-locked-bg);
-  border-color: var(--chip-locked-border);
-  color: var(--disabled);
+  background: var(--bg-disabled);
+  border-color: var(--border-disabled);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
+/* unread badge (v0.2: -5px offsets, 1px bg ring, SG 700 9px ink) */
+.hdr-badge {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--danger); border: 1px solid var(--bg);
+  border-radius: var(--r-pill);
+  font-family: var(--ui); font-weight: 700; font-size: 9px; color: var(--ink);
+}
+.hdr-badge[hidden] { display: none; }
+/* hamburger — three 18×2px pills, 4px gaps */
+.hamb { display: flex; flex-direction: column; gap: 4px; }
+.hamb i {
+  display: block; width: 18px; height: 2px;
+  border-radius: var(--r-pill); background: var(--text-bright);
+}
 
-/* signature divider + scrim */
+/* signature divider — full-bleed, 15px under the row */
 .hdr-rule {
-  height: 1px; margin: var(--gap-section) calc(var(--pad-screen) * -1) 0;
+  height: 1px; margin: 15px calc(var(--pad-screen) * -1) 0;
   background: var(--border);
 }
-.hdr-scrim {
-  position: relative; z-index: 5;
-  height: 20px; margin: 0 calc(var(--pad-screen) * -1) -20px;
-  background: linear-gradient(180deg,rgba(0,0,0,0.4),rgba(0,0,0,0));
-  pointer-events: none;
-}
 
-/* ── SCROLL BODY ── */
+/* ── SCROLL BODY ── (v0.2: 18px sides; The Hood is the 0-padding exception) */
 main {
   flex: 1;
   overflow-y: auto;
-  padding: 16px var(--pad-screen) 28px;
+  padding: 16px 18px 28px;
   scrollbar-width: none;
 }
 main::-webkit-scrollbar { width: 0; height: 0; }
@@ -198,32 +260,110 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   text-transform: uppercase;
   color: var(--faint);
 }
-.section-label .rule { flex: 1; height: 1px; background: var(--border); }
+.section-label .rule { flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+
+/* section header (within screens): Anton 15px title + rule + right count */
+.section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.section-head h4 {
+  margin: 0; font-family: var(--display);
+  font-size: 15px; letter-spacing: 2px; color: var(--text);
+}
+.section-head .rule { flex: 1; height: 1px; background: var(--track); }
+.section-head .count {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
+}
 
 /* ── TABS ── */
 .tab { display: none; }
 .tab.active { display: block; }
 
-/* ── CHIPS (Empire sub-nav) ──
-   Five fit a 390pt screen. Do not add a sixth. */
-.chip-row { display: flex; gap: 6px; margin-bottom: var(--gap-section); }
-/* display:flex would otherwise beat the UA [hidden] rule */
-.chip-row[hidden] { display: none; }
-.chip {
-  font-family: var(--ui);
-  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
-  padding: 7px 9px; border-radius: var(--r-pill);
-  background: transparent; border: 1px solid var(--border);
-  color: var(--muted); cursor: pointer;
-  transition: border-color .16s, color .16s;
+/* ═══════════════════════════════════════════════════════════
+   NAV DRAWER (v0.2 OVERLAYS.md) — z 50 scrim / 51 panel.
+   Hidden overlays stay MOUNTED (opacity 0, pointer-events none)
+   so open/close always animates.
+   ═══════════════════════════════════════════════════════════ */
+.drawer-scrim {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.6);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s;
 }
-.chip:hover { color: var(--text); border-color: var(--border-ctrl); }
-.chip.active {
-  background: var(--chrome-fill);
-  border-color: transparent;
-  color: var(--chrome-ink);
-  font-weight: 700;
+.drawer-scrim.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 51;
+  width: 262px;
+  display: flex; flex-direction: column;
+  padding: 30px 0 20px;
+  background: var(--overlay-fill);
+  border-right: 1px solid var(--border);
+  box-shadow: 30px 0 80px rgba(0,0,0,0.6);
+  transform: translateX(-112%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
 }
+.drawer.open { transform: translateX(0); }
+.drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px 18px;
+  border-bottom: 1px solid var(--track);
+}
+.drawer-wordmark {
+  font-family: var(--display); font-size: 24px; letter-spacing: 4px;
+  line-height: 1;
+  background: var(--gold-chrome);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+.drawer-items { flex: 1; overflow-y: auto; scrollbar-width: none; padding-top: 12px; }
+.drawer-items::-webkit-scrollbar { width: 0; }
+.drawer-item {
+  display: flex; align-items: center; gap: 12px;
+  width: calc(100% - 24px); text-align: left;
+  margin: 0 12px; padding: 14px 16px;
+  border-radius: var(--r-tile);
+  background: transparent; border: 1px solid transparent;
+  cursor: pointer;
+  transition: background .16s;
+}
+.drawer-item:hover { background: rgba(255,255,255,0.02); }
+.drawer-dot {
+  flex: none; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--border-strong);
+}
+.drawer-label {
+  font-family: var(--display); font-size: 15px; letter-spacing: 1.5px;
+  color: var(--text-mid);
+}
+.drawer-item.active {
+  background: var(--surface-raised);
+  border-color: var(--border-gold);
+}
+.drawer-item.active .drawer-dot { background: var(--gold-chrome); }
+.drawer-item.active .drawer-label { color: var(--text); }
+/* locked items (none currently — recipe per OVERLAYS.md) */
+.drawer-item.locked { cursor: default; }
+.drawer-item.locked:hover { background: transparent; }
+.drawer-item.locked .drawer-label { color: var(--text-disabled); }
+.drawer-soon {
+  margin-left: auto; padding: 3px 8px;
+  font-family: var(--ui); font-weight: 700; font-size: 9px;
+  letter-spacing: 1px; color: var(--text-disabled);
+  border: 1px solid var(--border-disabled); border-radius: var(--r-pill);
+}
+/* TEMPORARY (ruled on DOM-110, 2026-09-14): legacy screens keep a quiet
+   drawer section until their v0.2 homes land. ACTIVITIES → DOM-115,
+   SPOTS/STATS → DOM-117/118. Delete this block with the last of them. */
+.drawer-divider {
+  display: flex; align-items: center; gap: 8px;
+  margin: 14px 28px 6px;
+  font-family: var(--ui); font-weight: 500; font-size: 9px;
+  letter-spacing: 2px; color: var(--text-disabled);
+}
+.drawer-divider::after { content: ''; flex: 1; height: 1px; background: var(--track); }
+.drawer-item.legacy { padding: 10px 16px; }
+.drawer-item.legacy .drawer-label { font-size: 12px; color: var(--text-disabled); }
+.drawer-item.legacy.active .drawer-label { color: var(--text-mid); }
 
 /* ── CARDS ── */
 .card {
@@ -262,20 +402,20 @@ main::-webkit-scrollbar { width: 0; height: 0; }
   border: none;
   color: var(--chrome-ink);
 }
-.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:hover { filter: brightness(1.08); }
 .btn-secondary {
-  background: var(--control);
-  border: 1px solid var(--border-ctrl);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   color: var(--text);
 }
-.btn-secondary:hover { border-color: var(--border-gold); }
+.btn-secondary:hover { border-color: var(--border-gold); color: var(--text); }
 /* combat entry only */
 .btn-hostile {
-  background: var(--control);
-  border: 1px solid var(--border-red);
-  color: var(--red);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-danger);
+  color: var(--danger);
 }
-.btn-hostile:hover { filter: brightness(1.15); }
+.btn-hostile:hover { background: rgba(224,82,63,0.12); }
 /* locked chips state the gate, not the refusal */
 .btn-locked,
 .btn-primary:disabled,
@@ -1827,29 +1967,116 @@ img.plug-portrait {
 .metric-fill.energy { background: var(--energy-fill); }
 .metric-fill.health { background: var(--green); }
 
-/* ── BOTTOM TABS ──
-   Five tabs: Hood, Map, Moves, Opps, Empire. Replaces the nav drawer. */
-.tabbar {
-  flex: none;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  padding: 8px var(--pad-screen) calc(8px + env(safe-area-inset-bottom, 0px));
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  z-index: 40;
+/* ═══════════════════════════════════════════════════════════
+   SHARED OVERLAY INFRASTRUCTURE (v0.2 OVERLAYS.md)
+   Individual overlays ship with their screens; this is the shared
+   machinery. All overlays render inside the app frame, never as
+   browser dialogs. Hidden overlays stay mounted (opacity 0,
+   pointer-events none) so open/close always animates. Scrim tap
+   closes; the panel stopPropagation()s.
+
+   z-ladder: drawer 50/51 · metrics 55 · messages 55 · ranks 58 ·
+   engage 60 · log 60 · public profile 64 · confirm alloc 66 ·
+   stat info 67 · equip picker 68 · stats 69 · dialogue 70 ·
+   gold confirm 71 · XP toast 90.
+   ═══════════════════════════════════════════════════════════ */
+.ov-scrim {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px 18px;
+  background: rgba(0,0,0,0.78); /* per-overlay scrims override (0.55–0.84) */
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s;
 }
-.tabbar-btn {
-  font-family: var(--display);
-  font-size: 12px; letter-spacing: 1px;
-  padding: 11px 4px; min-height: 44px;
-  border-radius: var(--r-pill);
-  background: transparent; border: 1px solid transparent;
-  color: var(--muted); cursor: pointer;
-  transition: color .16s, background .16s;
+.ov-scrim.open { opacity: 1; pointer-events: auto; }
+.ov-scrim.sheet { align-items: flex-end; padding: 0; }
+/* centered panel: radius 22, scale 0.94–0.95 → 1 */
+.ov-panel {
+  width: 100%; max-width: 340px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-panel);
+  background: var(--overlay-fill);
+  box-shadow: var(--modal-shadow);
+  overflow: hidden;
+  transform: scale(0.94);
+  transition: transform .22s;
 }
-.tabbar-btn:hover { color: var(--text); }
-.tabbar-btn.active { background: var(--control); color: var(--chrome); }
+.ov-scrim.open .ov-panel { transform: scale(1); }
+/* bottom sheet: radius 24 24 0 0, translateY(100% → 0) */
+.ov-panel.sheet {
+  max-width: none; max-height: 82%;
+  display: flex; flex-direction: column;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0; border-bottom: none;
+  transform: translateY(100%);
+  transition: transform .26s;
+}
+.ov-scrim.open .ov-panel.sheet { transform: translateY(0); }
+/* panel header: title (Anton 19–21 ls 2) over an eyebrow, rule, circular ✕ */
+.ov-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid var(--track);
+}
+.ov-head .fill { flex: 1; min-width: 0; }
+.ov-eyebrow {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
+}
+.ov-title {
+  font-family: var(--display); font-size: 19px; letter-spacing: 2px;
+  color: var(--text); line-height: 1.1;
+}
+
+/* circular ✕ — 28px, invisible ::after extends the hit target */
+.btn-x {
+  flex: none; position: relative;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised); border: 1px solid var(--border-strong);
+  color: var(--text); font-size: 13px; line-height: 1; padding: 0;
+  cursor: pointer; transition: border-color .16s, color .16s;
+}
+.btn-x:hover { border-color: var(--border-gold); color: var(--gold); }
+.btn-x::after { content: ''; position: absolute; inset: -8px; }
+
+/* 4px mini-bars (header XP, skill rows, objective progress) */
+.bar-mini { height: 4px; border-radius: var(--r-pill); background: var(--track); overflow: hidden; }
+.bar-mini > * { display: block; height: 100%; border-radius: var(--r-pill); transition: width .4s; }
+
+/* tier label typography (v0.2) — colors stay the 6-tier .tier-* inks */
+.tier-label {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+
+/* ── MOTION (v0.2 README §Motion) ── */
+/* sheen — reward-granting gold CTAs ONLY (COMPLETE, BUY, LOCK IN/CONFIRM,
+   CLAIM TURF). Parent needs position:relative-free pills: the recipe is
+   self-contained — overflow hidden + ::after stripe. */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 34%;
+  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);
+  animation: sheen 4.2s linear infinite;
+  pointer-events: none;
+}
+@keyframes sheen {
+  0%       { transform: translateX(-150%) skewX(-18deg); }
+  55%,100% { transform: translateX(320%)  skewX(-18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  button::after, .sheen::after { animation: none !important; }
+}
+/* live dots / timers / selection ring */
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.blink { animation: blink 1.4s infinite; }
+/* map pings */
+@keyframes mappulse {
+  0%   { transform: scale(0.5); opacity: .8; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
 
 /* hood activity actions — COLLECT is the one primary; the rest go secondary */
 .do-job-btn.secondary {

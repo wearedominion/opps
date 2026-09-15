@@ -1518,4 +1518,36 @@ test('and keeps its rank title, because bands are wider than the move', () => {
   assert.strictEqual(rankForLevel(11, RANKS, PER_RANK), 'Soldier');
 });
 
+console.log('\nChrome Money v0.2 shell fields (DOM-110) — additive, defensively read');
+
+test('the G literal carries the v0.2 shell defaults', () => {
+  assert.strictEqual(G.soundOn, true);
+  assert.strictEqual(G.handle, null);
+  assert.strictEqual(G.gold, 0);
+  assert.deepStrictEqual(plain(G.supplies), {});
+  assert.deepStrictEqual(plain(G.turf), {});
+});
+
+test('an older save without the fields keeps the defaults through apply()', () => {
+  // GameState.apply is Object.assign(G, saved): a migrated save that predates
+  // the fields must not clobber the literal's defaults with undefined.
+  const migrated = migrate(clone(FIXTURE)).save;
+  assert.strictEqual('soundOn' in migrated, false); // migrations do not invent the field
+  const applied = Object.assign(clone(plain(G)), plain(migrated));
+  assert.strictEqual(applied.soundOn, true);
+  assert.strictEqual(applied.gold, 0);
+  assert.strictEqual(applied.handle, null);
+  assert.deepStrictEqual(applied.supplies, {});
+  assert.deepStrictEqual(applied.turf, {});
+});
+
+test('a save that already carries the fields wins over the defaults', () => {
+  const saved = Object.assign(plain(migrate(clone(FIXTURE)).save),
+                              { soundOn: false, gold: 120, handle: 'BIG WORM' });
+  const applied = Object.assign(clone(plain(G)), saved);
+  assert.strictEqual(applied.soundOn, false);
+  assert.strictEqual(applied.gold, 120);
+  assert.strictEqual(applied.handle, 'BIG WORM');
+});
+
 console.log('\n' + passed + ' passed' + (process.exitCode ? ', SOME FAILED' : '') + '\n');

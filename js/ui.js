@@ -9,37 +9,18 @@ function $(id) { return document.getElementById(id); }
 const SECTION_TITLES = {
   map: 'THE HOOD', jobs: 'MAKE MOVES', fight: 'OPPS LIST', plugs: 'PLUGS',
   crew: 'CREW', profile: 'PLAYER PROFILE', hood: 'ACTIVITIES',
-  props: 'SPOTS', store: 'THE PLUG', stats: 'STATS',
+  props: 'SPOTS', store: 'THE PLUG', stats: 'STATS', settings: 'SETTINGS',
 };
-
-// Five bottom tabs. Plugs / Gear / Spots / Stats / Crew live inside Empire
-// behind the chip row — five fit a 390pt screen, so do not add a sixth.
-// Profile has no tab of its own; it opens from the header identity button.
-const EMPIRE_SCREENS = ['plugs', 'store', 'props', 'stats', 'crew'];
-const TOP_TABS = ['hood', 'map', 'jobs', 'fight'];
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const tab = $('tab-' + name);
   if (tab) tab.classList.add('active');
 
-  // bottom tab: an Empire screen lights the Empire tab, not one of its own
-  const inEmpire = EMPIRE_SCREENS.indexOf(name) !== -1;
-  const topTab = inEmpire ? 'empire' : (TOP_TABS.indexOf(name) !== -1 ? name : null);
-  document.querySelectorAll('.tabbar-btn').forEach(b => b.classList.remove('active'));
-  if (topTab) {
-    const btn = $('tab-btn-' + topTab);
-    if (btn) btn.classList.add('active');
-  }
-
-  // chip row is visible only inside Empire
-  const chips = $('empire-chips');
-  if (chips) chips.hidden = !inEmpire;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  if (inEmpire) {
-    const chip = $('chip-' + name);
-    if (chip) chip.classList.add('active');
-  }
+  // drawer item sync — screens without a drawer entry light nothing
+  document.querySelectorAll('.drawer-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.nav === name);
+  });
 
   // The map fills the body: no padding, no scroll, no section label.
   const app = $('app');
@@ -52,6 +33,28 @@ function showTab(name) {
   if (name === 'map')    GameMap.init();
   if (name === 'plugs')  renderPlugs();
   if (name === 'profile' && typeof renderProfile === 'function') renderProfile();
+}
+
+// ── NAV DRAWER (v0.2 OVERLAYS.md) ───────────────
+// The drawer stays mounted; .open drives the translateX/opacity animation.
+function openDrawer() {
+  const d = $('drawer'), s = $('drawer-scrim');
+  if (!d || !s) return;
+  d.classList.add('open');
+  s.classList.add('open');
+  d.setAttribute('aria-hidden', 'false');
+}
+function closeDrawer() {
+  const d = $('drawer'), s = $('drawer-scrim');
+  if (!d || !s) return;
+  d.classList.remove('open');
+  s.classList.remove('open');
+  d.setAttribute('aria-hidden', 'true');
+}
+// Drawer navigation: switch screen, then close the drawer over it.
+function navTo(name) {
+  showTab(name);
+  closeDrawer();
 }
 
 function log(msg, cls = '') {

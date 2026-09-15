@@ -15,36 +15,38 @@
 
 <div class="app" id="app">
 
-  <!-- HEADER -->
+  <!-- HEADER (v0.2 README §Header) -->
   <header>
     <div class="hdr-row">
       <div class="logo">OPPS</div>
 
-      <!-- rank is the only header pill; everything else lives in the panel -->
-      <div class="hdr-pills">
-        <button class="hdr-pill" onclick="openMetrics()" aria-label="Rank and power">
-          <span id="h-level">SHORTY</span>
-        </button>
-      </div>
+      <!-- clout cluster: CLOUT over value · rank over 4px XP mini-bar · ▾.
+           Tap opens the metrics panel. -->
+      <button class="hdr-cluster" onclick="openMetrics()" aria-label="Power and currencies">
+        <span class="hdr-cluster-col">
+          <span class="hdr-cluster-k">CLOUT</span>
+          <span class="hdr-cluster-v" id="h-clout">0</span>
+        </span>
+        <span class="hdr-cluster-col">
+          <span class="hdr-cluster-k" id="h-rank">SHORTY</span>
+          <span class="hdr-xp-mini"><span class="hdr-xp-fill" id="h-xp-mini" style="width:0%"></span></span>
+        </span>
+        <span class="hdr-caret">&#9662;</span>
+      </button>
 
-      <!-- Messages is a later system (build order item 8); shown disabled, not dead -->
+      <!-- Messages ships with DOM-119 (S10); shown disabled, not dead.
+           The unread badge markup is ready for it. -->
       <button class="hdr-btn" id="btn-msgs" disabled aria-label="Messages — not available yet">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.76L3 21l1.86-5.54A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+        <span class="hdr-badge" id="msg-badge" hidden></span>
       </button>
 
-      <!-- PROFILE ENTRY POINT — DISABLED FOR THE CHROME MONEY MERGE.
-           js/profile.js ships on main but is unreachable: this button is the
-           only route into the profile screen. The screen itself has not been
-           reviewed against the Chrome Money contract (DOM-40, DOM-49, DOM-61).
-           To re-enable, delete this comment wrapper. Nothing else to change. -->
-      <!--
-      <button class="hdr-btn" onclick="showTab('profile')" aria-label="Player profile">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      <!-- hamburger — opens the nav drawer -->
+      <button class="hdr-btn" id="btn-menu" onclick="openDrawer()" aria-label="Menu">
+        <span class="hamb" aria-hidden="true"><i></i><i></i><i></i></span>
       </button>
-      -->
     </div>
     <div class="hdr-rule"></div>
-    <div class="hdr-scrim"></div>
   </header>
 
   <!-- MAIN -->
@@ -52,15 +54,6 @@
 
     <!-- Screen label — a caption, not a title -->
     <div class="section-label"><h3 id="section-title">ACTIVITIES</h3><div class="rule"></div></div>
-
-    <!-- Empire sub-nav. Five fit a 390pt screen; do not add a sixth. -->
-    <div class="chip-row" id="empire-chips" hidden>
-      <button class="chip" onclick="showTab('plugs')" id="chip-plugs">PLUGS</button>
-      <button class="chip" onclick="showTab('store')" id="chip-store">GEAR</button>
-      <button class="chip" onclick="showTab('props')" id="chip-props">SPOTS</button>
-      <button class="chip" onclick="showTab('stats')" id="chip-stats">STATS</button>
-      <button class="chip" onclick="showTab('crew')"  id="chip-crew">CREW</button>
-    </div>
 
     <!-- FEED -->
     <div id="feed">
@@ -189,16 +182,40 @@
       </div>
     </div>
 
+    <!-- SETTINGS TAB — placeholder until DOM-111 (S2) builds the screen -->
+    <div class="tab" id="tab-settings">
+      <div class="pf-empty">
+        <div class="pf-empty-label">SETTINGS</div>
+        <div class="pf-empty-hint">This screen is being rebuilt to the Chrome Money v0.2 design (DOM-111).</div>
+      </div>
+    </div>
+
   </main>
 
-  <!-- BOTTOM TABS -->
-  <nav class="tabbar">
-    <button class="tabbar-btn" onclick="showTab('hood')"  id="tab-btn-hood">HOOD</button>
-    <button class="tabbar-btn" onclick="showTab('map')"   id="tab-btn-map">MAP</button>
-    <button class="tabbar-btn" onclick="showTab('jobs')"  id="tab-btn-jobs">MOVES</button>
-    <button class="tabbar-btn" onclick="showTab('fight')" id="tab-btn-fight">OPPS</button>
-    <button class="tabbar-btn" onclick="showTab('plugs')" id="tab-btn-empire">EMPIRE</button>
-  </nav>
+  <!-- NAV DRAWER (v0.2 OVERLAYS.md) — stays mounted so open/close animates.
+       Eight spec items; the LEGACY section is temporary (ruled on DOM-110,
+       2026-09-14) and shrinks as DOM-115/117/118 absorb those screens. -->
+  <div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-wordmark">OPPS</div>
+      <button class="btn-x" onclick="closeDrawer()" aria-label="Close menu">&#x2715;</button>
+    </div>
+    <nav class="drawer-items">
+      <button class="drawer-item" data-nav="map"      onclick="navTo('map')"><span class="drawer-dot"></span><span class="drawer-label">THE HOOD</span></button>
+      <button class="drawer-item" data-nav="jobs"     onclick="navTo('jobs')"><span class="drawer-dot"></span><span class="drawer-label">MAKE MOVES</span></button>
+      <button class="drawer-item" data-nav="fight"    onclick="navTo('fight')"><span class="drawer-dot"></span><span class="drawer-label">OPPS LIST</span></button>
+      <button class="drawer-item" data-nav="plugs"    onclick="navTo('plugs')"><span class="drawer-dot"></span><span class="drawer-label">PLUGS</span></button>
+      <button class="drawer-item" data-nav="crew"     onclick="navTo('crew')"><span class="drawer-dot"></span><span class="drawer-label">CREW</span></button>
+      <button class="drawer-item" data-nav="store"    onclick="navTo('store')"><span class="drawer-dot"></span><span class="drawer-label">STORE</span></button>
+      <button class="drawer-item" data-nav="profile"  onclick="navTo('profile')"><span class="drawer-dot"></span><span class="drawer-label">PROFILE</span></button>
+      <button class="drawer-item" data-nav="settings" onclick="navTo('settings')"><span class="drawer-dot"></span><span class="drawer-label">SETTINGS</span></button>
+      <div class="drawer-divider">LEGACY</div>
+      <button class="drawer-item legacy" data-nav="hood"  onclick="navTo('hood')"><span class="drawer-dot"></span><span class="drawer-label">ACTIVITIES</span></button>
+      <button class="drawer-item legacy" data-nav="props" onclick="navTo('props')"><span class="drawer-dot"></span><span class="drawer-label">SPOTS</span></button>
+      <button class="drawer-item legacy" data-nav="stats" onclick="navTo('stats')"><span class="drawer-dot"></span><span class="drawer-label">STATS</span></button>
+    </nav>
+  </aside>
 
   <!-- METRICS / CURRENCIES PANEL -->
   <div id="metrics-overlay" onclick="closeMetrics()">
