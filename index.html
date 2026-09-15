@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/40-profile.css">
   <link rel="stylesheet" href="css/45-crew.css">
   <link rel="stylesheet" href="css/47-store.css">
+  <link rel="stylesheet" href="css/49-hood.css">
   <link rel="stylesheet" href="css/50-motion.css">
   <link rel="stylesheet" href="css/60-refinements.css">
   <link rel="stylesheet" href="css/70-moves.css">
@@ -120,20 +121,45 @@
 
     <!-- MAP TAB -->
     <div class="tab" id="tab-map">
-      <div class="map-outer">
+      <!-- THE HOOD (S9, DOM-118). The one screen with no section title and no
+           body padding: it fills the scroll body. Three mutually exclusive
+           modes hang off data-mode on .map-outer. -->
+      <div class="map-outer" data-mode="2d">
         <div id="map-container">
           <!-- SVG injected by map.js -->
         </div>
-        <!-- Controls -->
-        <div class="map-controls">
-          <button onclick="GameMap.zoomIn()" title="Zoom in" id="map-btn-in">+</button>
-          <div id="map-zoom-chip">1.0×</div>
-          <button onclick="GameMap.zoomOut()" title="Zoom out" id="map-btn-out">−</button>
-          <button onclick="GameMap.reset()" title="Fit city">⊡</button>
-          <button onclick="GameMap.centerBase()" title="Center on base">⌖</button>
-          <button onclick="toggleMap3D()" id="map-3d-btn" title="Toggle 3D view">3D</button>
+        <div class="map-overview" id="map-overview">
+          <img id="map-overview-img" src="assets/el-caldero-overview.jpg" alt="Illustrated overview of El Caldero" draggable="false">
         </div>
-        <div class="map-hint">DRAG TO PAN · PINCH OR SCROLL TO ZOOM · DOUBLE-TAP TO ZOOM IN</div>
+        <div class="map-vignette"></div>
+
+        <!-- upper left: OVERVIEW toggle, and its own zoom stack while it is on -->
+        <div class="map-ctl-left">
+          <button class="map-overview-btn" id="map-overview-btn" onclick="GameMap.setMode(GameMap.mode() === 'overview' ? '2d' : 'overview')">OVERVIEW</button>
+          <div class="map-ov-stack">
+            <button onclick="GameMap.ovZoom(1.3)" title="Zoom in">+</button>
+            <button onclick="GameMap.ovZoom(1/1.3)" title="Zoom out">−</button>
+            <button onclick="GameMap.ovReset()" title="Reset">⊡</button>
+          </div>
+        </div>
+
+        <!-- upper right: 2D/3D segmented pill, then the 2D-only controls -->
+        <div class="map-ctl-right">
+          <div class="map-seg">
+            <button data-mapmode="2d" class="is-active" onclick="GameMap.setMode('2d')">2D</button>
+            <button data-mapmode="3d" onclick="GameMap.setMode('3d')">3D</button>
+          </div>
+          <div class="map-2d-stack">
+            <button onclick="GameMap.zoomIn()" title="Zoom in" id="map-btn-in">+</button>
+            <button onclick="GameMap.zoomOut()" title="Zoom out" id="map-btn-out">−</button>
+            <button onclick="GameMap.centerBase()" title="Center on base">⌖</button>
+            <button onclick="GameMap.reset()" title="Fit city">⊡</button>
+            <div id="map-zoom-chip">1.0×</div>
+          </div>
+        </div>
+
+        <div class="map-sel-card" id="map-sel-card" hidden></div>
+        <div class="map-hint">DRAG TO PAN · SCROLL / PINCH TO ZOOM · ⌖ BASE · ⊡ FULL CITY</div>
       </div>
     </div>
 
