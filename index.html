@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/30-plugs.css">
   <link rel="stylesheet" href="css/35-settings.css">
   <link rel="stylesheet" href="css/40-profile.css">
+  <link rel="stylesheet" href="css/45-crew.css">
   <link rel="stylesheet" href="css/50-motion.css">
   <link rel="stylesheet" href="css/60-refinements.css">
   <link rel="stylesheet" href="css/70-moves.css">
@@ -361,6 +362,34 @@
           <span class="plug-modal-spacer"></span>
           <button class="plug-later-btn" onclick="closePlug()">LATER</button>
           <button class="plug-modal-cta" id="plug-modal-cta" onclick="advancePlug()">NEXT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Crew dialogue popup (DOM-114). Reuses the plug modal shell: 05-crew.md
+       specifies "same geometry as the plug popup", with a 268px portrait and a
+       status row where the plug has a moniker. -->
+  <div class="overlay" id="crew-overlay" onclick="crewScrim(event)">
+    <div class="plug-modal">
+      <div class="plug-modal-portrait-wrap crew-modal-portrait-wrap">
+        <img id="crew-modal-portrait" src="" alt="">
+        <div class="plug-modal-scrim"></div>
+        <div class="plug-modal-namewrap">
+          <span class="plug-modal-name" id="crew-modal-name">NAME</span>
+        </div>
+      </div>
+      <div class="plug-modal-body">
+        <div class="crew-modal-status">
+          <span class="crew-dot" id="crew-modal-dot"></span>
+          <span class="crew-modal-doing" id="crew-modal-doing"></span>
+        </div>
+        <div class="crew-modal-line" id="crew-modal-line"></div>
+        <div class="plug-modal-footer">
+          <span class="plug-modal-spacer"></span>
+          <button class="plug-later-btn" onclick="closeCrewMember()">LATER</button>
+          <button class="crew-map-btn" onclick="crewSeeOnMap()">
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg>SEE ON MAP
+          </button>
         </div>
       </div>
     </div>

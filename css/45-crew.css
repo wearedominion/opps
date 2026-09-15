@@ -1,0 +1,152 @@
+/* ── CREW (DOM-114) ──
+   S5 of Chrome Money v0.2. Three sections of member cards + the crew dialogue
+   popup. Geometry from screens/05-crew.md; every colour is a token from
+   00-base.css rather than the doc's raw hex, so a palette change reaches here.
+
+   The popup deliberately reuses the .plug-modal shell (30-plugs.css) — the doc
+   says "same geometry as the plug popup" and duplicating it would be two
+   things to keep in step. Only what differs is declared here: a 268px portrait
+   instead of the plug's, and a status row where the plug has a moniker. */
+
+.crew-sections { display: flex; flex-direction: column; gap: 22px; }
+
+/* ── section header: title · rule · zero-padded count ── */
+.crew-sec-head { display: flex; align-items: center; gap: 10px; }
+.crew-sec-title {
+  margin: 0;
+  font-family: var(--display); font-size: 15px; letter-spacing: 2px;
+  color: var(--text);
+}
+.crew-sec-rule { flex: 1; height: 1px; background: var(--track); }
+.crew-sec-count {
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  color: var(--text-label);
+}
+
+.crew-list { display: flex; flex-direction: column; gap: 9px; margin-top: 13px; }
+
+/* ── member card ── */
+.crew-card {
+  display: flex; align-items: stretch; height: 92px;
+  border: 1px solid var(--border); border-radius: var(--r-card);
+  background: var(--card-fill);
+  overflow: hidden;
+  transition: border-color .16s;
+  /* reset, because the NPC card is a <button> — the whole card is the tap
+     target and a div with a click handler is not reachable by keyboard */
+  width: 100%; padding: 0; text-align: left; font: inherit; color: inherit;
+}
+.crew-card.is-npc { cursor: pointer; }
+.crew-card.is-npc:hover,
+.crew-card.is-npc:focus-visible { border-color: var(--border-gold); }
+
+.crew-card-main {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+  padding: 0 16px;
+}
+.crew-name {
+  font-family: var(--display); font-size: 21px; letter-spacing: 1px;
+  color: var(--text); line-height: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.crew-status { display: flex; align-items: center; gap: 8px; }
+.crew-dot {
+  flex: none; width: 7px; height: 7px; border-radius: var(--r-pill);
+  background: var(--text-label);
+}
+.crew-dot.is-working { background: var(--success); }
+.crew-doing {
+  font-family: var(--ui); font-size: 11px; color: var(--text-mid);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── portrait panel + the pin that straddles its edge ── */
+.crew-portrait {
+  flex: none; width: 33%; position: relative;
+  background: var(--surface); border-left: 1px solid var(--border);
+}
+.crew-portrait img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.crew-pin {
+  position: absolute; top: 31px; left: -15px;
+  width: 30px; height: 30px; border-radius: var(--r-pill);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised); border: 1px solid var(--border-gold);
+  cursor: pointer; padding: 0;
+  transition: border-color .16s;
+}
+.crew-pin:hover, .crew-pin:focus-visible { border-color: var(--gold); }
+.crew-pin svg { display: block; fill: var(--gold); }
+
+/* ── MY ROSTER: real Lieutenants, so no portrait art and nothing to open ──
+   A Lieutenant is a real player the referral feed only gives us a count of —
+   no name, no location, no line. The card keeps the geometry and drops the
+   affordances that would be lying: no pin, no dialogue, no hover. */
+.crew-card.is-lieutenant { cursor: default; }
+.crew-lt-badge {
+  flex: none; width: 33%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); border-left: 1px solid var(--border);
+  font-family: var(--display); font-size: 26px; letter-spacing: 1px;
+  color: var(--border-strong);
+}
+
+/* ── the invite row: MY ROSTER's empty state, and its trailing CTA ──
+   This is the only entry point to Crew.invite() in the app, so it is present
+   whether or not the roster has members (Jake's ruling, DOM-114). */
+.crew-invite {
+  display: flex; flex-direction: column; gap: 14px;
+  min-height: 92px; padding: 16px;
+  border: 1px solid var(--border-gold); border-radius: var(--r-card);
+  background: var(--warm-card);
+}
+/* Stacked rather than side-by-side: the app frame is a fixed 402px (00-base.css
+   `.app`) with no wider case to serve, and the guest copy beside a pill left the
+   text in a ~160px gutter wrapping to five lines. Full-width is also the better
+   tap target, and what every other CTA in the app does. */
+.crew-invite-copy { min-width: 0; }
+.crew-invite-title {
+  font-family: var(--display); font-size: 17px; letter-spacing: 1px;
+  color: var(--text); line-height: 1;
+}
+.crew-invite-note {
+  margin-top: 7px;
+  font-family: var(--ui); font-size: 11px; line-height: 1.5;
+  color: var(--text-mid);
+}
+.crew-invite-btn {
+  width: 100%;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--ink); background: var(--gold-chrome);
+  border: none; border-radius: var(--r-pill);
+  padding: 12px 20px; cursor: pointer;
+  transition: filter .16s;
+}
+.crew-invite-btn:hover { filter: brightness(1.08); }
+
+/* ── crew dialogue popup — only the deltas from .plug-modal ── */
+.crew-modal-portrait-wrap { height: 268px; }
+.crew-modal-status { display: flex; align-items: center; gap: 8px; }
+.crew-modal-doing {
+  font-family: var(--ui); font-weight: 500; font-size: 10px; letter-spacing: 2px;
+  color: var(--text-label);
+}
+.crew-modal-line {
+  margin-top: 13px; min-height: 30px;
+  font-family: var(--ui); font-size: 15px; line-height: 1.6;
+  color: var(--text-bright);
+}
+.crew-map-btn {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1px;
+  color: var(--ink); background: var(--gold-chrome);
+  border: none; border-radius: var(--r-pill);
+  padding: 12px 20px; cursor: pointer;
+  transition: filter .16s;
+}
+.crew-map-btn:hover { filter: brightness(1.08); }
+.crew-map-btn svg { display: block; fill: var(--ink); }
+

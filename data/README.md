@@ -212,6 +212,27 @@ XP value is duplicated here.
 > taken by the Plug quests (DOM-90) whose ids are save keys in `G.quests`. Repurposing it would
 > have broken saves, so the Make Moves content landed as `moves.json`.
 
+## crew.json
+
+The NPC half of the CREW roster (DOM-114): `HITTERS` and `DEALERS`, each member carrying
+`id`, `name`, `doing`, `working` (the status dot), `line` (their one dialogue line), `loc`
+(a point in the `city.json` coordinate space the map pin centres on) and `slot` — a key into
+`portraits.json` `plugs`, **shared with the Plugs screen** exactly as `05-crew.md` specifies.
+
+**`MY ROSTER` is deliberately not in here.** Jake ruled on 2026-09-15 that it is the player's
+real Lieutenants from the Jest referral feed, with the invite CTA as its empty state, because
+the Crew tab is the only entry point to `Crew.invite()` — and that feeds a 250-Clout-per-recruit
+faucet and the whole bonus-gear-slot ladder. `js/crew.js` builds that section from the live
+count; adding the prototype's roster NPCs here would quietly undo the ruling, and a test fails
+if they appear.
+
+The feed gives a count and nothing else — no names, no locations, no lines — so a Lieutenant
+card keeps the card geometry and drops every affordance that would be fiction: no portrait, no
+map pin, no dialogue, no "working" dot.
+
+A fetch miss leaves HITTERS/DEALERS empty and the rest of the screen working, like the other
+content files.
+
 ## city.json
 
 Configuration for THE HOOD (DOM-118), extracted from the prototype's `design_reference/city-data.js`.
@@ -277,8 +298,8 @@ maps one onto the other.
 ## Other files
 
 `jobs.json`, `enemies.json`, `gear.json`, `properties.json`, `ranks.json`,
-`xp-system.json` — loaded by the client at boot (see `js/main.js`). Schemas to be
-documented here as they're formalized.
+`xp-system.json`, `crew.json` — loaded by the client at boot (see `js/main.js`). Schemas to
+be documented here as they're formalized.
 
 `gear.json` items carry **`upgradeable`** (bool, required), which gates the unbounded gear
 upgrade track — Cash-priced levels with small hard-capped stat gains, prestige beyond the cap.
