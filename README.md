@@ -60,7 +60,12 @@ opps/
 ├── data/
 │   ├── jobs.json         # Job definitions
 │   ├── enemies.json      # Enemy definitions
-│   ├── store.json        # Store item definitions
+│   ├── gear.json         # Item definitions — the whole catalog, one id one row
+│   ├── skills.json       # Skill identity + copy (costs live in tuning.json)
+│   ├── plugs.json        # Plug roster + dialogue
+│   ├── quests.json       # Plug quests
+│   ├── moves.json        # MAKE MOVES content (featured / side / daily)
+│   ├── city.json         # THE HOOD city seed + parameters
 │   ├── properties.json   # Property definitions
 │   └── ranks.json        # Rank name progression
 └── assets/

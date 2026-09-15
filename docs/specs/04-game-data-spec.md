@@ -36,7 +36,7 @@ contract for that data: formats, schemas, loading, validation, versioning, and d
 |---|---|---|
 | `data/jobs.json` | `JOBS` | `js/jobs.js` |
 | `data/enemies.json` | `ENEMIES` | `js/combat.js` |
-| `data/store.json` | `STORE_ITEMS` | `js/store.js` |
+| `data/gear.json` | `GEAR` (alias `STORE_ITEMS`) | `js/store.js`, `js/profile.js` |
 | `data/properties.json` | `PROPERTIES` | `js/properties.js` |
 | `data/ranks.json` | `RANK_NAMES` | `hud.js`, `ui.js`, `stats.js` |
 | `data/tuning.json` | `TUNING` | economy systems (see [`08-economy-schema.md`](./08-economy-schema.md)) |
@@ -111,7 +111,17 @@ entries. All money ranges are `[min, max]` integer tuples.
 > (`enemyThreat()` in `js/combat.js`, DOM-72). Adding an enemy today means a row in
 > `enemies.json` plus a portrait entry in `portraits.json`; no JS edit.
 
-### 3.3 `store.json` — Gear (The Plug)
+### 3.3 `gear.json` — Gear (The Plug)
+
+> **Renamed from `gear.json` (DOM-123, 2026-09-14).** `gear.json` is the single
+> source of truth for every item definition — storefront stock and drop-only
+> alike. There is no separate store SKU file: the storefront is the subset of
+> rows without `dropOnly`. Real-money packs are a different thing and stay in
+> `monetization.json`. Every row also carries a `slot` — one of the seven
+> permanent paper-doll keys `head, torso, handR, handL, legs, ride, stash`
+> (DOM-121). **Slot ids and item ids are save keys: permanent, lowercase,
+> never reused.** The older `type` field (weapon/armor/vehicle/utility) is
+> transitional and is retired by DOM-120/DOM-121.
 ```jsonc
 {
   "id": "knife",             // string, unique, permanent
@@ -281,7 +291,7 @@ A genuinely new kind of content (e.g. "heists") means: a new `data/<type>.json`,
 - Referenced assets (portraits/icons) exist per [`05-asset-spec.md`](./05-asset-spec.md).
 - Files are **valid JSON** (no comments, no trailing commas — the `jsonc` blocks above are
   documentation only).
-- `store.json`: every item has a boolean `upgradeable`.
+- `gear.json`: every item has a boolean `upgradeable`.
 - `jobs.json` / `enemies.json`: `clout` and `cash` present and ≥ 0; no `xp`, `rep`, `money` or
   `energy` field remains.
 - `monetization.json`: unique `sku`s; every `effect.type` is one `js/payments.js` implements.

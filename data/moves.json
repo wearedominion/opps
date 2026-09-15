@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "_note": "MAKE MOVES screen content (DOM-115). Everything below is DESIGN PLACEHOLDER copy carried over from the Chrome Money v0.2 prototype — it does not mirror repo economy data and is not tuned. Cash rewards are placeholders pending the economy simulator (DOM-67). XP is deliberately absent: it resolves from data/xp-system.json by `kind` (DOM-124), so no XP number is duplicated here.",
+  "featured": {
+    "id": "take_the_block",
+    "tag": "MAIN JOB",
+    "title": "TAKE THE BLOCK",
+    "sub": "Seize control of Downtown",
+    "kind": "mainStory",
+    "reward": { "cash": 2500, "territory": true, "label": "$2,500 + TERRITORY" },
+    "objectives": [
+      { "id": "eliminate_snitch", "text": "Eliminate the Local Snitch" },
+      { "id": "recruit_plugs",    "text": "Recruit 2 Plugs" },
+      { "id": "defeat_rivalcrew", "text": "Defeat the Rival Crew" },
+      { "id": "hold_downtown",    "text": "Hold Downtown for 24h" }
+    ]
+  },
+  "side": [
+    {
+      "id": "quick_flip",
+      "title": "QUICK FLIP",
+      "sub": "Move the product before the timer runs out",
+      "kind": "timed",
+      "status": "TIMED",
+      "seconds": 1188,
+      "reward": { "cash": 400 }
+    },
+    {
+      "id": "clean_house",
+      "title": "CLEAN HOUSE",
+      "sub": "Take out 5 Street Enforcers",
+      "kind": "multiTarget",
+      "status": "ACTIVE",
+      "target": 5,
+      "reward": { "cash": 650 }
+    },
+    {
+      "id": "run_the_plug",
+      "title": "RUN THE PLUG",
+      "sub": "Recruit a new supplier",
+      "kind": "standard",
+      "status": "NEW",
+      "target": 1,
+      "reward": { "cash": 300 }
+    }
+  ],
+  "daily": {
+    "id": "daily_grind",
+    "title": "DAILY GRIND",
+    "sub": "Earn $1,000 today",
+    "kind": "daily",
+    "goal": { "type": "cash", "amount": 1000 }
+  },
+  "turf": {
+    "label": "YOUR TURF",
+    "name": "DOWNTOWN",
+    "sub": "Plus 2 blocks of Old Town",
+    "territory": { "value": 2.4, "unit": "SQ MI" }
+  },
+  "hoodOps": [
+    { "id": "activeJobs",  "label": "ACTIVE JOBS", "value": 3,  "sub": "In progress",     "accent": "gold" },
+    { "id": "hustlers",    "label": "HUSTLERS",    "value": 12, "sub": "Working corners", "accent": "text" },
+    { "id": "safehouses",  "label": "SAFEHOUSES",  "value": 2,  "sub": "Operating",       "accent": "text" },
+    { "id": "drugDens",    "label": "DRUG DENS",   "value": 4,  "sub": "Producing",       "accent": "text" }
+  ],
+  "sightings": [
+    { "id": "oppcrew", "name": "RIVAL CREW",       "corner": "7th & Lenox",      "agoSeconds": 240 },
+    { "id": "snitch",  "name": "LOCAL SNITCH",     "corner": "MLK & 3rd",        "agoSeconds": 1320 },
+    { "id": "fed",     "name": "UNDERCOVER AGENT", "corner": "Dock St & Canal",  "agoSeconds": 3600 }
+  ]
+}

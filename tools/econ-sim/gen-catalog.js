@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // DOM-71 / DOM-81 / DOM-73 — faucet + sink catalog generator.
 //
-// Writes data/jobs.json, data/enemies.json and data/store.json from the
+// Writes data/jobs.json, data/enemies.json and data/gear.json from the
 // ratified design (2026-09-11, Jake):
 //   · static tier ladder, gates every 10 levels from L10 to L110 (DOM-71)
 //   · Clout income mix 60:35:5 moves:fights:recruiting, grind-led; recruiting
@@ -231,6 +231,13 @@ const RARITY_STEP = 1.15;
 // item may carry it; writeCatalogs throws if one appears.
 const RARITY_PREMIUM = { grey: 0, green: 0, blue: 1, purple: 2, orange: 3, mythic: 4 };
 const rarityMult = r => RARITY_STEP ** RARITY_PREMIUM[r];
+
+// Paper-doll slots (DOM-121). SLOT_IDS is the whole model; GEAR_OFFHAND names
+// the items that go in the left hand rather than the right — sidearms, melee,
+// and the one shield in the catalog. Everything else follows its type.
+const SLOT_IDS = ['head', 'torso', 'handR', 'handL', 'legs', 'ride', 'stash'];
+const SLOT_BY_TYPE = { weapon: 'handR', armor: 'torso', vehicle: 'ride', utility: 'stash' };
+const GEAR_OFFHAND = new Set(['knife', 'glock', 'fiveseven', 'golddeagle', 'tec9', 'mac11', 'ballistic']);
 
 const GEAR_CONTENT = [
   // legacy six — ids are load-bearing (saves, quest steps)
@@ -476,6 +483,14 @@ function buildCatalogs(E, M, K) {
   // the Clout knobs — rebuilt every candidate write purely for convenience.
   // Built before enemies: enemy ATK/DEF are solved against the band loadout.
   const gear = GEAR_CONTENT.map(item => {
+    // Paper-doll slot (DOM-121: 7 slots, single-depth; DOM-123 assigned them).
+    // Slot ids are SAVE KEYS — permanent, lowercase, never reused. The catalog
+    // is authored against the legacy 4-type model, so slot is derived from it:
+    // vehicles ride, utilities stash, body armour torso, long guns handR, and
+    // anything in GEAR_OFFHAND (sidearms, melee, the shield) handL. `head` and
+    // `legs` have no v1 items — see data/README.md.
+    const slot = GEAR_OFFHAND.has(item.id) ? 'handL' : SLOT_BY_TYPE[item.type];
+    if (!slot) throw new Error(item.id + ': no slot for type "' + item.type + '"');
     // Rarity premium (DOM-18): stats AND the notional price carry ×1.15 per
     // step over the gate baseline. Drop-only items keep a price because the
     // DOM-88 upgrade cost curve scales by it — they just can't be bought.
@@ -491,6 +506,7 @@ function buildCatalogs(E, M, K) {
     return {
       id: item.id, name: item.name, desc,
       type: item.type,
+      slot,
       tier: gates.indexOf(item.gate) + 1,
       levelReq: item.gate,
       rarity: item.rarity,
@@ -598,10 +614,11 @@ function writeCatalogs(E, M, K) {
     }
     if (g.rarity === 'mythic') throw new Error(g.id + ': mythic is reserved — no v1 items');
     if (!g.dropOnly && !g.plug) throw new Error(g.id + ': buyable item with no vendor');
+    if (!SLOT_IDS.includes(g.slot)) throw new Error(g.id + ': unknown slot "' + g.slot + '"');
   }
   fs.writeFileSync(path.join(ROOT, 'data/jobs.json'), JSON.stringify(jobsOut, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/enemies.json'), JSON.stringify(enemies, null, 2) + '\n');
-  fs.writeFileSync(path.join(ROOT, 'data/store.json'), JSON.stringify(gear, null, 2) + '\n');
+  fs.writeFileSync(path.join(ROOT, 'data/gear.json'), JSON.stringify(gear, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/properties.json'), JSON.stringify(spots, null, 2) + '\n');
   fs.writeFileSync(path.join(ROOT, 'data/quests.json'), JSON.stringify(quests, null, 2) + '\n');
 }
@@ -727,7 +744,7 @@ function main() {
       + (st.pWin * 100).toFixed(1) + '%';
   }).join(' · '));
   console.log('Wrote data/jobs.json (' + jobsOut.length + ' jobs), data/enemies.json ('
-    + enemies.length + ' enemies), data/store.json (' + gear.length + ' gear items), '
+    + enemies.length + ' enemies), data/gear.json (' + gear.length + ' gear items), '
     + 'data/properties.json (' + spots.length + ' spots) and data/quests.json (' + quests.length + ' quests).');
 }
 

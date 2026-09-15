@@ -128,7 +128,7 @@ Where each canonical term lands in the current prototype. Paths relative to repo
 **Moves feature** (`jobs`) — nav is already "MOVES". Internal `jobs.js`/`jobs.json`/`JOBS`/`renderJobs`/`doJob` may rename to `moves` for consistency (optional).
 
 **Plugs** (unified NPC dealers + quest givers — the gear shop and the "contacts" are the same feature)
-- Merge the two prototype surfaces into **one Plugs system**: the store (`js/store.js` / `data/store.json` / `STORE_ITEMS`, nav "THE PLUG" `nav-store`/`tab-store`) and the contacts (`js/plugs.js` / `PLUGS_DATA`, nav "PLUGS" `nav-plugs`/`tab-plugs`). Each Plug is a person who sells gear from the catalog **and** offers quests. Collapse the two nav entries into one. Quest-giving is **new systems work**.
+- Merge the two prototype surfaces into **one Plugs system**: the store (`js/store.js` / `data/gear.json` / `STORE_ITEMS`, nav "THE PLUG" `nav-store`/`tab-store`) and the contacts (`js/plugs.js` / `PLUGS_DATA`, nav "PLUGS" `nav-plugs`/`tab-plugs`). Each Plug is a person who sells gear from the catalog **and** offers quests. Collapse the two nav entries into one. Quest-giving is **new systems work**.
 
 **Crew / Lieutenants** (doc's "Gang"; code is already "Crew")
 - `js/crew.js` uses "Crew" ✓ but labels members **"SOLDIERS"** → rename to **"LIEUTENANTS"**; update invite copy in `Crew.invite()`. (Crew → gear-capacity, vs. the current flat ATK/DEF bonus, is a systems change tracked in the Combat doc.)

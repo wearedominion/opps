@@ -1,0 +1,62 @@
+[
+  {
+    "id": "plug-tommy",
+    "name": "TOMMY",
+    "moniker": "THE FENCE",
+    "line": "Got a buyer lined up for anything you can move tonight. No questions asked.",
+    "dialog": [
+      "Ay, look who finally pulled up. You been sittin’ on merchandise — I can smell it from here.",
+      "I got a buyer waitin’ out the back of the pawn shop on 5th. No names, no paper trail, cash on the spot.",
+      "Anything you boosted — jewelry, tools, electronics — bring it through before sunrise.",
+      "Move fast and I’ll cut you 70. That’s family rates, homie. We in business?"
+    ]
+  },
+  {
+    "id": "plug-theresa",
+    "name": "THERESA",
+    "moniker": "THE CONNECT",
+    "line": "Can re-up your stash at half price — but she needs a favor handled first.",
+    "dialog": [
+      "Mijo, you came at the right time. My re-up just landed and it’s heavy.",
+      "I’ll front you product at half price. Half. Nobody in this city gets that deal.",
+      "But first — a favor. There’s a snitch downtown runnin’ his mouth about my shipments.",
+      "Make that problem disappear and the discount’s yours. Don’t keep me waiting."
+    ]
+  },
+  {
+    "id": "plug-kylie",
+    "name": "KYLIE",
+    "moniker": "THE LOOKOUT",
+    "line": "Knows where the Rival Crew lays their heads. That intel won’t stay fresh long.",
+    "dialog": [
+      "Psst. Keep walkin’, act normal. I’ve had eyes on the Rival Crew all week.",
+      "They lay their heads at a spot off 7th & Lenox. Lights out by 2AM, one man on the door.",
+      "This intel won’t stay fresh — they rotate spots every few days.",
+      "Hit ’em while they’re sleepin’. And remember who put you on."
+    ]
+  },
+  {
+    "id": "plug-marco",
+    "name": "BIG HOMIE MARCO",
+    "moniker": "THE MECHANIC",
+    "line": "Needs parts boosted off the Auto Theft Ring. Help him out and he owes you one.",
+    "dialog": [
+      "Big dog! Just the hustler I been waitin’ on. Shop’s dry and I got orders stackin’ up.",
+      "That Auto Theft Ring out by the airport is sittin’ on a warehouse full of parts. Engines, rims, catalytics — all of it boosted anyway.",
+      "Run up in there and liberate me some inventory. They won’t hand it over polite, so come strapped.",
+      "Every crate you bring back, I’m payin’ top dollar. Cash, no questions. We got a deal or what?"
+    ]
+  },
+  {
+    "id": "plug-dex",
+    "name": "DEX",
+    "moniker": "THE TWEAKER",
+    "line": "Wants to put you onto a bigger play downtown. Pull up when you’re ready.",
+    "dialog": [
+      "Yo yo yo — okay okay, listen. LISTEN. I seen somethin’ downtown you need to know about.",
+      "Armored truck. Same route every Thursday. Parks behind the bank for exactly six minutes. SIX.",
+      "I counted. Twice. Maybe three times. Point is — that’s a whole bag just sittin’ there, homie.",
+      "Pull up Thursday and I’ll show you the spot. This is the big one, I’m tellin’ you."
+    ]
+  }
+]
