@@ -40,21 +40,58 @@ all 17, so two thirds of that screen is faceless. Art is uncommissioned.
   a ~328px-wide panel, so `object-fit:cover` **upscales them about 23%**. They
   hold up at phone density; worth re-exporting larger if the popup ever grows.
 
-## Not in the handoff
+## Extracted from the prototype
 
-Two assets DOM-125 expected to extract are **not present in the prototype**,
-as either files or data URIs:
+`OPPS App (standalone).html` uses **two** embedding schemes, and this matters
+because searching for only the first one misses half the art:
 
-| asset | expected by | what the prototype actually has |
-|---|---|---|
-| `el-caldero-overview.jpg` (1200×2150) | S9 · The Hood overview mode | `<img>` pointing at opaque resource id `c80b3bdb-1e5d-4398-bfbb-6c0c8cf3994a` — binary not exported |
-| `mp9-kit.png` (3:2) | S7 · Store featured offer | `<img>` in the `aspect-ratio:3/2` card pointing at `014b0eba-df01-4a7f-b893-70cfd556706e` — binary not exported |
+1. inline `data:image/…;base64` URIs — the 11 portraits;
+2. a **JSON resource map** keyed by the opaque ids that `<img src>` attributes
+   point at — `{"<uuid>":{"mime":…,"compressed":…,"data":"<base64>"}}`. 18
+   entries: 6 woff2 fonts, 9 scripts/HTML, and **3 images**.
 
-`OPPS App (standalone).html` bundles exactly 11 images as data URIs — the 5
-plug portraits and the 6 enemy portraits — and every one is **byte-identical**
-to the file already in `assets/portraits/`. There was nothing to extract. Both
-rasters above need re-exporting from the design tool before S7 and S9 can
-consume them.
+The second scheme is where the two headline assets live. An earlier pass of this
+audit grepped only for `data:image/` and concluded they were missing; that was
+wrong, and the reviewer of DOM-125 caught it.
+
+| file | source id | dimensions | bytes |
+|---|---|---|---|
+| `el-caldero-overview.jpg` | `c80b3bdb-1e5d-4398-bfbb-6c0c8cf3994a` | 1200×2150 | 457,244 |
+| `mp9-kit.png` | `014b0eba-df01-4a7f-b893-70cfd556706e` | 1536×1024 (3:2) | 1,771,847 |
+
+Both are the real thing, opened and checked: the JPEG is the full illustrated
+El Caldero city map with districts labelled (Westshore, Colinas Hills, Corona
+Heights, Downtown, East Caldero, Vale Verde, Salton Corridor, Dunbar Flats,
+Holloway Park, San Marcos, Harborside), the Serrano Mountains, the river, a
+compass rose, scale bar and title cartouche. The PNG is the MP9 render carrying
+exactly the five attachments the Store's includes list names — optic, grip,
+suppressor, extended mag, stock.
+
+To re-extract, or to pull anything else out of that map:
+
+```python
+import re, base64
+s = open("docs/design/chrome-money-v0.2/OPPS App (standalone).html",
+         encoding="utf-8", errors="replace").read()
+m = re.search('"' + uid + r'":\{"mime":"[^"]+","compressed":(?:true|false),"data":"([A-Za-z0-9+/=]+)"', s)
+open(name, "wb").write(base64.b64decode(m.group(1)))
+```
+
+Note `compressed` is `true` for the scripts (deflate) and `false` for every
+image and font, so the images decode straight from base64.
+
+### The third image is deliberately NOT in the repo
+
+The resource map holds one more image — `628457ae-2fce-4760-bc22-98217fcdb538`,
+a 124×156 webp — sitting in the prototype's `profile-avatar` slot
+(`placeholder="Player portrait"`).
+
+It is **not game art.** It is a personal photograph of a child, evidently
+whatever image happened to be loaded into the designer's image slot when the
+prototype was exported. It is not committed here and must not ship. The Profile
+identity header needs a real portrait asset commissioned per
+`docs/specs/05-asset-spec.md`; until then it renders the same `--surface`
+placeholder every other missing portrait uses.
 
 ## Paper-doll figure
 

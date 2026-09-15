@@ -2119,9 +2119,46 @@ test('assets — the inventory records the gaps rather than hiding them', () => 
   for (const id of KNOWN_FACELESS) {
     assert.ok(readme.includes('`' + id + '`'), 'assets/README.md does not list ' + id);
   }
-  // the two assets that are not in the handoff must stay called out
-  assert.ok(readme.includes('el-caldero-overview.jpg'), 'the missing overview map is not recorded');
-  assert.ok(readme.includes('mp9-kit.png'), 'the missing MP9 art is not recorded');
+});
+
+// The two rasters the screens consume. Committed binaries are easy to lose in a
+// rebase or a stray clean, and nothing else would notice until S7/S9 rendered
+// an empty box, so pin them by size as well as existence.
+const EXTRACTED_ASSETS = [
+  { file: 'assets/el-caldero-overview.jpg', minBytes: 400000, magic: [0xFF, 0xD8, 0xFF] },
+  { file: 'assets/mp9-kit.png',             minBytes: 1500000, magic: [0x89, 0x50, 0x4E, 0x47] },
+];
+
+test('assets — the overview map and MP9 art are committed and are real images', () => {
+  for (const a of EXTRACTED_ASSETS) {
+    const full = path.join(ROOT, a.file);
+    assert.ok(fs.existsSync(full), a.file + ' is missing — re-extract it from the prototype');
+    const buf = fs.readFileSync(full);
+    assert.ok(buf.length >= a.minBytes,
+      a.file + ' is ' + buf.length + ' bytes — looks like a stub, not the full asset');
+    assert.deepStrictEqual(Array.from(buf.subarray(0, a.magic.length)), a.magic,
+      a.file + ' does not start with the right magic bytes');
+  }
+});
+
+test('assets — the prototype resource map is documented, not just the data URIs', () => {
+  // The miss that made an earlier pass of this audit wrong: the prototype
+  // embeds art TWICE, and grepping only for data: URIs finds 11 of 14 images.
+  const readme = fs.readFileSync(path.join(ROOT, 'assets/README.md'), 'utf8');
+  assert.ok(/resource map/i.test(readme), 'the second embedding scheme is not documented');
+  assert.ok(readme.includes('c80b3bdb-1e5d-4398-bfbb-6c0c8cf3994a'), 'the overview map id is not recorded');
+  assert.ok(readme.includes('014b0eba-df01-4a7f-b893-70cfd556706e'), 'the MP9 id is not recorded');
+});
+
+test('assets — the prototype placeholder photo is not in the repo', () => {
+  // The third image in the resource map is a personal photograph of a child
+  // that was sitting in the designer's "Player portrait" slot at export. It is
+  // not game art and must never ship. Recorded so nobody "completes the set".
+  assert.ok(!fs.existsSync(path.join(ROOT, 'assets/portraits/player.webp')),
+    'the prototype placeholder photo was committed — remove it');
+  const readme = fs.readFileSync(path.join(ROOT, 'assets/README.md'), 'utf8');
+  assert.ok(readme.includes('628457ae-2fce-4760-bc22-98217fcdb538'),
+    'the excluded third image is not documented, so someone will extract it again');
 });
 
 console.log('\n' + passed + ' passed' + (process.exitCode ? ', SOME FAILED' : '') + '\n');
