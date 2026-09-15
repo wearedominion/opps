@@ -484,7 +484,7 @@ save migration in §5.2. All DOM-65 or later.
 
 ## 7. Tests
 
-`node tests/core.test.js` (formerly `tests/migration.test.js`) — the repo's regression suite,
+`node tests/run.js` — the repo's regression suite, one file per area under `tests/`,
 required by [`04-game-data-spec.md`](./04-game-data-spec.md) §7.4. It began as the golden-file
 test for the save migration chain and now also pins the Clout → level derivation, tuning access,
 curve evaluation, unlock gates, the ledger, the regen engine, the Moves/Stamina pool contracts,

@@ -4,7 +4,7 @@ Inventory and provenance for everything under `assets/`. Written for DOM-125
 (FW6), which was the first ticket to ask "does every portrait key actually
 resolve to a file?" — the answer was no, and the gaps are recorded below.
 
-`tests/core.test.js` enforces the two rules that can rot silently:
+`tests/assets.test.js` enforces the two rules that can rot silently:
 
 - every portrait key in `data/portraits.json` resolves to a file on disk;
 - every plug and enemy id either has a portrait entry or is on the known-gap
