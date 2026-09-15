@@ -57,6 +57,7 @@ let PORTRAITS = { enemies: {}, plugs: {} };
 // so the object is well-formed before data loads — these are the real values.
 function applyStartingState() {
   const now = Date.now();
+  G.createdAt = now;          // "Member since" (DOM-111) — set once, never moved
   G.attack  = tune('start.attack');
   G.defense = tune('start.defense');
   // Opening balances are credited, not assigned, so a new player's first rows are

@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/10-chrome.css">
   <link rel="stylesheet" href="css/20-legacy.css">
   <link rel="stylesheet" href="css/30-plugs.css">
+  <link rel="stylesheet" href="css/35-settings.css">
   <link rel="stylesheet" href="css/40-profile.css">
   <link rel="stylesheet" href="css/50-motion.css">
   <link rel="stylesheet" href="css/60-refinements.css">
@@ -187,12 +188,9 @@
       </div>
     </div>
 
-    <!-- SETTINGS TAB — placeholder until DOM-111 (S2) builds the screen -->
+    <!-- SETTINGS TAB (DOM-111) — rendered by js/settings.js -->
     <div class="tab" id="tab-settings">
-      <div class="pf-empty">
-        <div class="pf-empty-label">SETTINGS</div>
-        <div class="pf-empty-hint">This screen is being rebuilt to the Chrome Money v0.2 design (DOM-111).</div>
-      </div>
+      <div class="st" id="st-root"></div>
     </div>
 
   </main>
@@ -403,6 +401,7 @@
 <script src="js/crew.js"></script>
 <script src="js/quests.js"></script>
 <script src="js/plugs.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/payments.js"></script>
 <script src="js/map3d.js"></script>
