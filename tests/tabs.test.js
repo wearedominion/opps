@@ -143,10 +143,10 @@ const TABS = tabElements();
 
 test('every screen is a tab, and they are the only things the shell stacks', () => {
   // A floor, not a count: it catches a screen falling out of the shell by
-  // accident. Re-baselined from 10 to 9 when the ACTIVITIES and SPOTS screens
-  // were deleted on purpose (DOM-142) — move it deliberately, never to make a
-  // red test go green.
-  assert.ok(TABS.length >= 9, 'expected the full screen set, found ' + TABS.length);
+  // accident. Went 11 -> 9 when ACTIVITIES and SPOTS were deleted (DOM-142),
+  // then back to 10 when Spots was kept (DOM-148). Move it deliberately with
+  // the screen set, never to make a red test go green.
+  assert.ok(TABS.length >= 10, 'expected the full screen set, found ' + TABS.length);
   const ids = TABS.map(t => t.id);
   assert.deepStrictEqual(ids.filter(id => !id), [], 'a .tab element has no id to show');
   assert.strictEqual(new Set(ids).size, ids.length, 'two tabs share an id');

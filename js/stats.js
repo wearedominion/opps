@@ -13,6 +13,7 @@ function renderStats() {
     ['ATTACK', effAttack() + (fieldedStats().atk ? ` (${G.attack} + ${fieldedStats().atk} GEAR)` : '')],
     ['DEFENSE', effDefense() + (fieldedStats().def ? ` (${G.defense} + ${fieldedStats().def} GEAR)` : '')],
     ['CASH', '$' + G.cash.toLocaleString()],
+    ['INCOME/COLLECT', '$' + collectIncome()],
     ['JOBS DONE', Object.values(G.jobProgress).reduce((a, b) => a + b, 0)],
   ];
   grid.innerHTML = stats.map(([l, v]) => `

@@ -11,6 +11,13 @@
    Linked from index.html in this order; the cascade depends on it.
    ═══════════════════════════════════════════════════════════ */
 
+:root {
+  /* The Store tile's size, named because the HUD rail below the header row has
+     to reserve exactly this much on the right to stay aligned under Messages.
+     One number, two readers — they cannot drift apart. */
+  --store-tile: 44px;
+}
+
 /* ── PROFILE ENTRY, top left (DOM-145) ──────────────────────
    Where the OPPS wordmark used to be. 40px circle rather than the 38px
    icon-button recipe: it carries an avatar's worth of identity, and the level
@@ -56,7 +63,7 @@
    on a faster cycle than the CTA recipe — this one is ambient, not a prompt. */
 .hdr-store {
   flex: none; position: relative; overflow: hidden;
-  width: 44px; height: 44px;
+  width: var(--store-tile); height: var(--store-tile);
   display: flex; align-items: center; justify-content: center;
   background: var(--gold-chrome);
   border: 1px solid rgba(255,255,255,0.35);
@@ -78,6 +85,26 @@
 .hdr-store:hover { filter: brightness(1.1); }
 /* down state — the tile is already gold, so the border does the talking */
 .hdr-store.active { border-color: var(--text); }
+
+/* ── HUD RAIL (DOM-148) ─────────────────────────────────────
+   A second header row for destinations that are neither tabs nor the Store.
+   Right-aligned and padded by the Store tile's width, so its buttons line up
+   under the Messages button rather than under the Store. Spots is the only
+   occupant today; the row is built as a row so the next one costs nothing. */
+.hdr-rail {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 10px;
+  padding-right: calc(var(--store-tile) + var(--gap-section));
+}
+/* Down state. The Store and Profile entries own their own gold treatments;
+   a rail button borrows the shared icon-button recipe and only swaps the
+   surface, so adding a second one needs no new rule. */
+.hdr-rail-btn.active {
+  background: var(--gold-chrome);
+  border-color: transparent;
+  color: var(--ink);
+}
+.hdr-rail-btn.active:hover { border-color: transparent; filter: brightness(1.06); }
 
 /* ── BOTTOM TAB BAR (DOM-143) ───────────────────────────────
    Floating pill, inset from all three edges. z 45 is the whole point of the

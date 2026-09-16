@@ -38,25 +38,36 @@ test('no hamburger and no drawer survive anywhere in the client', () => {
   }
 });
 
-// ── the legacy screens are gone, not merely unreachable (Jake, 2026-09-15) ──
-test('ACTIVITIES and SPOTS left the client, and took their code with them', () => {
+// ── the legacy set (Jake, 2026-09-15) ──
+// ACTIVITIES went; SPOTS was kept and re-entered from the HUD rail (DOM-148).
+test('ACTIVITIES left the client, and took its code with it', () => {
   const markup = stripHtmlComments(html);
-  for (const id of ['tab-hood', 'tab-props']) {
-    assert.ok(!markup.includes(id), id + ' is still mounted');
-  }
-  for (const f of ['js/hood.js', 'js/properties.js']) {
-    assert.ok(!fs.existsSync(path.join(ROOT, f)), f + ' still exists');
-    assert.ok(!markup.includes(f), f + ' is still loaded by index.html');
-  }
-  // the identifiers those files owned must not survive as callers with no callee
-  const dead = /doActivity|renderProps|buyProp|collectSpots|collectIncome|spotsAccruedTotal|incomeReady/;
+  assert.ok(!markup.includes('tab-hood'), 'the ACTIVITIES screen is still mounted');
+  assert.ok(!fs.existsSync(path.join(ROOT, 'js/hood.js')), 'js/hood.js still exists');
+  assert.ok(!markup.includes('js/hood.js'), 'js/hood.js is still loaded by index.html');
   for (const { f, src } of js) {
-    assert.ok(!dead.test(stripJsComments(src)), 'js/' + f + ' still calls into a deleted screen');
+    assert.ok(!/doActivity/.test(stripJsComments(src)), 'js/' + f + ' still calls doActivity');
   }
   const rules = stripCssComments(css);
-  for (const sel of ['.job-card', '.do-job-btn', '.prop-card', '.prop-grid']) {
+  for (const sel of ['.job-card', '.do-job-btn']) {
     assert.ok(!rules.includes(sel), sel + ' is styling a screen that no longer exists');
   }
+});
+
+test('Spots survived, and can pay out without the screen that used to collect', () => {
+  const markup = stripHtmlComments(html);
+  assert.ok(markup.includes('id="tab-props"'), 'the Spots screen is gone');
+  assert.ok(markup.includes('js/properties.js'), 'js/properties.js is not loaded');
+  // its entry point: the HUD rail button, not a tab and not the Store
+  assert.ok(/class="hdr-btn hdr-rail-btn"[^>]*data-nav="props"/.test(markup),
+    'Spots has no HUD rail entry point');
+  // collecting moved onto the screen — without it you can buy a spot and never
+  // be paid, which is what deleting ACTIVITIES would otherwise have caused
+  const props = fs.readFileSync(path.join(ROOT, 'js/properties.js'), 'utf8');
+  assert.ok(/function collectFromSpots\(/.test(props), 'Spots has no collect action');
+  assert.ok(/collectSpots\(\)/.test(props), 'the collect action does not run the DOM-74 transaction');
+  assert.ok(markup.includes('onclick="collectFromSpots()"'), 'nothing on the screen collects');
+  assert.ok(/registerScreen\('props'/.test(props), 'the Spots screen does not claim its tab');
 });
 
 test('the client boots onto a tab, so the bar is never blank on first paint', () => {
@@ -168,12 +179,25 @@ test('scrolling screens end above the bar, and the map lifts its own furniture',
     'the map hint still sits behind the bar');
 });
 
+test('the HUD rail lines up under Messages, by reserving the Store tile', () => {
+  const nav = fs.readFileSync(path.join(ROOT, 'css/15-nav.css'), 'utf8');
+  assert.ok(/--store-tile:\s*44px/.test(nav), 'the Store tile size is not a token');
+  assert.ok(/width:\s*var\(--store-tile\)/.test(nav),
+    'the Store tile no longer reads the token, so the rail can drift out of line');
+  assert.ok(/\.hdr-rail\s*{[^}]*padding-right:\s*calc\(var\(--store-tile\)/.test(nav),
+    'the rail does not reserve the Store tile, so it sits under the wrong button');
+});
+
 // ── NAV-3: the Store entry is the loudest thing up there ──
 test('the Store tile outsizes the button beside it and never stops moving', () => {
   const rules = stripCssComments(css);
   const store = rules.slice(rules.indexOf('.hdr-store {'), rules.indexOf('.hdr-store:hover'));
-  assert.ok(/width:\s*44px/.test(store) && /height:\s*44px/.test(store),
-    'the Store tile is not 44px');
+  // The size is a token now, because the HUD rail reserves it (DOM-148) —
+  // check what it resolves to, not how it is spelled.
+  const tile = Number((rules.match(/--store-tile:\s*(\d+)px/) || [])[1]);
+  assert.strictEqual(tile, 44, 'the Store tile is not 44px');
+  assert.ok(/width:\s*var\(--store-tile\)/.test(store) && /height:\s*var\(--store-tile\)/.test(store),
+    'the Store tile does not read the size token');
   const hdrBtn = rules.slice(rules.indexOf('.hdr-btn {'));
   assert.ok(/width:\s*38px/.test(hdrBtn.slice(0, 400)),
     'the Messages button moved — the Store tile must stay the larger of the two');

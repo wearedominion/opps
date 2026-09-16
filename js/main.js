@@ -308,6 +308,7 @@ async function init() {
   renderJobs();
   renderEnemies();
   renderStore();
+  renderProps();
   if (typeof msgRenderBadge === 'function' && MESSAGES) msgRenderBadge();
   renderHospital();   // releases lazily if the timer ran out while away (DOM-72)
   updateHUD();

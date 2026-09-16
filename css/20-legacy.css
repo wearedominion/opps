@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════════════════════
    v0.1 SCREENS AWAITING REBUILD
-   Fight/Hood, Store, feed, overlays, combat modal, threat, Stats, level-up
-   banner, toast, IAP, Crew, scrollbar, Map and enemy cards — carried over from
+   Fight/Hood, Store, Properties, feed, overlays, combat modal, threat, Stats,
+   level-up banner, toast, IAP, Crew, scrollbar, Map and enemy cards — from
    v0.1 unchanged. As each screen is rebuilt under DOM-107 its rules move out to
-   css/screens/<name>.css and shrink this file. The job grid and the Properties
-   grid left with the ACTIVITIES and SPOTS screens (DOM-142).
+   css/screens/<name>.css and shrink this file. The job grid left with the
+   ACTIVITIES screen (DOM-142); Spots stayed.
 
    Linked from index.html in this order; the cascade depends on it.
    ═══════════════════════════════════════════════════════════ */
@@ -56,6 +56,78 @@
   white-space: nowrap;
 }
 .attack-btn:hover { filter: brightness(1.15); }
+
+/* ── PROPERTIES ── */
+/* Bank row (DOM-148) — what is sitting in the spots, and the one control that
+   moves it into the wallet. Collecting lived on the ACTIVITIES screen until
+   that screen was deleted; this is its replacement, on the screen it is about. */
+.prop-bank {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: var(--gap-list);
+  padding-bottom: var(--gap-list);
+  border-bottom: 1px solid var(--track);
+}
+.prop-bank-col { display: flex; flex-direction: column; gap: 3px; }
+.prop-bank-k {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
+}
+.prop-bank-v {
+  font-family: var(--display); font-size: 20px; letter-spacing: 1px;
+  line-height: 1; color: var(--gold);
+}
+.prop-collect-btn {
+  flex: none;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1.5px;
+  padding: 11px 20px; border-radius: var(--r-pill);
+  background: var(--gold-chrome); border: none; color: var(--ink);
+  cursor: pointer; transition: filter .16s;
+}
+.prop-collect-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.prop-collect-btn:disabled {
+  background: var(--bg-disabled);
+  border: 1px solid var(--border-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+.prop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gap-list);
+}
+.prop-card {
+  background: var(--panel-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.prop-name { font-family: var(--display); font-size: 14px; letter-spacing: 1px; color: var(--text); }
+.prop-income { color: var(--green); font-size: 12px; margin: 4px 0 6px; font-family: var(--ui); font-weight: 500; }
+.prop-owned { color: var(--chrome); font-size: 12px; margin-bottom: 10px; }
+.prop-btn {
+  width: 100%;
+  margin-top: auto;
+  background: var(--control);
+  border: 1px solid var(--border-ctrl);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 10px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: filter .16s;
+}
+.prop-btn:hover { border-color: var(--border-gold); }
+.prop-btn:disabled {
+  background: var(--chip-locked-bg);
+  border: 1px solid var(--chip-locked-border);
+  color: var(--disabled);
+  cursor: not-allowed;
+  filter: none;
+}
 
 /* ── FEED ──
    Two lines, no panel and no border. Newest at --muted with a 4px dot
