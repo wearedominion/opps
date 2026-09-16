@@ -88,7 +88,11 @@ function renderSettings() {
   ).join('');
 
   root.innerHTML =
-    '<div class="st-group">'
+    // Settings is no longer a destination of its own — it is reached through
+    // Profile, so the way out of it is back to Profile and not to whatever
+    // tab you were on before (DOM-146).
+    '<button class="st-back" onclick="showTab(\'profile\')">&lsaquo; PROFILE</button>'
+    + '<div class="st-group">'
       + '<div class="st-heading">PREFERENCES</div>'
       + '<div class="st-card st-sound">'
         + _stIcon('speaker', true)

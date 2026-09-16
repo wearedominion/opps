@@ -48,9 +48,32 @@ function collectSpots() {
   return total;
 }
 
+// Collecting used to be a card on the ACTIVITIES screen (doActivity('collect')).
+// That screen is gone (DOM-142) and Spots stayed, so the action moves onto the
+// screen it was always about — same transaction, same ledger row, same refusals.
+function collectFromSpots() {
+  if (Object.keys(G.properties).length === 0) { toast('You got no spots yet. Buy some!', true); return; }
+  const income = collectSpots();   // one ledger row, anchors reset (DOM-74)
+  if (income === 0) { toast('Nothing banked yet — give your spots a minute.', true); return; }
+  log(`Collected $${income.toLocaleString()} from your spots`, 'gold');
+  toast('+$' + income.toLocaleString() + ' collected!');
+  updateHUD();
+  renderProps();
+  GameState.save();
+}
+
 function renderProps() {
   const container = $('prop-list');
   container.innerHTML = '';
+
+  // The bank row reads the same number collectSpots() would pay out, so what
+  // the button promises and what it pays can never disagree.
+  const banked = collectIncome();
+  const bankEl = $('prop-banked');
+  if (bankEl) bankEl.textContent = '$' + banked.toLocaleString();
+  const btn = $('prop-collect');
+  if (btn) btn.disabled = banked < 1;
+
   const now = Date.now();
   const capSec = spotCapSeconds();
   PROPERTIES.forEach(p => {
@@ -103,3 +126,7 @@ function buyProp(propId) {
   // they can actually receive that reminder. Throttled + guarded inside Auth.
   if (typeof Auth !== 'undefined') Auth.promptRegister('bought_spot');
 }
+
+// This screen claims its tab (DOM-127). Spots bank in real time, so the screen
+// is rebuilt on entry rather than cached — the number moves while you are away.
+registerScreen('props', renderProps);

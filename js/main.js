@@ -308,14 +308,16 @@ async function init() {
   renderJobs();
   renderEnemies();
   renderStore();
-  if (typeof msgRenderBadge === 'function' && MESSAGES) msgRenderBadge();
   renderProps();
+  if (typeof msgRenderBadge === 'function' && MESSAGES) msgRenderBadge();
   renderHospital();   // releases lazily if the timer ran out while away (DOM-72)
   updateHUD();
 
-  // Seed the whole nav from one call so the bottom tab, chip row and section
-  // label can't drift out of step with the markup's starting screen.
-  showTab('hood');
+  // Seed the whole nav from one call so the bottom tab and section label can't
+  // drift out of step with the markup's starting screen. The client used to
+  // boot onto ACTIVITIES, which was never one of the tabs — with that screen
+  // gone (DOM-142) the landing screen is The Hood, the bar's first tab.
+  showTab('map');
 
   if (typeof JestSDK !== 'undefined') JestSDK.setLoadingProgress(100); // dismisses loading overlay
 

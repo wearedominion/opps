@@ -1,71 +1,13 @@
 /* ═══════════════════════════════════════════════════════════
    v0.1 SCREENS AWAITING REBUILD
-   Job grid, Hood, Store, Properties, feed, overlays, combat modal, threat,
-   Stats, level-up banner, toast, IAP, Crew, scrollbar, Map and enemy cards —
-   carried over from v0.1 unchanged. As each screen is rebuilt under DOM-107
-   its rules move out to css/screens/<name>.css and shrink this file.
+   Fight/Hood, Store, Properties, feed, overlays, combat modal, threat, Stats,
+   level-up banner, toast, IAP, Crew, scrollbar, Map and enemy cards — from
+   v0.1 unchanged. As each screen is rebuilt under DOM-107 its rules move out to
+   css/screens/<name>.css and shrink this file. The job grid left with the
+   ACTIVITIES screen (DOM-142); Spots stayed.
 
    Linked from index.html in this order; the cascade depends on it.
    ═══════════════════════════════════════════════════════════ */
-/* ── JOB GRID ──
-   Single-column rows, action anchored right and vertically centred. */
-.job-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-list);
-}
-.job-card {
-  background: var(--panel-fill);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 11px 13px;
-  cursor: pointer;
-  transition: border-color .16s;
-  position: relative;
-}
-.job-card:hover { border-color: var(--border-ctrl); }
-/* locked jobs render at full contrast — the action names the gate */
-.job-card.locked { cursor: not-allowed; }
-.job-card.locked:hover { border-color: var(--border); }
-.job-name {
-  font-family: var(--display); font-size: 15px; letter-spacing: 1px;
-  color: var(--text); margin-bottom: 6px;
-}
-.job-meta { display: flex; gap: var(--gap-section); font-size: 11px; color: var(--faint); margin-bottom: 8px; }
-.job-meta span { display: flex; align-items: center; gap: 4px; }
-.job-meta .val { color: var(--text); font-weight: 500; }
-.job-pay { color: var(--chrome); font-size: 13px; font-weight: 500; }
-.job-progress-wrap { margin-top: 8px; }
-.job-progress-label {
-  display: flex; justify-content: space-between;
-  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--faint); margin-bottom: 4px;
-}
-.job-bar { height: 4px; background: var(--track); border-radius: var(--r-pill); overflow: hidden; }
-.job-bar-fill { height: 100%; background: var(--energy-fill); border-radius: var(--r-pill); transition: width .4s; }
-.do-job-btn {
-  margin-top: 10px;
-  float: right;
-  background: var(--chrome-fill);
-  border: none;
-  color: var(--chrome-ink);
-  font-family: var(--display);
-  font-size: 13px;
-  letter-spacing: 1px;
-  padding: 10px 20px;
-  border-radius: var(--r-pill);
-  cursor: pointer;
-  transition: filter .16s;
-}
-.do-job-btn:hover { filter: brightness(1.06); }
-.do-job-btn:disabled {
-  background: var(--chip-locked-bg);
-  border: 1px solid var(--chip-locked-border);
-  color: var(--disabled);
-  cursor: not-allowed;
-  filter: none;
-}
-
 /* ── FIGHT / HOOD ── */
 .enemy-list { display: flex; flex-direction: column; gap: var(--gap-list); }
 .enemy-card {
@@ -116,6 +58,38 @@
 .attack-btn:hover { filter: brightness(1.15); }
 
 /* ── PROPERTIES ── */
+/* Bank row (DOM-148) — what is sitting in the spots, and the one control that
+   moves it into the wallet. Collecting lived on the ACTIVITIES screen until
+   that screen was deleted; this is its replacement, on the screen it is about. */
+.prop-bank {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: var(--gap-list);
+  padding-bottom: var(--gap-list);
+  border-bottom: 1px solid var(--track);
+}
+.prop-bank-col { display: flex; flex-direction: column; gap: 3px; }
+.prop-bank-k {
+  font-family: var(--ui); font-weight: 500; font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-label);
+}
+.prop-bank-v {
+  font-family: var(--display); font-size: 20px; letter-spacing: 1px;
+  line-height: 1; color: var(--gold);
+}
+.prop-collect-btn {
+  flex: none;
+  font-family: var(--display); font-size: 13px; letter-spacing: 1.5px;
+  padding: 11px 20px; border-radius: var(--r-pill);
+  background: var(--gold-chrome); border: none; color: var(--ink);
+  cursor: pointer; transition: filter .16s;
+}
+.prop-collect-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.prop-collect-btn:disabled {
+  background: var(--bg-disabled);
+  border: 1px solid var(--border-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
 .prop-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -303,7 +277,9 @@
   cursor: not-allowed;
 }
 
-/* THE HOSPITAL (DOM-72) — the recovery card at the top of the Hood tab. */
+/* THE HOSPITAL (DOM-72/DOM-76). No longer a card on a screen: it is app chrome
+   above every tab (DOM-142), so the lockout is visible wherever the player is.
+   Placement lives with the shell in css/10-chrome.css; these are its internals. */
 .hospital-body {
   display: flex;
   align-items: center;

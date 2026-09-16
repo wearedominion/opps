@@ -11,6 +11,22 @@
    ═══════════════════════════════════════════════════════════ */
 .st { display: flex; flex-direction: column; gap: 22px; }
 
+/* back to Profile (DOM-146) — Settings sits inside Profile now, so this is the
+   way out of it, and it always goes to Profile rather than to whatever screen
+   preceded it. Aligned left and alone above the first group. */
+.st-back {
+  align-self: flex-start;
+  padding: 8px 14px;
+  font-family: var(--display); font-size: 12px; letter-spacing: 1.5px;
+  color: var(--text-bright);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: border-color .16s, color .16s;
+}
+.st-back:hover { border-color: var(--border-gold); color: var(--gold); }
+
 /* group heading — label style, 11px below-gap */
 .st-group { display: flex; flex-direction: column; gap: 11px; }
 .st-heading {

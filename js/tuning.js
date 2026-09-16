@@ -39,8 +39,6 @@ const TUNING_REQUIRED = [
   'drops.procChance', 'drops.rarityChance.grey', 'drops.rarityChance.green',
   'drops.rarityChance.blue', 'drops.rarityChance.purple', 'drops.rarityChance.orange',
   'drops.rarityChance.mythic',
-  'hoodActions.restMovesCost', 'hoodActions.restHealAmount',
-  'hoodActions.launderMovesCost', 'hoodActions.launderRate',
   'gear.upgradeEnabled', 'gear.maxUpgradeLevel', 'gear.statCapLevel',
   'gear.statGainPerLevel.attack', 'gear.statGainPerLevel.defense',
   'gear.statGainPerLevel.hpBonus',

@@ -4,7 +4,7 @@
 
 // What a collect is worth RIGHT NOW — accrued since the last collect, clamped
 // by the level-gated offline cap (DOM-74). Every display of "income ready"
-// (HUD, stats, notifications) reads this one number.
+// (Spots screen, stats, notifications) reads this one number.
 function collectIncome() {
   return Math.floor(spotsAccruedTotal(Date.now()));
 }
@@ -18,6 +18,10 @@ function updateHUD() {
   // header clout cluster — CLOUT value, rank title, 4px XP mini-bar
   set('h-clout', G.clout.toLocaleString());
   set('h-rank', rank);
+
+  // level chip on the header's Profile entry (DOM-145) — the only place the
+  // raw level number shows outside the metrics panel
+  set('h-profile-lv', G.level);
 
   // metrics panel hero
   set('m-clout', G.clout.toLocaleString());
@@ -41,5 +45,4 @@ function updateHUD() {
   set('health-label', G.health.current + ' / ' + G.health.max);
   bar('health-bar', (G.health.current / G.health.max) * 100);
 
-  set('collect-income', '$' + collectIncome());
 }

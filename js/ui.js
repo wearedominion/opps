@@ -8,8 +8,8 @@ function $(id) { return document.getElementById(id); }
 // The map is deliberately absent — it is the one screen with no label.
 const SECTION_TITLES = {
   map: 'THE HOOD', jobs: 'MAKE MOVES', fight: 'OPPS LIST', plugs: 'PLUGS',
-  crew: 'CREW', profile: 'PLAYER PROFILE', hood: 'ACTIVITIES',
-  props: 'SPOTS', store: 'THE PLUG', stats: 'STATS', settings: 'SETTINGS',
+  crew: 'CREW', profile: 'PLAYER PROFILE', props: 'SPOTS',
+  store: 'THE PLUG', stats: 'STATS', settings: 'SETTINGS',
 };
 
 function showTab(name) {
@@ -17,9 +17,14 @@ function showTab(name) {
   const tab = $('tab-' + name);
   if (tab) tab.classList.add('active');
 
-  // drawer item sync — screens without a drawer entry light nothing
-  document.querySelectorAll('.drawer-item').forEach(b => {
-    b.classList.toggle('active', b.dataset.nav === name);
+  // Nav down-state sync (DOM-141). Every nav control — the five bottom tabs and
+  // the two header entries — declares the screen it stands for in data-nav, so
+  // this stays one loop no matter how many of them there are, and showTab()
+  // never learns a screen's name. `data-nav-also` covers the one control that
+  // answers for two screens: Profile stays gold while you are in Settings,
+  // because Settings is reached through it (DOM-146).
+  document.querySelectorAll('[data-nav]').forEach(b => {
+    b.classList.toggle('active', b.dataset.nav === name || b.dataset.navAlso === name);
   });
 
   // The map fills the body: no padding, no scroll, no section label.
@@ -51,27 +56,9 @@ function registerScreen(name, render) {
   SCREEN_RENDERERS[name] = render;
 }
 
-// ── NAV DRAWER (v0.2 OVERLAYS.md) ───────────────
-// The drawer stays mounted; .open drives the translateX/opacity animation.
-function openDrawer() {
-  const d = $('drawer'), s = $('drawer-scrim');
-  if (!d || !s) return;
-  d.classList.add('open');
-  s.classList.add('open');
-  d.setAttribute('aria-hidden', 'false');
-}
-function closeDrawer() {
-  const d = $('drawer'), s = $('drawer-scrim');
-  if (!d || !s) return;
-  d.classList.remove('open');
-  s.classList.remove('open');
-  d.setAttribute('aria-hidden', 'true');
-}
-// Drawer navigation: switch screen, then close the drawer over it.
-function navTo(name) {
-  showTab(name);
-  closeDrawer();
-}
+// The nav drawer and its openDrawer/closeDrawer/navTo trio were deleted in
+// DOM-142. Nothing wraps showTab() any more: a nav control calls it directly,
+// because there is no longer an overlay that has to close behind the jump.
 
 function log(msg, cls = '') {
   const feed = $('feed');

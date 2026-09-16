@@ -1,0 +1,175 @@
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION (DOM-141 — Menu System Update)
+   The nav drawer's replacement: a persistent bottom tab bar, plus the two
+   header entries that took the wordmark's and the hamburger's places.
+
+   One rule governs the whole system: exactly one thing is gold at a time.
+   On the five tab screens it is a tab; on Store/Profile/Settings it is the
+   header entry, and no tab is gold. `.active` is set by showTab() from the
+   data-nav attributes, so nothing here needs a screen name.
+
+   Linked from index.html in this order; the cascade depends on it.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* The Store tile's size, named because the HUD rail below the header row has
+     to reserve exactly this much on the right to stay aligned under Messages.
+     One number, two readers — they cannot drift apart. */
+  --store-tile: 44px;
+}
+
+/* ── PROFILE ENTRY, top left (DOM-145) ──────────────────────
+   Where the OPPS wordmark used to be. 40px circle rather than the 38px
+   icon-button recipe: it carries an avatar's worth of identity, and the level
+   chip hangs off its bottom edge, so it reads as a person, not a control. */
+.hdr-profile {
+  flex: none; position: relative;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--text-bright);
+  cursor: pointer;
+  transition: border-color .16s, background .16s, color .16s;
+}
+.hdr-profile:hover { border-color: var(--border-gold); }
+/* down state — gold on Profile and on Settings, since Settings now lives
+   inside Profile and the header must not go dark when you step into it. */
+.hdr-profile.active {
+  background: var(--gold-chrome);
+  border-color: transparent;
+  color: var(--ink);
+}
+/* level chip — pinned to bottom centre, half-overhanging the circle */
+.hdr-profile-lv {
+  position: absolute; left: 50%; bottom: -5px;
+  transform: translateX(-50%);
+  min-width: 16px; padding: 1px 4px;
+  font-family: var(--ui); font-weight: 700; font-size: 8px;
+  letter-spacing: .5px; line-height: 1.25;
+  color: var(--gold); background: var(--bg);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r-pill);
+}
+/* the chip keeps its own colours in the down state — it is a readout, not
+   part of the button's surface */
+.hdr-profile.active .hdr-profile-lv { color: var(--gold); }
+
+/* ── STORE ENTRY, top right (DOM-144) ───────────────────────
+   The one permanently-gold control in the client. It is larger than the 38px
+   Messages button beside it and it never goes quiet, because it is the screen
+   that takes money. The sheen is the shared `sheen` keyframe (50-motion.css)
+   on a faster cycle than the CTA recipe — this one is ambient, not a prompt. */
+.hdr-store {
+  flex: none; position: relative; overflow: hidden;
+  width: var(--store-tile); height: var(--store-tile);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gold-chrome);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: var(--r-tile);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(232,201,138,0.35),
+              inset 0 1px 0 rgba(255,255,255,0.5);
+  transition: border-color .16s, filter .16s;
+}
+.hdr-store::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  animation: sheen 3.4s linear infinite;
+  pointer-events: none;
+}
+.hdr-store:hover { filter: brightness(1.1); }
+/* down state — the tile is already gold, so the border does the talking */
+.hdr-store.active { border-color: var(--text); }
+
+/* ── HUD RAIL (DOM-148) ─────────────────────────────────────
+   A second header row for destinations that are neither tabs nor the Store.
+   Right-aligned and padded by the Store tile's width, so its buttons line up
+   under the Messages button rather than under the Store. Spots is the only
+   occupant today; the row is built as a row so the next one costs nothing. */
+.hdr-rail {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 10px;
+  padding-right: calc(var(--store-tile) + var(--gap-section));
+}
+/* Down state. The Store and Profile entries own their own gold treatments;
+   a rail button borrows the shared icon-button recipe and only swaps the
+   surface, so adding a second one needs no new rule. */
+.hdr-rail-btn.active {
+  background: var(--gold-chrome);
+  border-color: transparent;
+  color: var(--ink);
+}
+.hdr-rail-btn.active:hover { border-color: transparent; filter: brightness(1.06); }
+
+/* ── BOTTOM TAB BAR (DOM-143) ───────────────────────────────
+   Floating pill, inset from all three edges. z 45 is the whole point of the
+   number: above the map and the scroll body, below every scrim (50), sheet
+   and modal, so nothing that opens over a screen has to know it exists. */
+.tabbar {
+  position: absolute; z-index: 45;
+  left: 14px; right: 14px; bottom: 12px;
+  display: flex; align-items: center; gap: 3px;
+  padding: 5px;
+  background: rgba(16,16,20,0.72);
+  -webkit-backdrop-filter: blur(16px);
+          backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: var(--r-pill);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+}
+
+.tabbar-btn {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  height: 42px; padding: 0;
+  background: transparent; border: none;
+  border-radius: var(--r-pill);
+  color: var(--text-mid);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all .22s;
+}
+.tabbar-btn svg { flex: none; width: 19px; height: 19px; }
+.tabbar-btn:hover { background: rgba(255,255,255,0.05); }
+
+/* the label only exists on the active tab; collapsing it rather than hiding it
+   is what lets the width change animate instead of snapping */
+.tabbar-label {
+  font-family: var(--display); font-size: 12px; letter-spacing: 1.5px;
+  line-height: 1; white-space: nowrap;
+  max-width: 0; opacity: 0;
+  transition: max-width .22s, opacity .22s;
+}
+
+/* down state — gold pill, ink icon, label revealed, tab takes ~2x the width */
+.tabbar-btn.active {
+  flex: 1.9;
+  background: var(--gold-chrome);
+  color: var(--ink);
+}
+.tabbar-btn.active:hover { background: var(--gold-chrome); }
+.tabbar-btn.active .tabbar-label { max-width: 90px; opacity: 1; }
+
+/* hairline between every adjacent pair — four of them, never at the ends */
+.tabbar-div {
+  flex: none; width: 1px; height: 16px;
+  background: rgba(255,255,255,0.09);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabbar-btn, .tabbar-label { transition: none; }
+}
+
+/* ── CONTENT CLEARANCE ──────────────────────────────────────
+   The bar floats over the screens, so every screen has to end above it.
+   Scroll body: enough bottom padding that the last row clears the pill.
+   The map does not scroll — its own furniture is lifted instead. */
+main { padding-bottom: 100px; }
+.app.is-map main { padding-bottom: 0; }
+.app.is-map .map-sel-card { bottom: 84px; }
+.app.is-map .map-hint { padding-bottom: 76px; }

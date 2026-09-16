@@ -16,17 +16,6 @@ header {
 }
 .hdr-row { display: flex; align-items: center; gap: var(--gap-section); }
 
-.logo {
-  font-family: var(--display);
-  font-size: 27px;
-  line-height: 1;
-  letter-spacing: 4px;
-  background: var(--gold-chrome);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-}
-
 /* ── clout cluster (v0.2 README §Header) — tap opens the metrics panel ──
    CLOUT label over the value; rank title over a 4px XP mini-bar; a 9px ▾ */
 .hdr-cluster {
@@ -85,13 +74,6 @@ header {
   font-family: var(--ui); font-weight: 700; font-size: 9px; color: var(--ink);
 }
 .hdr-badge[hidden] { display: none; }
-/* hamburger — three 18×2px pills, 4px gaps */
-.hamb { display: flex; flex-direction: column; gap: 4px; }
-.hamb i {
-  display: block; width: 18px; height: 2px;
-  border-radius: var(--r-pill); background: var(--text-bright);
-}
-
 /* signature divider — full-bleed, 15px under the row */
 .hdr-rule {
   height: 1px; margin: 15px calc(var(--pad-screen) * -1) 0;
@@ -148,92 +130,17 @@ main::-webkit-scrollbar { width: 0; height: 0; }
 .tab:not(.active) { display: none; }
 .tab.active { display: block; }
 
-/* ═══════════════════════════════════════════════════════════
-   NAV DRAWER (v0.2 OVERLAYS.md) — z 50 scrim / 51 panel.
-   Hidden overlays stay MOUNTED (opacity 0, pointer-events none)
-   so open/close always animates.
-   ═══════════════════════════════════════════════════════════ */
-.drawer-scrim {
-  position: absolute; inset: 0; z-index: 50;
-  background: rgba(0,0,0,0.6);
-  opacity: 0; pointer-events: none;
-  transition: opacity .25s;
-}
-.drawer-scrim.open { opacity: 1; pointer-events: auto; }
-.drawer {
-  position: absolute; top: 0; bottom: 0; left: 0; z-index: 51;
-  width: 262px;
-  display: flex; flex-direction: column;
-  padding: 30px 0 20px;
-  background: var(--overlay-fill);
-  border-right: 1px solid var(--border);
-  box-shadow: 30px 0 80px rgba(0,0,0,0.6);
-  transform: translateX(-112%);
-  transition: transform .28s cubic-bezier(.4,0,.2,1);
-}
-.drawer.open { transform: translateX(0); }
-.drawer-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px 18px;
-  border-bottom: 1px solid var(--track);
-}
-.drawer-wordmark {
-  font-family: var(--display); font-size: 24px; letter-spacing: 4px;
-  line-height: 1;
-  background: var(--gold-chrome);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-}
-.drawer-items { flex: 1; overflow-y: auto; scrollbar-width: none; padding-top: 12px; }
-.drawer-items::-webkit-scrollbar { width: 0; }
-.drawer-item {
-  display: flex; align-items: center; gap: 12px;
-  width: calc(100% - 24px); text-align: left;
-  margin: 0 12px; padding: 14px 16px;
-  border-radius: var(--r-tile);
-  background: transparent; border: 1px solid transparent;
-  cursor: pointer;
-  transition: background .16s;
-}
-.drawer-item:hover { background: rgba(255,255,255,0.02); }
-.drawer-dot {
-  flex: none; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--border-strong);
-}
-.drawer-label {
-  font-family: var(--display); font-size: 15px; letter-spacing: 1.5px;
-  color: var(--text-mid);
-}
-.drawer-item.active {
-  background: var(--surface-raised);
-  border-color: var(--border-gold);
-}
-.drawer-item.active .drawer-dot { background: var(--gold-chrome); }
-.drawer-item.active .drawer-label { color: var(--text); }
-/* locked items (none currently — recipe per OVERLAYS.md) */
-.drawer-item.locked { cursor: default; }
-.drawer-item.locked:hover { background: transparent; }
-.drawer-item.locked .drawer-label { color: var(--text-disabled); }
-.drawer-soon {
-  margin-left: auto; padding: 3px 8px;
-  font-family: var(--ui); font-weight: 700; font-size: 9px;
-  letter-spacing: 1px; color: var(--text-disabled);
-  border: 1px solid var(--border-disabled); border-radius: var(--r-pill);
-}
-/* TEMPORARY (ruled on DOM-110, 2026-09-14): legacy screens keep a quiet
-   drawer section until their v0.2 homes land. ACTIVITIES → DOM-115,
-   SPOTS/STATS → DOM-117/118. Delete this block with the last of them. */
-.drawer-divider {
-  display: flex; align-items: center; gap: 8px;
-  margin: 14px 28px 6px;
-  font-family: var(--ui); font-weight: 500; font-size: 9px;
-  letter-spacing: 2px; color: var(--text-disabled);
-}
-.drawer-divider::after { content: ''; flex: 1; height: 1px; background: var(--track); }
-.drawer-item.legacy { padding: 10px 16px; }
-.drawer-item.legacy .drawer-label { font-size: 12px; color: var(--text-disabled); }
-.drawer-item.legacy.active .drawer-label { color: var(--text-mid); }
+/* The nav drawer lived here until DOM-142. Its replacement — the bottom tab
+   bar and the two header entries — is css/15-nav.css. */
+
+/* ── THE HOSPITAL (DOM-72/DOM-76) ──
+   Sits between the feed and the screens, outside every tab, because being
+   locked up is a state of the player and not of a screen — it used to live on
+   the ACTIVITIES screen and vanish the moment you navigated off it. `hidden`
+   while healthy, so this costs a well player nothing. The map drops the body
+   padding, so the card carries its own margin there. */
+.hospital-card { flex: none; }
+.app.is-map .hospital-card:not([hidden]) { margin: 12px 18px 0; }
 
 /* ── CARDS ── */
 .card {

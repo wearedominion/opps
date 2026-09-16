@@ -142,6 +142,10 @@ const RULES = styleRules(readAllCss());
 const TABS = tabElements();
 
 test('every screen is a tab, and they are the only things the shell stacks', () => {
+  // A floor, not a count: it catches a screen falling out of the shell by
+  // accident. Went 11 -> 9 when ACTIVITIES and SPOTS were deleted (DOM-142),
+  // then back to 10 when Spots was kept (DOM-148). Move it deliberately with
+  // the screen set, never to make a red test go green.
   assert.ok(TABS.length >= 10, 'expected the full screen set, found ' + TABS.length);
   const ids = TABS.map(t => t.id);
   assert.deepStrictEqual(ids.filter(id => !id), [], 'a .tab element has no id to show');

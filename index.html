@@ -14,6 +14,7 @@
        one line here — it never appends to someone else's file (DOM-127). -->
   <link rel="stylesheet" href="css/00-base.css">
   <link rel="stylesheet" href="css/10-chrome.css">
+  <link rel="stylesheet" href="css/15-nav.css">
   <link rel="stylesheet" href="css/20-legacy.css">
   <link rel="stylesheet" href="css/25-opps-list.css">
   <link rel="stylesheet" href="css/30-plugs.css">
@@ -34,7 +35,15 @@
   <!-- HEADER (v0.2 README §Header) -->
   <header>
     <div class="hdr-row">
-      <div class="logo">OPPS</div>
+      <!-- Profile entry (DOM-145) — takes the wordmark's place at the far
+           left. The level chip half-overhangs the bottom edge; js/hud.js keeps
+           it on the live level. Goes gold on Profile AND Settings, which is
+           what data-nav-also says. -->
+      <button class="hdr-profile" id="btn-profile" data-nav="profile" data-nav-also="settings"
+              onclick="showTab('profile')" aria-label="Profile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span class="hdr-profile-lv" id="h-profile-lv">1</span>
+      </button>
 
       <!-- clout cluster: CLOUT over value · rank over a 4px level-progress bar · ▾.
            (The bar wears --xp, the token the contract fixes for level meters;
@@ -59,9 +68,22 @@
         <span class="hdr-badge" id="msg-badge" hidden></span>
       </button>
 
-      <!-- hamburger — opens the nav drawer -->
-      <button class="hdr-btn" id="btn-menu" onclick="openDrawer()" aria-label="Menu">
-        <span class="hamb" aria-hidden="true"><i></i><i></i><i></i></span>
+      <!-- Store entry (DOM-144) — takes the hamburger's place. Bigger than the
+           38px Messages button beside it on purpose: this one sells things.
+           The sheen is the ::after stripe; prefers-reduced-motion stops it. -->
+      <button class="hdr-store" id="btn-store" data-nav="store"
+              onclick="showTab('store')" aria-label="Store">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+      </button>
+    </div>
+
+    <!-- HUD rail — secondary destinations that are not tabs and not the Store.
+         Right-aligned under the Messages button, which is what the row's right
+         padding is reserving space for. Spots is its first occupant. -->
+    <div class="hdr-rail">
+      <button class="hdr-btn hdr-rail-btn" id="btn-spots" data-nav="props"
+              onclick="showTab('props')" aria-label="Spots">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 5 4h14l2 5.5"></path><path d="M3 9.5h18V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"></path><path d="M3 9.5a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"></path><path d="M9.5 21v-5h5v5"></path></svg>
       </button>
     </div>
     <div class="hdr-rule"></div>
@@ -71,57 +93,30 @@
   <main>
 
     <!-- Screen label — a caption, not a title -->
-    <div class="section-label"><h3 id="section-title">ACTIVITIES</h3><div class="rule"></div></div>
+    <div class="section-label"><h3 id="section-title"></h3><div class="rule"></div></div>
 
     <!-- FEED -->
     <div id="feed">
       <div class="feed-line info">» Welcome to OPPS. Build your empire.</div>
     </div>
 
-    <!-- HOOD TAB -->
-    <div class="tab active" id="tab-hood">
-      <!-- HOSPITAL (DOM-72) — hidden while healthy; the defeat flow lands here. -->
-      <div class="card hospital-card" id="hospital-card" hidden>
-        <div class="card-title">THE HOSPITAL</div>
-        <div class="hospital-body">
-          <div class="hospital-status">You got beat down. Discharged in
-            <span class="hospital-timer" id="hospital-timer">0:00</span></div>
-          <button class="hospital-heal-btn" id="hospital-heal-btn" onclick="hospitalHealNow()">HEAL NOW</button>
-          <button class="hospital-iap-btn" id="hospital-iap-btn" hidden>SKIP THE WAIT</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">HOOD ACTIVITIES</div>
-        <div class="job-grid">
-          <div class="job-card" onclick="doActivity('collect')">
-            <div class="job-name">Collect From Spots</div>
-            <div class="job-meta">
-              <span>TAKE <span class="val" id="collect-income">$0</span></span>
-              <span>MOVES <span class="val">0</span></span>
-            </div>
-            <div class="do-job-btn">COLLECT</div>
-          </div>
-          <div class="job-card" onclick="doActivity('rest')">
-            <div class="job-name">Rest Up (Heal)</div>
-            <div class="job-meta">
-              <span>HEAL <span class="val">+25 HP</span></span>
-              <span>MOVES <span class="val">1</span></span>
-            </div>
-            <div class="do-job-btn secondary">REST</div>
-          </div>
-          <div class="job-card" onclick="doActivity('launder')">
-            <div class="job-name">Launder Money</div>
-            <div class="job-meta">
-              <span class="val">SHUT DOWN</span>
-            </div>
-            <div class="do-job-btn secondary">LAUNDER</div>
-          </div>
-        </div>
+    <!-- HOSPITAL (DOM-72/DOM-76) — app chrome, not screen content. It used to
+       sit on the ACTIVITIES screen, which is gone; being outside the tabs is
+       also truer to it, since the lockout follows you across every screen
+       rather than waiting on one. Hidden while healthy, so a well player
+       never sees it. -->
+    <div class="card hospital-card" id="hospital-card" hidden>
+      <div class="card-title">THE HOSPITAL</div>
+      <div class="hospital-body">
+        <div class="hospital-status">You got beat down. Discharged in
+          <span class="hospital-timer" id="hospital-timer">0:00</span></div>
+        <button class="hospital-heal-btn" id="hospital-heal-btn" onclick="hospitalHealNow()">HEAL NOW</button>
+        <button class="hospital-iap-btn" id="hospital-iap-btn" hidden>SKIP THE WAIT</button>
       </div>
     </div>
 
     <!-- MAP TAB -->
-    <div class="tab" id="tab-map">
+    <div class="tab active" id="tab-map">
       <!-- THE HOOD (S9, DOM-118). The one screen with no section title and no
            body padding: it fills the scroll body. Three mutually exclusive
            modes hang off data-mode on .map-outer. -->
@@ -186,10 +181,20 @@
     <!-- STORE TAB -->
     <div class="tab" id="tab-store"></div>
 
-    <!-- PROPS TAB -->
+    <!-- SPOTS TAB (DOM-74) — kept when the rest of the LEGACY set was deleted
+         (Jake, 2026-09-15). Reached from the HUD icon under Messages. The bank
+         row is new: collecting used to live on the ACTIVITIES screen, so
+         without it the screen could sell you a spot and never pay it out. -->
     <div class="tab" id="tab-props">
       <div class="card">
         <div class="card-title">SPOTS — PASSIVE INCOME</div>
+        <div class="prop-bank">
+          <div class="prop-bank-col">
+            <span class="prop-bank-k">BANKED</span>
+            <span class="prop-bank-v" id="prop-banked">$0</span>
+          </div>
+          <button class="prop-collect-btn" id="prop-collect" onclick="collectFromSpots()">COLLECT</button>
+        </div>
         <div class="prop-grid" id="prop-list"></div>
       </div>
     </div>
@@ -221,30 +226,36 @@
 
   </main>
 
-  <!-- NAV DRAWER (v0.2 OVERLAYS.md) — stays mounted so open/close animates.
-       Eight spec items; the LEGACY section is temporary (ruled on DOM-110,
-       2026-09-14) and shrinks as DOM-115/117/118 absorb those screens. -->
-  <div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
-  <aside class="drawer" id="drawer" aria-hidden="true">
-    <div class="drawer-head">
-      <div class="drawer-wordmark">OPPS</div>
-      <button class="btn-x" onclick="closeDrawer()" aria-label="Close menu">&#x2715;</button>
-    </div>
-    <nav class="drawer-items">
-      <button class="drawer-item" data-nav="map"      onclick="navTo('map')"><span class="drawer-dot"></span><span class="drawer-label">THE HOOD</span></button>
-      <button class="drawer-item" data-nav="jobs"     onclick="navTo('jobs')"><span class="drawer-dot"></span><span class="drawer-label">MAKE MOVES</span></button>
-      <button class="drawer-item" data-nav="fight"    onclick="navTo('fight')"><span class="drawer-dot"></span><span class="drawer-label">OPPS LIST</span></button>
-      <button class="drawer-item" data-nav="plugs"    onclick="navTo('plugs')"><span class="drawer-dot"></span><span class="drawer-label">PLUGS</span></button>
-      <button class="drawer-item" data-nav="crew"     onclick="navTo('crew')"><span class="drawer-dot"></span><span class="drawer-label">CREW</span></button>
-      <button class="drawer-item" data-nav="store"    onclick="navTo('store')"><span class="drawer-dot"></span><span class="drawer-label">STORE</span></button>
-      <button class="drawer-item" data-nav="profile"  onclick="navTo('profile')"><span class="drawer-dot"></span><span class="drawer-label">PROFILE</span></button>
-      <button class="drawer-item" data-nav="settings" onclick="navTo('settings')"><span class="drawer-dot"></span><span class="drawer-label">SETTINGS</span></button>
-      <div class="drawer-divider">LEGACY</div>
-      <button class="drawer-item legacy" data-nav="hood"  onclick="navTo('hood')"><span class="drawer-dot"></span><span class="drawer-label">ACTIVITIES</span></button>
-      <button class="drawer-item legacy" data-nav="props" onclick="navTo('props')"><span class="drawer-dot"></span><span class="drawer-label">SPOTS</span></button>
-      <button class="drawer-item legacy" data-nav="stats" onclick="navTo('stats')"><span class="drawer-dot"></span><span class="drawer-label">STATS</span></button>
-    </nav>
-  </aside>
+  <!-- BOTTOM TAB BAR (DOM-143) — the nav drawer's replacement. Five tabs, one
+       gold at a time; on Store/Profile/Settings none of them is gold and the
+       header entry carries the down state instead. z 45 keeps it over the map
+       and the scroll body but under every scrim, sheet and modal. -->
+  <nav class="tabbar" id="tabbar" aria-label="Primary">
+    <button class="tabbar-btn" data-nav="map" onclick="showTab('map')" aria-label="The Hood">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      <span class="tabbar-label">HOOD</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="jobs" onclick="showTab('jobs')" aria-label="Make Moves">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+      <span class="tabbar-label">MOVES</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="fight" onclick="showTab('fight')" aria-label="Opps List">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>
+      <span class="tabbar-label">OPPS</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="plugs" onclick="showTab('plugs')" aria-label="Plugs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path></svg>
+      <span class="tabbar-label">PLUGS</span>
+    </button>
+    <span class="tabbar-div" aria-hidden="true"></span>
+    <button class="tabbar-btn" data-nav="crew" onclick="showTab('crew')" aria-label="Crew">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"></path></svg>
+      <span class="tabbar-label">CREW</span>
+    </button>
+  </nav>
 
   <!-- METRICS / CURRENCIES PANEL -->
   <div id="metrics-overlay" onclick="closeMetrics()">
@@ -472,7 +483,6 @@
 <script src="js/combat.js"></script>
 <script src="js/store.js"></script>
 <script src="js/properties.js"></script>
-<script src="js/hood.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/crew.js"></script>
